@@ -1,0 +1,6 @@
+out/
+scripts/
+tools/
+docs/FINDINGS.md
+framework/build.sh
+framework/wh_kill.c

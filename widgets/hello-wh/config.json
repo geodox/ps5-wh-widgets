@@ -1,0 +1,7 @@
+{
+  "id": "hello-wh",
+  "title": "Hello Hub",
+  "description": "A reference widget: a live clock built with the Welcome Hub SDK.",
+  "iconId": "date_time",
+  "size": 1
+}

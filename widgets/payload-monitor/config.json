@@ -1,0 +1,8 @@
+{
+  "id": "payload-monitor",
+  "title": "Payload Monitor",
+  "description": "See which payloads are running and how much memory they use.",
+  "glyph": "glyph.png",
+  "iconFallback": "grid",
+  "size": 1
+}
