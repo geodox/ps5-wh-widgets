@@ -272,7 +272,7 @@ The loader also reports focus to the hub's grid (so it scrolls your tile into vi
 | `Square` | `'Square'` | yes |
 | `Options` | `'Options'` | yes (stock widgets open their options menu with it, e.g. Battery's View selector) |
 | `L1` / `R1` | `'L'` / `'R'` | yes (inside an entered tile they move the `wh.Focusable` selection) |
-| `L2` / `R2` / `L3` / `R3` | `'L2'` / `'R2'` / `'L3'` / `'R3'` | yes |
+| `L2` / `R2` / `L3` / `R3` | `'L2'` / `'R2'` / `'L3'` / `'R3'` | yes, but these are hub shortcuts (R3 opens Edit Widgets); handling one takes it over while your tile is focused. L3 may be unavailable when Showcase Mode is on |
 | `Triangle` | `'Triangle'` | only inside an entered tile (otherwise it opens Edit Widgets) |
 | `Circle`, `Up`/`Down`/`Left`/`Right` | `'Back'`, arrows | no: Circle goes back (or leaves an entered tile), arrows move between tiles (or between items inside an entered tile) |
 
@@ -285,6 +285,7 @@ wh.onPressed(wh.Button.Square, function (e) { refresh(); });
 
 * A handler runs only while your tile has focus and the hub is not in edit mode. In edit mode the hub keeps every button (Move/Remove, L1/R1 resize).
 * Return `false` from a handler to let the hub handle that button as usual. Returning anything else (or nothing) means you handled it.
+* The tile only intercepts a button when your widget registers a handler for it (or needs it: X always, Options when it has settings, arrows/L1/R1/Circle/Triangle while entered). Every other button reaches the hub exactly as on a stock widget, so shortcuts like R3 (Edit Widgets) and Triangle (Utilities) keep working.
 * The first time a handler fires, `wh.log` records `button <key> handled`. If a handler throws, the error is logged and the button still counts as handled.
 
 ### Selectable items inside a tile (`wh.Focusable`)
