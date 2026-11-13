@@ -1,4 +1,4 @@
-# ps5-wh-widgets
+# PS5 Welcome Hub custom widgets — project root
 
 ## WelcomeHubActivator
 

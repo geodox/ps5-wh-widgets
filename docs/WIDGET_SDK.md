@@ -47,7 +47,7 @@ No JSX — use `React.createElement`. Minimal example:
 })(globalThis.__wh);
 ```
 
-> **Harness note:** `globalThis.__wh` is the SDK handle. It carries `React`, `View`, `Text`, `Image`, `FocusLayerPS`, `StyleSheet`, `FontSizePS`, `IconPS`, `I18nPS`, `Animated`, `ActivityIndicator`, `KeyGuidePS`, `ScrollView`, `LayoutAnimation`, `findNodeHandle`, the literal enums `WidgetSize`, `FontSize` and `Metrics` (always present, firmware-independent), the stock-look components `Title`, `Label`, `TextStyles`, `dims(size)`, `registerGlyph(name, spec)`, `register()`, and the parsed `config`. (Any PS-only primitive may be `undefined` on older firmware — guard before use.) Until the handle is finalized, the reference loader finds the primitives by shape on `globalThis.base_dll` and assigns the component to `globalThis.widgetEncodedLayout`. A `widget.js` written against `wh.*` is adapted automatically.
+> **Harness note:** `globalThis.__wh` is the SDK handle. It carries `React`, `View`, `Text`, `Image`, `FocusLayerPS`, `StyleSheet`, `FontSizePS`, `IconPS`, `I18nPS`, `Animated`, `ActivityIndicator`, `KeyGuidePS`, `ScrollView`, `LayoutAnimation`, `findNodeHandle`, the literal enums `WidgetSize` and `Metrics` (always present, firmware-independent), `Button`, the stock-look components `Title`, `Label`, `TextStyles`, `Focusable`, `onPressed(button, fn)`, `dims(size)`, `registerGlyph(name, spec)`, `register()`, and the parsed `config`. (Any PS-only primitive may be `undefined` on older firmware — guard before use.) Until the handle is finalized, the reference loader finds the primitives by shape on `globalThis.base_dll` and assigns the component to `globalThis.widgetEncodedLayout`. A `widget.js` written against `wh.*` is adapted automatically.
 
 The framework wraps every widget in an error boundary. A bad render stays isolated to that widget — you only need to ship valid React Native JS.
 
@@ -93,7 +93,7 @@ function Inner() {
 
 ## 2. Font sizes (`FontSizePS`)
 
-Use `wh.FontSize.<Name>` (literal, always present) or `wh.FontSizePS.<Name>` (the hub's own enum; falls back to the literal).
+Use `wh.FontSizePS.<Name>`. It is the hub's own enum; the loader fills in the same values only if the hub doesn't provide it.
 
 RNPS validates `fontSize` against a whitelist and **throws** on any other value. Only these sizes are allowed:
 
@@ -164,9 +164,33 @@ Do not reuse these — they belong to the built-in widgets:
   "glyph": "glyph.png",         // white-on-transparent PNG in this folder -> icon "wh:<id>"
   "iconId": "trophies",         // OR a stock IconPS glyph (default: "wh:<id>" if glyph, else app_welcome)
   "iconFallback": "grid",       // stock glyph used if the image glyph can't load
-  "size": 1                     // starting WidgetSize (DEFAULT=1, LARGE=2, FULL=3)
+  "size": 1,                    // starting WidgetSize (DEFAULT=1, LARGE=2, FULL=3)
+  "settings": [ ... ]           // per-widget settings schema (see below)
 }
 ```
+
+Any other field you add is parsed and handed to your component on `props.config`, so a widget can carry its own configuration (e.g. `"url": "..."`, `"threshold": 80`). Unknown fields are never touched by the loader.
+
+### `settings` — per-widget settings schema
+
+Declare settings the user can change; the loader validates them and passes the current values to your component on `props.settings` (an object keyed by setting `id`). Each entry:
+
+```jsonc
+"settings": [
+  { "id": "sort", "title": "Sort by", "type": "choice",
+    "options": [ { "value": "memory", "label": "Memory" }, { "value": "name", "label": "Name" } ],
+    "default": "memory" },
+  { "id": "showPid", "title": "Show PID", "type": "toggle", "default": true }
+]
+```
+
+* `type` is `"choice"` (needs `options`) or `"toggle"`; omit it and a list of `options` means choice, otherwise toggle.
+* `options` may be `{value,label}` objects or bare strings/numbers.
+* A missing or malformed entry is skipped with a log line; a `default` outside the options falls back to the first option.
+
+When the widget is focused, **Options** (Start) opens the stock options popup built from this schema (`toggle` -> a Switch row, `choice` -> a Dropdown). Changing a value updates `props.settings` live and re-renders the widget. Values **persist** across hub reloads and reboots: they are saved to `/data/wh-widgets/<id>/.settings.json` by the resident payload and reloaded on mount (merged over the config defaults).
+
+A focused widget also shows a stock **key-guide hint bar** at the bottom of the screen (Settings on Options, Select/Edit on X, and Prev/Next/Done while inside a `wh.Focusable` tile).
 
 ### Runtime form
 
@@ -238,6 +262,55 @@ function MyWidget(props) {
 
 The loader also reports focus to the hub's grid (so it scrolls your tile into view) and forwards edit-mode presses (Move/Remove), exactly like the stock widget frame.
 
+### Buttons (`wh.Button`, `wh.onPressed`)
+
+`wh.Button` names the controller buttons. The values are the console's own key names (the `keyType` of a key event); the system has no button enum of its own to expose.
+
+| `wh.Button.` | value | can a widget handle it? |
+|-|-|-|
+| `Cross` | `'Enter'` | yes |
+| `Square` | `'Square'` | yes |
+| `Options` | `'Options'` | yes (stock widgets open their options menu with it, e.g. Battery's View selector) |
+| `L1` / `R1` | `'L'` / `'R'` | yes (inside an entered tile they move the `wh.Focusable` selection) |
+| `L2` / `R2` / `L3` / `R3` | `'L2'` / `'R2'` / `'L3'` / `'R3'` | yes |
+| `Triangle` | `'Triangle'` | only inside an entered tile (otherwise it opens Edit Widgets) |
+| `Circle`, `Up`/`Down`/`Left`/`Right` | `'Back'`, arrows | no: Circle goes back (or leaves an entered tile), arrows move between tiles (or between items inside an entered tile) |
+
+Handle a button for the whole tile with `wh.onPressed(button, handler)`. Call it from your component on every render, like any hook, once per button:
+
+```js
+wh.onPressed(wh.Button.Cross,  function (e) { setMode(function (m) { return !m; }); });
+wh.onPressed(wh.Button.Square, function (e) { refresh(); });
+```
+
+* A handler runs only while your tile has focus and the hub is not in edit mode. In edit mode the hub keeps every button (Move/Remove, L1/R1 resize).
+* Return `false` from a handler to let the hub handle that button as usual. Returning anything else (or nothing) means you handled it.
+* The first time a handler fires, `wh.log` records `button <key> handled`. If a handler throws, the error is logged and the button still counts as handled.
+
+### Selectable items inside a tile (`wh.Focusable`)
+
+A tile with `wh.Focusable` items works like the stock "locked" controls:
+
+1. Focus the tile and press **X** to enter it. The first item is selected.
+2. Inside, the **arrows** (and L1/R1) move between items by their position on screen, and **X** presses the selected item. Focus can't leave the tile while you're inside.
+3. Press **Circle** to leave. The tile also leaves if it loses focus or the hub goes into edit mode.
+
+```js
+ce(wh.Focusable, {
+  onPress: function () { toggle(); },                   // X while this item is selected
+  buttons: { Square: function () { details(); } },      // other buttons, keyed by wh.Button value
+  style: styles.chip,
+  focusedStyle: styles.chipSelected                     // added while selected
+}, function (selected) {                                 // children may be a function of `selected`
+  return ce(wh.Label, null, selected ? 'Selected' : 'Item');
+})
+```
+
+* Your component gets `props.active` (true while entered), e.g. to show a hint such as "Circle: done".
+* While entered, a button goes to the selected item first, then to your `wh.onPressed` handlers. **Triangle** can be handled only while entered (outside, it opens Edit Widgets).
+* A tile without `wh.Focusable` items is never entered; X goes to `wh.onPressed(wh.Button.Cross, ...)`.
+* `hello-wh` is the reference: X enters, arrows pick a chip, X toggles it, Square (`wh.onPressed`) resets both, Circle leaves.
+
 ### Size and resizing
 
 Users resize tiles in edit mode with L1/R1. The loader sizes your tile from the grid's live size and passes it to your component:
@@ -247,6 +320,18 @@ Users resize tiles in edit mode with L1/R1. The loader sizes your tile from the 
 | `props.size` | current `WidgetSize` (starts at `config.json` `size`, changes on L1/R1) |
 | `props.width` / `props.height` | tile box in px (504×152 / 504×328 / 504×504; XL 1032×504) |
 | `props.editing` | `true` while the hub is in edit mode |
+
+L1/R1 step through **DEFAULT → LARGE → FULL** only (the stock editor's range). Reaching XL from the editor is not supported — an earlier attempt to extend L1/R1 to XL crashed the hub and was reverted. Use the layout for XL (below).
+
+**XL via the layout** also works (useful to start a widget double-wide): in `widget:customTemplates` each inner array is one screen column of 3 rows. Repeat your id in all 3 rows of **two adjacent columns** and the hub renders one double-wide tile (`size: 6`, 1032×504):
+
+```json
+{"custom":[["battery","trophy:summary","storage"],
+           ["my-widget","my-widget","my-widget"],
+           ["my-widget","my-widget","my-widget"]]}
+```
+
+Write the layout only while signed out (`whctl place <user> '<json>'`), then sign in.
 
 Fill `width` × `height` and adapt your content to it — the tile clips anything outside. `wh.dims(size)` returns the same `{width, height}` for any size.
 
@@ -302,6 +387,8 @@ exact error. Use `--force` to upload anyway.
 re-renders), so after deploying or installing, sign out and back in (or `whctl install --race`).
 
 ## 8. Open items
+
+* **Per-widget settings (planned):** stock widgets open an options menu with Options (Start), e.g. Battery's Detail/Compact View. The goal is to let a custom widget declare its settings and get the same stock menu, with the choice saved per user.
 
 Known gaps. Documented so authors know the current limits.
 

@@ -4,5 +4,11 @@
   "description": "See which payloads are running and how much memory they use.",
   "glyph": "glyph.png",
   "iconFallback": "grid",
-  "size": 1
+  "size": 1,
+  "settings": [
+    { "id": "sort", "title": "Sort by", "type": "choice",
+      "options": [ { "value": "memory", "label": "Memory" }, { "value": "name", "label": "Name" } ],
+      "default": "memory" },
+    { "id": "showPid", "title": "Show PID", "type": "toggle", "default": true }
+  ]
 }

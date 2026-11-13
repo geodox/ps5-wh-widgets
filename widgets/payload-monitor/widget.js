@@ -44,10 +44,7 @@
             .then(function (d) {
               if (!mounted.current) return;
               var list = (d && Array.isArray(d.processes)) ? d.processes : [];
-              list = list.filter(isPayload).sort(function (a, b) {
-                return (b.memory || 0) - (a.memory || 0);
-              });
-              setProcs(list);
+              setProcs(list.filter(isPayload));   // sorted at render from props.settings
               setErr(null);
             })
             .catch(function (e) {
@@ -66,8 +63,11 @@
     // height and show as many rows as fit (padding 32 + header 38, ~30px per row).
     var W = (props && props.width) || 504;
     var H = (props && props.height) || 152;
-    // padding 32 + stock title row 40 + gap 8; stock-size rows ~32px each
-    var maxRows = Math.max(1, Math.floor((H - 32 - 48) / 32));
+    // padding 32 + stock title row 40 + gap 8. Short tiles (DEFAULT) use compact
+    // 24px rows with size-18 names so 3 rows fit; taller tiles use 32px rows.
+    var COMPACT = H < 300;
+    var ROW_H = COMPACT ? 24 : 32;
+    var maxRows = Math.max(1, Math.floor((H - 32 - 48) / ROW_H));
 
     // Stock text: wh.Label = hub Text (size 21, theme color, font scaling capped);
     // secondary info is dimmed with opacity rather than a custom color.
@@ -75,19 +75,40 @@
     var DIM = { opacity: 0.6 };
     var SMALL = { fontSize: 18 };   // FontSizePS.Size3XSmall
 
+    // Settings (config.json "settings" -> props.settings; menu on the Options button).
+    var set = props.settings || {};
+    var showPid = set.showPid !== false;
+    if (procs) {
+      procs = procs.slice().sort(set.sort === 'name'
+        ? function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); }
+        : function (a, b) { return (b.memory || 0) - (a.memory || 0); });
+    }
+
     var rows = [];
     if (procs) {
-      for (var i = 0; i < procs.length && i < maxRows; i++) {
+      // If the list doesn't fit, the last visible row becomes "+N more" instead
+      // of silently dropping payloads (the list is sorted by memory, biggest first).
+      var shown = procs.length > maxRows ? maxRows - 1 : procs.length;
+      for (var i = 0; i < shown; i++) {
         var p = procs[i];
         rows.push(
           ce(View, {
             key: String(p.pid || i),
-            style: { flexDirection: 'row', alignItems: 'center', height: 32 }
+            style: { flexDirection: 'row', alignItems: 'center', height: ROW_H }
           },
             ce(View, { style: { width: 10, height: 10, borderRadius: 5, backgroundColor: p.is_daemon ? '#16a34a' : '#60a5fa', marginRight: 10 } }),
-            ce(Label, { style: { flex: 1 } }, String(p.name || '?')),
-            ce(Label, { style: [SMALL, DIM, { marginRight: 12 }] }, String(p.pid)),
+            ce(Label, { style: COMPACT ? [SMALL, { flex: 1 }] : { flex: 1 } }, String(p.name || '?')),
+            showPid ? ce(Label, { style: [SMALL, DIM, { marginRight: 12 }] }, String(p.pid)) : null,
             ce(Label, { style: [SMALL, DIM, { minWidth: 72, textAlign: 'right' }] }, (p.memory != null ? ((Math.round(p.memory * 10) / 10) + ' MB') : ''))
+          )
+        );
+      }
+      var hidden = procs.length - shown;
+      if (hidden > 0) {
+        rows.push(
+          ce(View, { key: '__more', style: { flexDirection: 'row', alignItems: 'center', height: ROW_H } },
+            ce(View, { style: { width: 10, marginRight: 10 } }),
+            ce(Label, { style: [SMALL, DIM] }, '+' + hidden + ' more' + (shown ? '' : ' running'))
           )
         );
       }
