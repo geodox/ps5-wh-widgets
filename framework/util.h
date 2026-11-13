@@ -31,4 +31,14 @@ void put64(uint8_t *b, uint64_t v);
 uint64_t get64(const uint8_t *b);
 uint64_t fnv1a64(const uint8_t *p, size_t n);
 
+/* Widget folder / file names: letters, digits, '.', '_', '-'; no leading '.'
+ * and no "..". Used for both the asset server and the prelude's glyph names. */
+int wh_name_ok(const char *s, size_t n);
+
+/* "image/png" or "image/jpeg" for a .png/.jpg/.jpeg name, else NULL. */
+const char *wh_img_type(const char *f);
+
+/* Where the resident payload serves widget images (hub Image loads http:// only). */
+#define WH_ASSET_URL  "http://127.0.0.1:8098/"
+
 #endif

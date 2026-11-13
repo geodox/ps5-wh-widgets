@@ -39,3 +39,21 @@ void notify(const char *fmt, ...) {
   va_start(ap, fmt); vsnprintf(req.message, sizeof req.message, fmt, ap); va_end(ap);
   sceKernelSendNotificationRequest(0, &req, sizeof req, 0);
 }
+
+int wh_name_ok(const char* s, size_t n){
+  if (!n || n > 64 || s[0] == '.') return 0;
+  for (size_t i = 0; i < n; i++){
+    char c = s[i];
+    if (!((c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='.'||c=='_'||c=='-')) return 0;
+    if (c == '.' && i+1 < n && s[i+1] == '.') return 0;
+  }
+  return 1;
+}
+
+const char* wh_img_type(const char* f){
+  const char* e = strrchr(f, '.');
+  if (!e) return 0;
+  if (!strcmp(e,".png")) return "image/png";
+  if (!strcmp(e,".jpg") || !strcmp(e,".jpeg")) return "image/jpeg";
+  return 0;
+}

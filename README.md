@@ -23,11 +23,11 @@ The Welcome Hub is built with **React Native**, so a widget is just a **React vi
 
 The SDK hands your widget everything it needs through a single handle, `globalThis.__wh`: React and the RN primitives, the hub's own stock-styled `Title`/`Label` components, icon and font helpers, and your parsed `config.json`. The framework wraps each widget in an error boundary (a bad render only breaks that one tile), gives it native focus and resizing, and shows it in the Edit Widgets list with your title, icon and description.
 
-For the full API, sizes, styling rules and the stock-look components, see **[docs/WIDGET_SDK.md](/docs/WIDGET_SDK.md)**.
+For the full API, sizes, styling rules and the stock-look components, see **[docs/sdk/](docs/sdk/README.md)**.
 
 ## Included Widgets
 
-I've created two widgets that are included in this project. You can grab them from the [Releases](/releases).
+Two complete examples live in [`sample-widgets/`](sample-widgets/). You can also grab them from the [Releases](/releases).
 
 ### Hello Hub
 
@@ -99,8 +99,31 @@ A widget is a folder with a `widget.js` (the component) and a `config.json` (its
   payload-monitor/
     widget.js        # required – the component module
     config.json      # required – id, title, size
-    icon.png         # optional – Edit Widgets list icon
+    glyph.png        # optional – Edit Widgets list icon
     README.md        # optional – ignored by the loader
 ```
 
-Full authoring guide, including styling, sizes, icons and the stock-look components: **[docs/WIDGET_SDK.md](/docs/WIDGET_SDK.md)**.
+Full authoring guide, including styling, sizes, icons and the stock-look components: **[docs/sdk/](docs/sdk/README.md)**.
+
+## Building from source
+
+Requirements: the [ps5-payload-sdk](https://github.com/ps5-payload-dev/ps5-payload-sdk) in `$HOME/ps5-payload-sdk`, Node, Python 3 (+ Keystone), and `zip` (or `python3`) for the sample archives.
+
+```
+node tools/build_bridge_hbc.js <orig.hbc> out/bridge.hbc
+node tools/make_delta.js       <orig.hbc> out/bridge.hbc out/bridge.delta
+(cd tools && npm ci)                      # pinned terser
+node tools/build_loader.js                # out/loader.min.js
+python tools/gen_detour.py framework/wh_detour.h
+bash framework/build.sh                   # out/wh_bridge.elf, out/wh_kill.elf, out/*.zip
+```
+
+`<orig.hbc>` is the decrypted Welcome Hub bundle from your own console dump; it is not distributed here. `out/` is git-ignored. `docs/INTERNALS.md` (hook points, firmware signatures, HBC notes) is also kept local.
+
+Deploy and test with the CLI (no built-in console IP; pass `--host` or set `WH_HOST`):
+
+```
+python scripts/whctl.py --host <ip> deploy
+python scripts/whctl.py --host <ip> install out/wh_bridge.elf --race
+python scripts/whctl.py --host <ip> log
+```

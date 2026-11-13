@@ -1,0 +1,8 @@
+{
+  "name": "ps5-wh-widgets-tools",
+  "private": true,
+  "description": "Build tools for the Welcome Hub widget framework (see README.md, Building).",
+  "devDependencies": {
+    "terser": "5.36.0"
+  }
+}

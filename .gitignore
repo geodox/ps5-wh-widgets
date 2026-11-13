@@ -1,6 +1,13 @@
+# Build output (ELFs, delta, minified loader, widget zips, manifest)
 out/
-scripts/
-tools/
-docs/FINDINGS.md
-framework/build.sh
-framework/wh_kill.c
+
+# Tool dependencies
+tools/node_modules/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Internal notes and the refactor deviations record: kept locally, not published
+docs/INTERNALS.md
+docs/DEVIATIONS.md
