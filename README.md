@@ -103,6 +103,14 @@ A widget is a folder with a `widget.js` (the component) and a `config.json` (its
     README.md        # optional – ignored by the loader
 ```
 
+**Live reload** — the resident payload hashes every folder's `config.json` and
+`widget.js` about once a second. A change that stays stable for five seconds is
+rebuilt into a fresh prelude and swapped into the running shell, with no payload
+reload and no ShellUI restart. The hub picks it up in a new JS runtime: sign out and
+back in. Leaving the hub and coming back is not enough - that runtime is kept.
+Images are served live and never force a rebuild. A change to the loader itself
+takes the same route: send the payload, then sign out and back in.
+
 Full authoring guide, including styling, sizes, icons and the stock-look components: **[docs/sdk/](docs/sdk/README.md)**.
 
 ## Building from source

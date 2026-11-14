@@ -12,13 +12,17 @@ Subcommands:
   install <elf> [--race]        send ELF to elfldr -> verify hooked. The payload
                                 replaces its own previous hook in place (reusing
                                 the bridge already in ShellUI), so no restore is
-                                needed. The hub runtime persists across refocus:
-                                sign out/in (or --race) to load the new build.
-                                --race: SIGKILL ShellUI first and install the
-                                moment the respawned process maps libhermes
-                                (the proven solo reload loop).
+                                needed. The hook is live immediately; the hub runs
+                                the prelude in a new runtime, so sign out and back
+                                in to load the new build. Leaving and re-entering
+                                the hub keeps the runtime.
+                                --race: optional. SIGKILL ShellUI and install on
+                                the respawn, as a recovery hatch for a wedged
+                                shell.
   reload                        SIGKILL SceShellUI (out/wh_kill.elf) and wait for
-                                the respawn. Jailbreak survives; reloads the hub.
+                                the respawn. Recovery hatch only (wedged shell or
+                                stuck hub); widget and payload changes no longer
+                                need it - re-enter the hub instead.
   send <elf>                    Just stream an ELF to elfldr (no restore/verify).
   deploy [local_dir] [--only ID..] [--force]
                                 Mirror a sample-widgets tree to /data/wh-widgets
@@ -177,7 +181,7 @@ def cmd_install(a):
             print(" ", ln)
     print("== verify hooked ==")
     hooked = cmd_check(a) == 1
-    print("installed: sign out/in (or install --race) so a new hub runtime loads it" if hooked else "NOT hooked - see output above")
+    print("installed: sign out and back in to load it (no ShellUI restart needed)" if hooked else "NOT hooked - see output above")
     return 0 if hooked else 1
 
 

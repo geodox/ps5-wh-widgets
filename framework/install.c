@@ -168,3 +168,23 @@ int wh_rehook(pid_t np, unsigned my, size_t dlen, size_t blen, uint64_t bhash){
   }
   return rc;
 }
+
+/* Widget sources changed on disk: rebuild the prelude and swap the hook in place.
+ * No SceShellUI restart and no payload reload -- the old cave stays mapped so
+ * in-flight evaluations finish, and one 8-byte slot write points the detour at
+ * the new prelude. The revision stamp makes the hub take the new widget set the
+ * next time it evaluates its bundle (leave and re-enter Explore Hub). */
+int wh_refresh_in_place(pid_t pid, size_t dlen, size_t blen, uint64_t bhash){
+  int reload = 0;
+  int rc = wh_install_once(pid, dlen, blen, bhash, &reload);
+  if (rc == WH_OK) {
+    char sum[220];
+    if (wh_wbad) snprintf(sum, sizeof sum, "%d widgets loaded, %d failed - applies at the next hub start", wh_wok, wh_wbad);
+    else snprintf(sum, sizeof sum, "%d widgets loaded - applies at the next hub start", wh_wok);
+    notify("Widgets refreshed  v%s\n%s", WH_VERSION, sum);
+    wh_flog("assets", "in-place refresh done: %s", sum);
+  } else {
+    notify("Widgets refresh failed (rc=%d)  v%s\nSee wh.log", rc, WH_VERSION);
+  }
+  return rc;
+}

@@ -9,9 +9,10 @@
  *     '.', no ".."; served from WH_WIDGETS_DIR only, O_NOFOLLOW, regular files
  *   - image types only (.png .jpg .jpeg), <= 1 MB; no listings, no other methods
  *
- * It also carries the loader's log/settings endpoints (/__log, /__wget, /__wset)
- * and keeps the hook alive: if ShellUI respawns, it reinstalls before the next
- * focus, and it retires when a newer install bumps the generation file. */
+ * It also carries the loader's log/settings endpoints (/__log, /__wget, /__wset),
+ * the re-eval trigger (/__launch) and keeps the hook alive: if ShellUI respawns,
+ * it reinstalls before the next focus, it rebuilds the prelude when the widget
+ * sources change, and it retires when a newer install bumps the generation file. */
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -26,11 +27,18 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <ps5/kernel.h>
 #include <ps5/klog.h>
 #include "server.h"
 #include "install.h"
+#include "prelude.h"
 #include "remote.h"
 #include "util.h"
+
+/* System services for the re-eval trigger (see wh_launch_action). */
+int sceKernelLoadStartModule(const char*, size_t, const void*, uint32_t, void*, uint32_t*);
+int sceUserServiceInitialize(void*);
+int sceUserServiceGetForegroundUser(uint32_t*);
 
 #define WH_ASSET_PORT 8098
 #define WH_ASSET_MAX  (1024*1024)
@@ -65,6 +73,73 @@ static void wh_hexdecode(const char* in, char* out, size_t cap){
     out[o++] = ((unsigned char)ch < 32 || ch == 127) ? ' ' : ch;
   }
   out[o] = 0;
+}
+/* ---- Re-eval trigger: ShellUI URI launch (loopback only) -------------------
+ * The hub evaluates its bundle when Explore Hub is entered, and that is when the
+ * prelude re-registers widgets. This asks ShellUI to navigate back to Explore
+ * Hub, so a rebuilt prelude is picked up in a new runtime. Nothing calls it since
+ * the options-menu row was removed; it is kept as the trigger for whatever binds
+ * it next. Exactly one fixed action exists; there is no arbitrary-URI entry point. */
+static void wh_reply_json(int c, int status, const char* body){
+  const char* phrase = status == 200 ? "OK" : status == 400 ? "Bad Request"
+    : status == 429 ? "Too Many Requests" : "Bad Gateway";
+  size_t n = strlen(body);
+  char h[200]; int m = snprintf(h, sizeof h,
+    "HTTP/1.0 %d %s\r\nContent-Type: application/json\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n",
+    status, phrase, n);
+  wh_send_all(c, h, (size_t)m); wh_send_all(c, body, n);
+}
+typedef struct { uint32_t size; uint32_t userId; } WHLaunchUriParam;
+typedef int (*WHUriInitFn)(void);
+typedef int (*WHUriLaunchFn)(const char*, WHLaunchUriParam*);
+static int g_shellui_handle = -1;
+static WHUriLaunchFn g_shellui_launch = 0;
+static int g_shellui_state = 0;            /* 0 = unknown, 1 = ready, -1 = unusable */
+static int wh_user_service(void){
+  static int tried = 0, ready = 0;
+  if (!tried) { tried = 1; ready = (sceUserServiceInitialize(0) == 0); if (!ready) wh_flog("assets", "user service init failed"); }
+  return ready;
+}
+static int wh_shellui_resolve(void){
+  if (g_shellui_state) return g_shellui_state > 0 ? 0 : -1;
+  g_shellui_state = -1;                    /* do not retry a failed resolve */
+  g_shellui_handle = sceKernelLoadStartModule("/system_ex/common_ex/lib/libSceShellUIUtil.sprx", 0, 0, 0, 0, 0);
+  if (g_shellui_handle < 0) { wh_flog("assets", "ShellUIUtil load failed (%d)", (int)g_shellui_handle); return -1; }
+  intptr_t init = kernel_dynlib_dlsym(-1, (uint32_t)g_shellui_handle, "sceShellUIUtilInitialize");
+  intptr_t launch = kernel_dynlib_dlsym(-1, (uint32_t)g_shellui_handle, "sceShellUIUtilLaunchByUri");
+  if (init <= 0 || launch <= 0) { wh_flog("assets", "ShellUIUtil symbols not found"); return -1; }
+  int rc = ((WHUriInitFn)init)();
+  if (rc) { wh_flog("assets", "ShellUIUtil initialize rc=%d", rc); return -1; }
+  g_shellui_launch = (WHUriLaunchFn)launch;
+  g_shellui_state = 1;
+  return 0;
+}
+static int wh_native_launch(const char* uri){
+  if (wh_shellui_resolve()) return -1;
+  WHLaunchUriParam param = { sizeof(WHLaunchUriParam), 0 };
+  if (wh_user_service()) {
+    uint32_t user = 0;
+    if (sceUserServiceGetForegroundUser(&user)) { wh_flog("assets", "no foreground user"); return -2; }
+    param.userId = user;
+  }
+  return g_shellui_launch(uri, &param);
+}
+/* GET /__launch?action=homehub -> navigate ShellUI back to Explore Hub. */
+static void wh_launch_action(int c, char* q){
+  static time_t win = 0; static int cnt = 0;
+  time_t now = time(0);
+  if (now - win >= 60) { win = now; cnt = 0; }
+  if (++cnt > 6) { wh_reply_json(c, 429, "{\"ok\":false,\"error\":\"rate-limited\"}"); return; }
+  char action[32] = "";
+  for (char* t = q; t && *t; ) {
+    if (!strncmp(t, "action=", 7)) wh_urldecode(t + 7, action, sizeof action);
+    t = strchr(t, '&'); if (t) t++;
+  }
+  if (strcmp(action, "homehub")) { wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"unknown action\"}"); return; }
+  int rc = wh_native_launch("pshome:explorehub");
+  wh_flog("assets", "launch: explorehub rc=%d", rc);
+  if (rc) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"launch failed\"}"); return; }
+  wh_reply_json(c, 200, "{\"ok\":true}");
 }
 static char g_fseen[16][72]; static int g_fns = 0;   /* widgets already notified this hub load */
 static void wh_fail_notify(const char* w, const char* m){
@@ -166,6 +241,7 @@ static void wh_asset_conn(int c){
   if (!strncmp(path, "__log?", 6)) { wh_log_endpoint(c, path + 6); return; }
   if (!strncmp(path, "__wget?", 7)) { wh_settings_get(c, path + 7); return; }
   if (!strncmp(path, "__wset?", 7)) { wh_settings_set(c, path + 7); return; }
+  if (!strncmp(path, "__launch?", 9)) { wh_launch_action(c, path + 9); return; }
   char shown[100]; snprintf(shown, sizeof shown, "%s", path);   /* for refused-request log lines */
   char* q = strchr(path, '?');  if (q) *q = 0;
   char* sl = strchr(path, '/');
@@ -232,6 +308,13 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
   int dn = open("/dev/null", O_RDWR);        /* detach stdio so the loader connection ends */
   if (dn >= 0) { dup2(dn, 0); dup2(dn, 1); dup2(dn, 2); if (dn > 2) close(dn); }
   struct timeval tv = { 2, 0 };
+  /* In-place widget refresh: poll the source fingerprint at ~1 Hz and rebuild the
+   * prelude once a change has been identical for 5 samples. SceShellUI keeps
+   * running; only the hook slot moves, so the hub picks the new widgets up on its
+   * next bundle evaluation. */
+  uint64_t applied = wh_prelude_sig;         /* fingerprint live in SceShellUI */
+  uint64_t candidate = wh_prelude_sig;
+  int stable = 0, ticks = 0, attempts = 0;
   for (;;) {
     struct pollfd pf = { s, POLLIN, 0 };
     int pr = poll(&pf, 1, 250);
@@ -240,12 +323,31 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
       wh_flog("assets", "server gen %u handed over to a newer install, exiting", my);
       close(s); _exit(0);
     }
+    if (++ticks >= 4) {                      /* ~1 Hz: hashing reads every widget */
+      ticks = 0;
+      uint64_t now = wh_widget_fingerprint();
+      if (now && now != applied) {
+        if (now != candidate) { candidate = now; stable = 0; }
+        else if (++stable >= 5) {
+          stable = 0;
+          wh_flog("assets", "widget sources stable for 5s (sig %016llx); refreshing prelude in place",
+                  (unsigned long long)candidate);
+          int rr = wh_refresh_in_place(shell, dlen, blen, bhash);
+          if (rr == 0) { applied = candidate = wh_prelude_sig; attempts = 0; }
+          else if (++attempts >= 3) {
+            wh_flog("assets", "in-place refresh failed 3x (rc=%d); waiting for the next change", rr);
+            applied = candidate = wh_prelude_sig; attempts = 0;
+          } else wh_flog("assets", "in-place refresh failed rc=%d; will retry", rr);
+        }
+      } else { candidate = applied; stable = 0; }
+    }
     pid_t np = find_pid("SceShellUI");
     if (np > 0 && np != shell) {             /* ShellUI respawned: our hook is gone with it */
       wh_flog("installer", "SceShellUI pid %d -> %d, reinstalling", (int)shell, (int)np);
       int rr = wh_rehook(np, my, dlen, blen, bhash);
       if (rr < 0) { wh_flog("assets", "server gen %u handed over to a newer install, exiting", my); close(s); _exit(0); }
       shell = np;
+      applied = candidate = wh_prelude_sig; stable = 0; attempts = 0;
       if (rr == 0) { wh_flog("installer", "reinstalled into SceShellUI pid %d", (int)np); notify("WHBridge reinstalled after ShellUI restart  v%s", WH_VERSION); }
       else { wh_flog("installer", "reinstall into pid %d failed rc=%d", (int)np, rr); notify("WHBridge: ShellUI restarted, reinstall failed (rc=%d)", rr); }
       continue;

@@ -32,17 +32,29 @@ from compiling. `whctl deploy` checks every widget first - valid `config.json`
 with an `id`, `widget.js` syntax (`node --check`), glyph file present - and skips
 broken ones with the exact error. Use `--force` to upload anyway.
 
-## New code needs a new hub runtime
+## New widget code needs a new hub runtime
 
-The hub's JS runtime survives refocusing (it only re-renders). After deploying or
-installing, sign out and back in, or install with `--race`:
+The payload watches `config.json` / `widget.js` and swaps the new widget set into
+the running shell about six seconds after a change settles. The hub only evaluates
+that prelude in a new JS runtime:
+
+1. **Sign out and back in.** That restarts the hub app, and the new runtime runs the
+   installed prelude.
+2. Leaving the hub and coming back does **not** work - that runtime is kept.
+
+`wh.log` shows the handoff: `widget sources stable for 5s ... refreshing prelude in
+place`, `INSTALLED slot2->... (reload, bridge reused)`, then on the next runtime
+`loader ready in the hub runtime (vendor ok, icons wrapped)`.
+
+Changes to `framework/loader.js` itself (or a new payload build) take the same
+route: install without `--race`, then sign out and back in.
 
 ```
-python scripts/whctl.py --host <console-ip> install out/wh_bridge.elf --race
+python scripts/whctl.py --host <console-ip> install out/wh_bridge.elf
 ```
 
 `--race` SIGKILLs ShellUI and installs the moment the respawned process maps
-libhermes. The jailbreak survives.
+libhermes - keep it as a recovery hatch for a wedged shell, not the normal path.
 
 ## Widget does not appear
 
@@ -51,7 +63,7 @@ libhermes. The jailbreak survives.
    or the file threw while evaluating.
 3. Check the folder name matches `config.json`'s `id` and is not a
    [reserved stock id](config.md#reserved-stock-ids).
-4. Reload the hub (sign out/in or `install --race`).
+4. Sign out and back in so a new hub runtime loads the refreshed prelude.
 
 ## Render errors
 

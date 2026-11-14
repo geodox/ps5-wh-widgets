@@ -18,6 +18,7 @@ extern const char wh_loader[];   /* framework/loader.js, minified (embed.S) */
 
 int wh_wok = 0, wh_wbad = 0, wh_wmore = 0;
 char wh_wfail[200] = "";
+uint64_t wh_prelude_sig = 0;
 
 static int wh_read_file(const char* path, char** buf, size_t* len){
   int fd = open(path, O_RDONLY);
@@ -68,11 +69,78 @@ static void wh_fail_add(const char* name){
   if (l) strcat(wh_wfail, ", ");
   strcat(wh_wfail, name);
 }
+/* ---- widget source fingerprint ---------------------------------------------
+ * Hash only the executable widget inputs: every folder's config.json and
+ * widget.js, in sorted order. Images are served live, so a glyph-only edit must
+ * not trigger a rebuild. 0 means the drop folder could not be read, which the
+ * asset loop treats as "no observation" rather than a change. */
+static uint64_t wh_hash_step(uint64_t h, const void* data, size_t n){
+  const uint8_t* p = (const uint8_t*)data;
+  while (n--){ h ^= *p++; h *= 0x100000001b3ull; }
+  return h;
+}
+static int wh_cmp_name(const void* a, const void* b){ return strcmp((const char*)a, (const char*)b); }
+uint64_t wh_widget_fingerprint(void){
+  char names[256][72]; size_t count = 0;
+  DIR* d = opendir(WH_WIDGETS_DIR);
+  if (!d) return 0;
+  struct dirent* e;
+  while ((e = readdir(d))){
+    if (e->d_name[0] == '.' || count >= 256) continue;
+    size_t nl = strlen(e->d_name);
+    if (nl >= sizeof names[0]) continue;      /* cannot be an id we can serve */
+    char path[600]; struct stat st;
+    snprintf(path, sizeof path, "%s/%s", WH_WIDGETS_DIR, e->d_name);
+    if (stat(path, &st) || !S_ISDIR(st.st_mode)) continue;
+    memcpy(names[count], e->d_name, nl + 1);
+    count++;
+  }
+  closedir(d);
+  qsort(names, count, sizeof names[0], wh_cmp_name);
+  uint64_t h = 0xcbf29ce484222325ull;
+  for (size_t i = 0; i < count; i++){
+    h = wh_hash_step(h, names[i], strlen(names[i]) + 1);
+    const char* files[] = {"config.json", "widget.js"};
+    for (size_t j = 0; j < 2; j++){
+      char path[600]; char* buf = 0; size_t len = 0;
+      snprintf(path, sizeof path, "%s/%s/%s", WH_WIDGETS_DIR, names[i], files[j]);
+      h = wh_hash_step(h, files[j], strlen(files[j]) + 1);
+      if (!wh_read_file(path, &buf, &len)){
+        h = wh_hash_step(h, &len, sizeof len);
+        h = wh_hash_step(h, buf, len);
+        free(buf);
+      } else {
+        const uint8_t missing = 0xff;
+        h = wh_hash_step(h, &missing, sizeof missing);
+      }
+    }
+  }
+  return wh_hash_step(h, &count, sizeof count);
+}
 
 void build_prelude(char** outbuf, size_t* outlen){
   size_t cap = 16384, len = 0;
   char* out = (char*)malloc(cap); out[0] = 0;
+  wh_prelude_sig = wh_widget_fingerprint();
   WHAPP(wh_loader);
+  /* Revision stamp. The hub re-evaluates its bundle every time Explore Hub is
+   * entered, so this prelude runs again on each hub load. Same revision -> stop,
+   * the widget sections below are already live. New revision -> forget every id
+   * this loader registered and let the sections below register afresh. Without
+   * it the loader's `__loaded` guard would keep the first eval's widget set. */
+  {
+    char rev[24]; snprintf(rev, sizeof rev, "%016llx", (unsigned long long)wh_prelude_sig);
+    char js[1024]; int n = snprintf(js, sizeof js,
+      "\n(function(){var G=globalThis,W=G.__wh,R='%s';if(!W||W.__sourceRevision===R)return;"
+      "var o=G.__wh_order||[],k=W.__metaKeys||[],m=W.__meta||{};"
+      "for(var i=0;i<o.length;i++){var id=o[i];"
+      "try{if(W.__map)delete W.__map[id];}catch(e){}"
+      "try{if(W.__editable)delete W.__editable['__wh_'+id];}catch(e){}"
+      "for(var j=0;j<k.length;j++){try{if(m[k[j][0]])delete m[k[j][0]][id];}catch(e){}}}"
+      "G.__wh_widgets={};G.__wh_cfgs={};G.__wh_order=[];"
+      "W.__sourceRevision=R;W.__loaded=0;W.__regLogged=0;})();\n", rev);
+    if (n > 0 && (size_t)n < sizeof js) wh_app(&out, &len, &cap, js, (size_t)n);
+  }
   int count = 0;
   DIR* d = opendir(WH_WIDGETS_DIR);
   if (d){

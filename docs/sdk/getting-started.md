@@ -73,12 +73,24 @@ ones - one syntax error stops the whole widget prelude from compiling.
 
 ## See it
 
-The hub's JS runtime survives refocusing, so new code needs a new hub runtime:
-sign out and back in, or run
+Widget sources are watched while the payload is resident: `config.json` and
+`widget.js` are hashed about once a second, and a change that stays stable for
+five seconds is spliced into a fresh prelude and swapped into the running shell -
+no payload reload, no ShellUI restart.
+
+The hub picks that prelude up in a new JS runtime: **sign out and back in**. Leaving
+the hub and coming back does not work - that runtime is kept.
+
+The first install of the payload, and a change to `framework/loader.js` itself, use
+the same route: send the ELF (no `--race`), then sign out and back in.
 
 ```
-python scripts/whctl.py --host <console-ip> install out/wh_bridge.elf --race
+python scripts/whctl.py --host <console-ip> install out/wh_bridge.elf
 ```
+
+`wh.log` gets a fresh `loader ready in the hub runtime (vendor ok, icons wrapped)`
+when the new build is picked up. `--race` (SIGKILL + install on the respawn) exists
+as a recovery hatch for a wedged shell; it is not part of the normal loop.
 
 Read `/data/wh-widgets/wh.log` if a widget does not appear
 (`python scripts/whctl.py --host <console-ip> log`), and see

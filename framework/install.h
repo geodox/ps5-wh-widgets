@@ -14,4 +14,10 @@ int wh_install_once(pid_t pid, size_t dlen, size_t blen, uint64_t bhash, int *re
  * or -1 if a newer resident install took over while we waited. */
 int wh_rehook(pid_t np, unsigned my, size_t dlen, size_t blen, uint64_t bhash);
 
+/* Rebuild the prelude and swap the hook in place, without restarting SceShellUI
+ * or reloading the payload: the old cave stays mapped for in-flight calls and
+ * one 8-byte slot write moves the detour to the new prelude. The revision stamp
+ * makes the hub adopt the new widget set the next time it evaluates its bundle. */
+int wh_refresh_in_place(pid_t pid, size_t dlen, size_t blen, uint64_t bhash);
+
 #endif
