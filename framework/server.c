@@ -43,6 +43,18 @@ int sceUserServiceGetForegroundUser(uint32_t*);
 #define WH_ASSET_PORT 8098
 #define WH_ASSET_MAX  (1024*1024)
 #define WH_GEN_FILE   WH_WIDGETS_DIR "/.wh_gen"
+#define WH_SAMPLE_MS  1000u        /* widget fingerprint sampling period */
+#define WH_STABLE_MS  5000u        /* how long a change must hold before rebuilding */
+
+/* Monotonic milliseconds. The refresh check must be timed by the clock, not by
+ * poll iterations: serving a request or the rebuild itself (ptrace attach) can
+ * take far longer than the 250 ms poll timeout, which would stretch a counted
+ * "five samples" window unpredictably. */
+static uint64_t wh_now_ms(void){
+  struct timespec ts;
+  if (clock_gettime(CLOCK_MONOTONIC, &ts)) return (uint64_t)time(0) * 1000u;   /* fallback */
+  return (uint64_t)ts.tv_sec * 1000u + (uint64_t)(ts.tv_nsec / 1000000);
+}
 
 static void wh_send_all(int c, const void* b, size_t n){
   const char* p = (const char*)b;
@@ -308,13 +320,14 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
   int dn = open("/dev/null", O_RDWR);        /* detach stdio so the loader connection ends */
   if (dn >= 0) { dup2(dn, 0); dup2(dn, 1); dup2(dn, 2); if (dn > 2) close(dn); }
   struct timeval tv = { 2, 0 };
-  /* In-place widget refresh: poll the source fingerprint at ~1 Hz and rebuild the
-   * prelude once a change has been identical for 5 samples. SceShellUI keeps
-   * running; only the hook slot moves, so the hub picks the new widgets up on its
-   * next bundle evaluation. */
+  /* In-place widget refresh: sample the source fingerprint at ~1 Hz and rebuild
+   * the prelude once a change has been identical for WH_STABLE_MS. Sampling is
+   * clock-driven, so a served request or the rebuild itself cannot stretch the
+   * stability window. SceShellUI keeps running; only the hook slot moves. */
   uint64_t applied = wh_prelude_sig;         /* fingerprint live in SceShellUI */
   uint64_t candidate = wh_prelude_sig;
-  int stable = 0, ticks = 0, attempts = 0;
+  uint64_t candidate_since = 0, next_sample = wh_now_ms() + WH_SAMPLE_MS;
+  int attempts = 0;
   for (;;) {
     struct pollfd pf = { s, POLLIN, 0 };
     int pr = poll(&pf, 1, 250);
@@ -323,15 +336,16 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
       wh_flog("assets", "server gen %u handed over to a newer install, exiting", my);
       close(s); _exit(0);
     }
-    if (++ticks >= 4) {                      /* ~1 Hz: hashing reads every widget */
-      ticks = 0;
-      uint64_t now = wh_widget_fingerprint();
-      if (now && now != applied) {
-        if (now != candidate) { candidate = now; stable = 0; }
-        else if (++stable >= 5) {
-          stable = 0;
-          wh_flog("assets", "widget sources stable for 5s (sig %016llx); refreshing prelude in place",
-                  (unsigned long long)candidate);
+    uint64_t t = wh_now_ms();
+    if (t >= next_sample) {                  /* ~1 Hz by deadline, not by iterations */
+      next_sample = t + WH_SAMPLE_MS;
+      uint64_t sig = wh_widget_fingerprint();
+      if (sig && sig != applied) {
+        if (sig != candidate) { candidate = sig; candidate_since = t; }   /* changed: restart the window */
+        else if (t - candidate_since >= WH_STABLE_MS) {
+          candidate_since = t;               /* a retry waits another full window */
+          wh_flog("assets", "widget sources stable for %us (sig %016llx); refreshing prelude in place",
+                  (unsigned)(WH_STABLE_MS / 1000u), (unsigned long long)candidate);
           int rr = wh_refresh_in_place(shell, dlen, blen, bhash);
           if (rr == 0) { applied = candidate = wh_prelude_sig; attempts = 0; }
           else if (++attempts >= 3) {
@@ -339,7 +353,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
             applied = candidate = wh_prelude_sig; attempts = 0;
           } else wh_flog("assets", "in-place refresh failed rc=%d; will retry", rr);
         }
-      } else { candidate = applied; stable = 0; }
+      } else { candidate = applied; candidate_since = 0; }
     }
     pid_t np = find_pid("SceShellUI");
     if (np > 0 && np != shell) {             /* ShellUI respawned: our hook is gone with it */
@@ -347,7 +361,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
       int rr = wh_rehook(np, my, dlen, blen, bhash);
       if (rr < 0) { wh_flog("assets", "server gen %u handed over to a newer install, exiting", my); close(s); _exit(0); }
       shell = np;
-      applied = candidate = wh_prelude_sig; stable = 0; attempts = 0;
+      applied = candidate = wh_prelude_sig; candidate_since = 0; attempts = 0;
       if (rr == 0) { wh_flog("installer", "reinstalled into SceShellUI pid %d", (int)np); notify("WHBridge reinstalled after ShellUI restart  v%s", WH_VERSION); }
       else { wh_flog("installer", "reinstall into pid %d failed rc=%d", (int)np, rr); notify("WHBridge: ShellUI restarted, reinstall failed (rc=%d)", rr); }
       continue;

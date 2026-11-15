@@ -21,8 +21,8 @@ Subcommands:
                                 shell.
   reload                        SIGKILL SceShellUI (out/wh_kill.elf) and wait for
                                 the respawn. Recovery hatch only (wedged shell or
-                                stuck hub); widget and payload changes no longer
-                                need it - re-enter the hub instead.
+                                stuck hub); widget and payload changes are applied
+                                by signing out and back in.
   send <elf>                    Just stream an ELF to elfldr (no restore/verify).
   deploy [local_dir] [--only ID..] [--force]
                                 Mirror a sample-widgets tree to /data/wh-widgets

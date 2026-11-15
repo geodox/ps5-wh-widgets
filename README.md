@@ -70,7 +70,7 @@ Widget folders are watched while the payload is resident: a `config.json` or `wi
 The hub only evaluates that prelude when its JS runtime starts, so **sign out and back in** to see the change. Leaving the hub and coming back does not work; that runtime is kept.
 
 > [!TIP]
-> If a widget is still missing after that, check `wh.log` for `[widget:<id>] not loaded` — one broken `widget.js` is skipped and the rest still load.
+> `[widget:<id>] not loaded` means that widget threw while evaluating, or never called `wh.register` — the other widgets still load. A **syntax** error is different: it stops the whole prelude from compiling, so nothing loads. Run `whctl deploy` first; it checks every `widget.js` with `node --check` and skips the broken ones with the exact error.
 
 ## Before Installing
 

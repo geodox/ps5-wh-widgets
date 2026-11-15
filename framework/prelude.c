@@ -72,31 +72,50 @@ static void wh_fail_add(const char* name){
 /* ---- widget source fingerprint ---------------------------------------------
  * Hash only the executable widget inputs: every folder's config.json and
  * widget.js, in sorted order. Images are served live, so a glyph-only edit must
- * not trigger a rebuild. 0 means the drop folder could not be read, which the
- * asset loop treats as "no observation" rather than a change. */
+ * not trigger a rebuild. 0 means the drop folder could not be read (or could not
+ * be enumerated), which the asset loop treats as "no observation", not a change.
+ *
+ * The scan mirrors build_prelude(): every non-dot directory under WH_WIDGETS_DIR,
+ * with no name-length or folder-count limit, so a change to any widget the
+ * prelude loads also moves the fingerprint. */
 static uint64_t wh_hash_step(uint64_t h, const void* data, size_t n){
   const uint8_t* p = (const uint8_t*)data;
   while (n--){ h ^= *p++; h *= 0x100000001b3ull; }
   return h;
 }
-static int wh_cmp_name(const void* a, const void* b){ return strcmp((const char*)a, (const char*)b); }
+static int wh_cmp_name(const void* a, const void* b){
+  return strcmp(*(const char* const*)a, *(const char* const*)b);
+}
 uint64_t wh_widget_fingerprint(void){
-  char names[256][72]; size_t count = 0;
   DIR* d = opendir(WH_WIDGETS_DIR);
   if (!d) return 0;
+  char** names = 0; size_t count = 0, cap = 0;
+  int oom = 0;
   struct dirent* e;
   while ((e = readdir(d))){
-    if (e->d_name[0] == '.' || count >= 256) continue;
-    size_t nl = strlen(e->d_name);
-    if (nl >= sizeof names[0]) continue;      /* cannot be an id we can serve */
+    if (e->d_name[0] == '.') continue;
     char path[600]; struct stat st;
     snprintf(path, sizeof path, "%s/%s", WH_WIDGETS_DIR, e->d_name);
     if (stat(path, &st) || !S_ISDIR(st.st_mode)) continue;
-    memcpy(names[count], e->d_name, nl + 1);
-    count++;
+    if (count == cap){
+      size_t ncap = cap ? cap * 2 : 32;
+      char** grown = (char**)realloc(names, ncap * sizeof *names);
+      if (!grown){ oom = 1; break; }
+      names = grown; cap = ncap;
+    }
+    size_t nl = strlen(e->d_name);
+    char* copy = (char*)malloc(nl + 1);
+    if (!copy){ oom = 1; break; }
+    memcpy(copy, e->d_name, nl + 1);
+    names[count++] = copy;
   }
   closedir(d);
-  qsort(names, count, sizeof names[0], wh_cmp_name);
+  if (oom){                                  /* partial list: report "unreadable" */
+    for (size_t i = 0; i < count; i++) free(names[i]);
+    free(names);
+    return 0;
+  }
+  if (count > 1) qsort(names, count, sizeof *names, wh_cmp_name);
   uint64_t h = 0xcbf29ce484222325ull;
   for (size_t i = 0; i < count; i++){
     h = wh_hash_step(h, names[i], strlen(names[i]) + 1);
@@ -115,6 +134,8 @@ uint64_t wh_widget_fingerprint(void){
       }
     }
   }
+  for (size_t i = 0; i < count; i++) free(names[i]);
+  free(names);
   return wh_hash_step(h, &count, sizeof count);
 }
 
