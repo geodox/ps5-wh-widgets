@@ -4,8 +4,8 @@
 ps5-payload-manager (itsPLK) shows a version only for payloads installed from a
 REPOSITORY SOURCE: it never reads the version out of the ELF. The version is the
 "version" string in a catalog entry; local/USB uploads show no version. So to see
-"26.11.12 beta" in the manager, host wh_bridge.elf + this repo.json somewhere and
-add that repo.json URL as a source in the manager.
+the WH_VERSION string in the manager, host wh_bridge.elf + this repo.json somewhere
+and add that repo.json URL as a source in the manager.
 
   python tools/build-repo.py [out/wh_bridge.elf] [repo.json] [--url <download URL>]
                              [--author <name>]
