@@ -1,137 +1,145 @@
-# PS5 Welcome Hub custom widgets — project root
+<div align="center">
 
-## WelcomeHubActivator
+![ps5-wh-widgets — custom widgets for the PS5 Welcome Hub](img/readme-banner.svg)
 
-This project is meant to be used together with
-**[WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator)** by
-**[ghost1372](https://github.com/ghost1372)**. That project is an ELF payload that turns on the PS5 Welcome Hub (FW 10.00–13.60), and the change survives restarts. This project adds support for custom widgets in the hub once it is active, so run WelcomeHubActivator first if the Welcome Hub isn't already on.
+# ps5-wh-widgets
 
-Everything this project does is applied **in memory**, at runtime: it hooks the running Welcome Hub process and injects the widgets live. **No system files are modified** — nothing on the console's storage is patched or replaced. A reboot undoes all of it, returning the console to a completely stock state; just run the payload again to bring the widgets back.
+### Turn your PS5 Welcome Hub into something more.
 
-Credit and thanks to ghost1372 for WelcomeHubActivator (MIT licensed), and to the
-projects it credits.
+**One ELF. Your hub, your widgets.**
 
-![Custom Widgets in Welcome Hub](/img/welcomehubwidgets.jpg)
+Add your own widgets to the PS5 Welcome Hub — injected into the running hub at runtime. Nothing on disk is patched, and a reboot returns the console to stock.
 
-## Welcome Hub
+[![PS5](https://img.shields.io/badge/Platform-PlayStation%205-174B91?style=for-the-badge)](#before-installing)
+[![Version](https://img.shields.io/badge/Version-10.00--13.60-168E78?style=for-the-badge)](#before-installing)
+[![MIT License](https://img.shields.io/badge/License-MIT-556477?style=for-the-badge)](LICENSE)
 
-The Welcome Hub is a customizable panel on the PS5 home screen, added in a 2024 system software update. It shows a grid of widgets — battery, trophies, storage, friends, recently played and more — that the user can rearrange, resize and toggle from an "Edit Widgets" screen. Sony ships a fixed set of widgets; this project lets you add your own alongside them.
+[**Installation Prerequisites**](#before-installing) · [**Developer SDK**](docs/sdk/README.md)
 
-## Widgets
+</div>
 
-The Welcome Hub is built with **React Native**, so a widget is just a **React view** — a component built from native primitives like `View`, `Text` and `Image`, not HTML/CSS. There is no DOM, no `div`, no `window`.
+---
 
-The SDK hands your widget everything it needs through a single handle, `globalThis.__wh`: React and the RN primitives, the hub's own stock-styled `Title`/`Label` components, icon and font helpers, and your parsed `config.json`. The framework wraps each widget in an error boundary (a bad render only breaks that one tile), gives it native focus and resizing, and shows it in the Edit Widgets list with your title, icon and description.
+## 🧩 Included Widgets
 
-For the full API, sizes, styling rules and the stock-look components, see **[docs/sdk/](docs/sdk/README.md)**.
+Two widgets ship with the project, as working examples and as the starting point for your own:
 
-## Included Widgets
+<div align="center">
 
-Two complete examples live in [`sample-widgets/`](sample-widgets/). You can also grab them from the [Releases](/releases).
+![Payload Monitor and Hello Hub running in the Welcome Hub](img/welcome-hub-widgets.jpg)
 
-### Hello Hub
+</div>
 
-A minimal reference widget: a live, ticking clock. It exists to demonstrate the SDK end to end — the stock title row, stock text, an icon, hooks and a timer — and is the easiest starting point for writing your own.
+| Widget | What it does |
+| :--- | :--- |
+| **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks and a timer. The smallest complete widget. |
+| **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. |
 
-![Hello Hub Widget](/img/hellohub.jpg)
+Drop either folder into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
 
-#### Payload Monitor
+## 📸 Community Showcase
 
-Shows the homebrew payloads currently running on the console, each with its PID and memory use, updating live. It pulls the data from the [ps5-payload-manager](https://github.com/ps5-payload-dev)'s local server and filters out Sony's own system processes, so you see just what you've launched.
+Screenshots from other setups, shared by the [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) project:
 
-![Payload Monitor Widget](/img/payloadmonitor.jpg)
+<div align="center">
+<table><tr><td width="50%"><img src="https://raw.githubusercontent.com/manchildtechnologies-ui/NiDUS/main/img/20261113_110144_00592274.webp" alt="Community widgets in the Welcome Hub" width="100%"></td><td width="50%"><img src="https://raw.githubusercontent.com/manchildtechnologies-ui/NiDUS/main/img/20261113_110150_00429265.webp" alt="Widget Store and game tiles in the Welcome Hub" width="100%"></td></tr></table>
+</div>
 
-## Building a Widget
+*Images courtesy of [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) — not produced by this project.*
 
-A widget is a folder with a `widget.js` (the component) and a `config.json` (its metadata). No build step, no bundler — `widget.js` is plain JavaScript evaluated once when the hub loads, and must be self-contained (no `import` / `require`).
+## 🚀 What Powers ps5-wh-widgets
 
-**`widget.js`** — grab React + the primitives from the `wh` handle, build a component with `React.createElement` (no JSX), and register it:
+### Native Welcome Hub Integration
 
-```js
-// widget.js
-(function (wh) {
-  var React = wh.React;
-  var View = wh.View;
-  var Text = wh.Text;
+- Renders your widgets inside the Welcome Hub's native frame and header.
+- Passes widget configuration through `props.config` and per-widget settings through `props.settings`.
+- Provides a native settings menu and persists widget settings in `.settings.json`.
+- Supports controller navigation, focusable buttons, and native Hub interaction.
+- Records detailed installation failures to support troubleshooting.
 
-  function MyWidget(props) {
-    return React.createElement(
-      View,
-      {
-        style: {
-          flex: 1,
-          width: 504,
-          padding: 16,
-          borderRadius: 16,
-          backgroundColor: '#1b1d23',
-        },
-      },
-      React.createElement(
-        Text,
-        { style: { color: '#ffffff', fontSize: 24 } },
-        'Hello Hub'
-      )
-    );
-  }
+## Testing And Current Status
 
-  wh.register(MyWidget);
-})(globalThis.__wh);
-```
+The payload and loader have been run on-console: the hook installs into SceShellUI, both sample widgets render inside the native hub frame, settings persist, and a widget source change is rebuilt and swapped in place without restarting the shell.
 
-**`config.json`** — the widget's id, its name/icon/description in the Edit Widgets list, and its starting size:
+**Firmware:** developed on PS5 firmware **13.20**, which is what has been verified on-console. Other firmware should work too: the payload locates the JS hook point and recognises the hub bundle by signature and content instead of fixed offsets, and it refuses to touch a hook it does not own. Treat 13.20 as tested and everything else in the 10.00-13.60 hub range as expected but unverified.
 
-```jsonc
-{
-  "id": "payload-monitor",      // required, unique, not a stock id
-  "title": "Payload Monitor",   // Edit Widgets list name (default: id)
-  "description": "...",         // Edit Widgets description shown on focus (optional)
-  "glyph": "glyph.png",         // white-on-transparent PNG in this folder -> icon "wh:<id>"
-  "iconId": "trophies",         // OR a stock IconPS glyph (default: "wh:<id>" if glyph, else app_welcome)
-  "iconFallback": "grid",       // stock glyph used if the image glyph can't load
-  "size": 1                     // starting WidgetSize (DEFAULT=1, LARGE=2, FULL=3)
-}
-```
+## 🔄 Applying Widget Changes
 
-**File structure** — drop your widget folder into `/data/wh-widgets/` on the console. Each immediate subfolder is one widget, named by its id:
+Widget folders are watched while the payload is resident: a `config.json` or `widget.js` change is noticed within a second and, once it has been stable for five seconds, rebuilt into a fresh prelude and swapped into the running shell — no payload reload, no shell restart.
 
-```
+The hub only evaluates that prelude when its JS runtime starts, so **sign out and back in** to see the change. Leaving the hub and coming back does not work; that runtime is kept.
+
+> [!TIP]
+> If a widget is still missing after that, check `wh.log` for `[widget:<id>] not loaded` — one broken `widget.js` is skipped and the rest still load.
+
+## Before Installing
+
+> [!IMPORTANT]
+> **Install and run [WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator) by [@ghost1372](https://github.com/ghost1372) first.** The PS5 Welcome Hub must be activated before custom widgets can run.
+
+- **Tested firmware: PS5 13.20.** Other firmware should work for the reasons in [Testing and current status](#testing-and-current-status), but only 13.20 has been verified on-console.
+- A PS5 with a homebrew environment and a way to load an ELF payload is required.
+- Use the payload from this repository's releases — a stock bridge build does not include the widget loader and will not load widgets.
+
+## Installation
+
+Send `wh_bridge.elf` with your payload loader (elfldr, or whatever you normally use), or install it through Payload Manager:
+
+- Add this repository as a custom source in Payload Manager, pointing it at the raw [`repo.json`](repo.json): `https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/repo.json`
+- Install **Welcome Hub Bridge** from that source.
+
+There is nothing else to install: the widget loader lives inside the payload. It stays resident as the widget asset server, and everything it does is in memory — a reboot removes it, so run the payload again to bring the widgets back.
+
+### Adding Widgets
+
+Once the payload is installed and running, place each unpacked widget in its own folder on the console:
+
+```text
 /data/wh-widgets/
-  payload-monitor/
-    widget.js        # required – the component module
-    config.json      # required – id, title, size
-    glyph.png        # optional – Edit Widgets list icon
-    README.md        # optional – ignored by the loader
+  example-widget/
+    config.json
+    widget.js
+    glyph.png       # optional
 ```
 
-**Live reload** — the resident payload hashes every folder's `config.json` and
-`widget.js` about once a second. A change that stays stable for five seconds is
-rebuilt into a fresh prelude and swapped into the running shell, with no payload
-reload and no ShellUI restart. The hub picks it up in a new JS runtime: sign out and
-back in. Leaving the hub and coming back is not enough - that runtime is kept.
-Images are served live and never force a rebuild. A change to the loader itself
-takes the same route: send the payload, then sign out and back in.
+The folder name should match its widget id. Changes are picked up while the payload is running; see [Applying widget changes](#applying-widget-changes). See the [SDK getting-started guide](docs/sdk/getting-started.md) for deployment and troubleshooting.
 
-Full authoring guide, including styling, sizes, icons and the stock-look components: **[docs/sdk/](docs/sdk/README.md)**.
+## Build Your Own
 
-## Building from source
+Widgets are React Native components: plain JavaScript built with `React.createElement` and the SDK handle `globalThis.__wh` — not web HTML, CSS or DOM APIs. A widget's entry file registers its component with `wh.register(Component)`.
 
-Requirements: the [ps5-payload-sdk](https://github.com/ps5-payload-dev/ps5-payload-sdk) in `$HOME/ps5-payload-sdk`, Node, Python 3 (+ Keystone), and `zip` (or `python3`) for the sample archives.
+- [SDK overview](docs/sdk/README.md)
+- [Getting started](docs/sdk/getting-started.md)
+- [API reference](docs/sdk/api.md)
+- [config.json](docs/sdk/config.md)
+- [Sizes and layout](docs/sdk/sizes-and-layout.md)
+- [Input and focus](docs/sdk/input-and-focus.md)
+- [Settings and persistence](docs/sdk/settings.md)
+- [Glyphs and images](docs/sdk/glyphs.md)
+- [Style guide](docs/sdk/style-guide.md)
+- [Troubleshooting](docs/sdk/troubleshooting.md)
+- [Sample widgets](sample-widgets/)
 
+## Source Layout
+
+```text
+framework/      payload sources: hook/installer, prelude, loader, asset server
+docs/           SDK documentation (docs/sdk/)
+sample-widgets/ example widget projects
+scripts/        whctl (deploy, install, logs) and console/toolchain helpers
+tools/          HBC, detour and payload build utilities, plus tests/
+img/            screenshots and documentation images
+repo.json       Payload Manager custom source (payload catalog)
 ```
-node tools/build_bridge_hbc.js <orig.hbc> out/bridge.hbc
-node tools/make_delta.js       <orig.hbc> out/bridge.hbc out/bridge.delta
-(cd tools && npm ci)                      # pinned terser
-node tools/build_loader.js                # out/loader.min.js
-python tools/gen_detour.py framework/wh_detour.h
-bash framework/build.sh                   # out/wh_bridge.elf, out/wh_kill.elf, out/*.zip
-```
 
-`<orig.hbc>` is the decrypted Welcome Hub bundle from your own console dump; it is not distributed here. `out/` is git-ignored. `docs/INTERNALS.md` (hook points, firmware signatures, HBC notes) is also kept local.
+## ❤️ Credits & Origins
 
-Deploy and test with the CLI (no built-in console IP; pass `--host` or set `WH_HOST`):
+- **[@ghost1372](https://github.com/ghost1372)** — [WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator), which enables the Welcome Hub where it is not already active, and the projects it credits.
+- **[NiDUS](https://github.com/manchildtechnologies-ui/NiDUS)** — the community screenshots in the showcase above, and the in-place refresh approach (fingerprint + revision-stamped prelude) this loader's widget reload is based on.
+- **PS5 homebrew community** — [ps5-payload-sdk](https://github.com/ps5-payload-dev/ps5-payload-sdk) and the payload tooling this project builds with.
 
-```
-python scripts/whctl.py --host <ip> deploy
-python scripts/whctl.py --host <ip> install out/wh_bridge.elf --race
-python scripts/whctl.py --host <ip> log
-```
+This is an independent, unofficial community homebrew project. It is not affiliated with or endorsed by Sony Interactive Entertainment or PlayStation.
+
+## License
+
+Released under the MIT license — see [LICENSE](LICENSE).
