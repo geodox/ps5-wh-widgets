@@ -1,0 +1,217 @@
+{
+  "fw": 1360,
+  "source_sha1": "d0e41972f86b3c45a689bd911ca40ed5182005d9",
+  "ref_sha1": "12c6c475d9c4dc8a7166b8f379e236671dce85cb",
+  "targets": [
+    {
+      "name": "(lock A)",
+      "fid_1320": 5916,
+      "hook": "lock",
+      "fid": 6186,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (22 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "(lock B)",
+      "fid_1320": 19960,
+      "hook": "lock",
+      "fid": 20531,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "__whWidgetMap",
+      "fid_1320": 7374,
+      "hook": "global",
+      "fid": 8282,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (56 insns); numbers moved: LoadConstUInt8@203 arg1 175->185; WIDGET_MAP export true; require=param3 true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whWidgetMap",
+            "valReg": 1,
+            "at": null
+          },
+          {
+            "name": "__whRequire",
+            "valReg": 7,
+            "at": 12
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whEditable",
+      "fid_1320": 128,
+      "hook": "global",
+      "fid": 128,
+      "confidence": 0.963,
+      "evidence": "aligned match sim=0.963 (runner-up F1823 0.315); +5/-0 insns [+ LoadConstString r1 \"flare\" | + PutById r3 r1 _ \"FLARE\" | + LoadConstString r4 \"beta\" | + LoadConstString r3 \"BETA\" | + PutOwnByVal r1 r4 r3 #]; EDITABLE true; ACCESSIBILITY true; FRIENDS_ONLINE true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whEditable",
+            "valReg": 3,
+            "at": 277
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whTitles",
+      "fid_1320": 5162,
+      "hook": "global",
+      "fid": 5382,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.978 (runner-up F20639 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:8c86886b627fb8d0 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; 16 I18n getters, e.g. msgid_accessibility, msgid_battery_level, msgid_discover_tips",
+      "params": {
+        "inj": [
+          {
+            "name": "__whTitles",
+            "valReg": 1,
+            "at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whIcons",
+      "fid_1320": 20067,
+      "hook": "global",
+      "fid": 20638,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.976 (runner-up F20671 0.423); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + LoadConstString r5 \"signal_flare\" | + PutOwnByVal r1 r5 r6 # | + GetById r5 r3 _ \"default\"]; icon ids accessibility,battery_full,ps_store",
+      "params": {
+        "inj": [
+          {
+            "name": "__whIcons",
+            "valReg": 1,
+            "at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whDescs",
+      "fid_1320": 20068,
+      "hook": "global",
+      "fid": 20639,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.978 (runner-up F5382 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:eaa07f0556612c86 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; 15 I18n getters, e.g. msgid_review_ps5_accessibility_options, msgid_display_battery_status, msgid_learn_new_features",
+      "params": {
+        "inj": [
+          {
+            "name": "__whDescs",
+            "valReg": 1,
+            "at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whSizeDown",
+      "fid_1320": 19931,
+      "hook": "sizeStep",
+      "fid": 20502,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; Math.max true",
+      "params": {
+        "at": 46,
+        "env": 0,
+        "res": 2,
+        "s": [
+          1,
+          3,
+          4,
+          3
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whSizeUp",
+      "fid_1320": 19932,
+      "hook": "sizeStep",
+      "fid": 20503,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (73 insns); all numbers identical; Math.min true FULL true",
+      "params": {
+        "at": 71,
+        "env": 2,
+        "res": 8,
+        "s": [
+          0,
+          1,
+          7,
+          1
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whScrollTo",
+      "fid_1320": 19985,
+      "hook": "prefix",
+      "fid": 20556,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (27 insns); all numbers identical; scroll ref .current/.start/.end true",
+      "params": {
+        "frame": 0,
+        "prologue_ok": true,
+        "envDepth": 1,
+        "envSlot": 4
+      }
+    },
+    {
+      "name": "__whLayoutResize",
+      "fid_1320": 1674,
+      "hook": "prefix",
+      "fid": 1470,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (81 insns); all numbers identical; Array.fill true",
+      "params": {
+        "frame": 6,
+        "prologue_ok": true
+      }
+    },
+    {
+      "name": "__whFind",
+      "fid_1320": 1665,
+      "hook": "prefix",
+      "fid": 1461,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (19 insns); all numbers identical; returns {id,position,size} true",
+      "params": {
+        "frame": 5,
+        "prologue_ok": true
+      }
+    }
+  ],
+  "modules": [
+    {
+      "name": "stockFrame",
+      "id_1320": 106,
+      "fid_1320": 1186,
+      "id": 108,
+      "fid": 1191,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.994 (runner-up F5770 0.550); +1/-1 insns [+ LoadConstUInt8 r1 # | - LoadConstInt r1 #]"
+    },
+    {
+      "name": "stockHeader",
+      "id_1320": 77,
+      "fid_1320": 922,
+      "id": 69,
+      "fid": 864,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (123 insns); numbers moved: LoadConstUInt8@396 arg1 94->99, LoadConstUInt8@413 arg1 21->20"
+    }
+  ]
+}

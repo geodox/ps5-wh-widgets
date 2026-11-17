@@ -11,7 +11,7 @@
 Add your own widgets to the PS5 Welcome Hub — injected into the running hub at runtime. Nothing on disk is patched, and a reboot returns the console to stock.
 
 [![PS5](https://img.shields.io/badge/Platform-PlayStation%205-174B91?style=for-the-badge)](#before-installing)
-[![Version](https://img.shields.io/badge/Version-10.00--13.60-168E78?style=for-the-badge)](#before-installing)
+[![Firmware](https://img.shields.io/badge/Firmware-13.20%20%7C%2013.60-168E78?style=for-the-badge)](#before-installing)
 [![MIT License](https://img.shields.io/badge/License-MIT-556477?style=for-the-badge)](LICENSE)
 
 [**Installation Prerequisites**](#before-installing) · [**Developer SDK**](docs/sdk/README.md)
@@ -61,7 +61,24 @@ Screenshots from other setups, shared by the [NiDUS](https://github.com/manchild
 
 The payload and loader have been run on-console: the hook installs into SceShellUI, both sample widgets render inside the native hub frame, settings persist, and a widget source change is rebuilt and swapped in place without restarting the shell.
 
-**Firmware:** developed on PS5 firmware **13.20**, which is what has been verified on-console. Other firmware should work too: the payload locates the JS hook point and recognises the hub bundle by signature and content instead of fixed offsets, and it refuses to touch a hook it does not own. Treat 13.20 as tested and everything else in the 10.00-13.60 hub range as expected but unverified.
+**Firmware:** each firmware ships its own Welcome Hub, so the payload carries one hub patch per supported firmware and picks the one for your console at install time.
+
+| Firmware | Status |
+| :--- | :--- |
+| **13.20** | Verified on-console. |
+| **13.60** | Verified on-console. |
+
+On any other firmware the payload does not install. It shows `WHBridge failed: FW x.yy not supported yet` with the supported list, rather than loading and silently showing no widgets. Even on a supported firmware, the hub is only patched if it is byte-for-byte the build the patch was made from; anything else is left stock.
+
+### Help Support Your Firmware
+
+Adding a firmware needs a dump of that firmware's stock hub. With ps5debug-NG running on the console (port 744), reboot the console, **do not** load `wh_bridge.elf`, open the Welcome Hub once, then run:
+
+```text
+python scripts/dump_hub.py --host <console-ip> --out .
+```
+
+It only reads from the console and writes `hub_fw<NNNN>_<hash>.hbc` on your PC. Open an issue to arrange sending it. The file is Sony's bytecode, so please **do not attach it publicly**.
 
 ## 🔄 Applying Widget Changes
 
@@ -77,7 +94,7 @@ The hub only evaluates that prelude when its JS runtime starts, so **sign out an
 > [!IMPORTANT]
 > **Install and run [WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator) by [@ghost1372](https://github.com/ghost1372) first.** The PS5 Welcome Hub must be activated before custom widgets can run.
 
-- **Tested firmware: PS5 13.20.** Other firmware should work for the reasons in [Testing and current status](#testing-and-current-status), but only 13.20 has been verified on-console.
+- **Supported firmware: PS5 13.20 and 13.60.** See [Testing and current status](#testing-and-current-status) for what each has been verified on, and how to help add another firmware.
 - A PS5 with a homebrew environment and a way to load an ELF payload is required.
 - Use the payload from this repository's releases — a stock bridge build does not include the widget loader and will not load widgets.
 
@@ -127,7 +144,7 @@ framework/      payload sources: hook/installer, prelude, loader, asset server
 docs/           SDK documentation (docs/sdk/)
 sample-widgets/ example widget projects
 scripts/        whctl (deploy, install, logs) and console/toolchain helpers
-tools/          HBC, detour and payload build utilities, plus tests/
+tools/          HBC, detour and payload build utilities, per-firmware maps (fidmaps/), tests/
 img/            screenshots and documentation images
 repo.json       Payload Manager custom source (payload catalog)
 ```

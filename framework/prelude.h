@@ -4,9 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Splice wh_loader + one section per widget folder into a new buffer. Never
- * fails to return a buffer; widgets that cannot load are counted as failed. */
-void build_prelude(char **outbuf, size_t *outlen);
+struct wh_bridge;
+
+/* Splice the hub facts for `br` (module ids the loader requires), wh_loader and
+ * one section per widget folder into a new buffer. Never fails to return a
+ * buffer; widgets that cannot load are counted as failed. */
+void build_prelude(char **outbuf, size_t *outlen, const struct wh_bridge *br);
 
 /* FNV-1a64 over every widget folder's config.json + widget.js (sorted). Images
  * are served live by the asset server and are not hashed; 0 = folder unreadable. */

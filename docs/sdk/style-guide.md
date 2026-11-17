@@ -15,7 +15,7 @@ Stock widgets don't set a font family or text colour: they use the system font,
 the theme colour, and a fixed set of sizes. The loader recreates the hub's own
 text components so you get the same look for free:
 
-| component | stock source | what it renders |
+| component | stock source (FW 13.20 module ids) | what it renders |
 |---|---|---|
 | `wh.Title` | hub modules 77 + 94 | title row: 40px icon + **bold size-21** text (1 line, ellipsis) + optional right-aligned `badge` |
 | `wh.Label` | hub module 21 | body text: size 21, theme colour, 1 line by default, font scaling capped like stock |

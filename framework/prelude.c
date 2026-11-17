@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include "bridge.h"
 #include "prelude.h"
 #include "util.h"
 
@@ -139,10 +140,15 @@ uint64_t wh_widget_fingerprint(void){
   return wh_hash_step(h, &count, sizeof count);
 }
 
-void build_prelude(char** outbuf, size_t* outlen){
+void build_prelude(char** outbuf, size_t* outlen, const struct wh_bridge* br){
   size_t cap = 16384, len = 0;
   char* out = (char*)malloc(cap); out[0] = 0;
   wh_prelude_sig = wh_widget_fingerprint();
+  /* Hub module ids move between firmware builds (tools/fid_match.js); the loader
+   * requires the stock frame and header by these ids. 0 = not available. */
+  char mods[96]; snprintf(mods, sizeof mods, "globalThis.__wh_hubmods={frame:%u,header:%u};\n",
+                          br->frame_mod, br->header_mod);
+  WHAPP(mods);
   WHAPP(wh_loader);
   /* Revision stamp. The hub re-evaluates its bundle every time Explore Hub is
    * entered, so this prelude runs again on each hub load. Same revision -> stop,

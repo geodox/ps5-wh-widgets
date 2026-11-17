@@ -24,6 +24,7 @@ from ps5dbg import PS5Dbg, DbgError
 HBC_MAGIC = bytes.fromhex("c61fbc03c103191f")   # Hermes HBC, verified on FW 13.20
 HBC_VER = 89                                    # HBC bytecode version (Hermes 0.11)
 HUB_NEEDLE = b"widget:customTemplates"          # only the Welcome Hub bundle has it
+BRIDGE_NEEDLE = b"__whWidgetMap"                # only our patched bridge has it
 FLEN_OFF = 32                                   # u32 fileLength in the HBC header
 MIN_LEN = 0x100000                              # 1 MB  -- below this is not the hub
 MAX_LEN = 0x800000                              # 8 MB  -- above this is not the hub
@@ -60,7 +61,13 @@ def scan_region(d, pid, start, end):
 
 
 def find_hub(d, pid):
-    """Return (addr, fileLength) of the Welcome Hub bundle, or (None, None)."""
+    """Return (addr, fileLength, bridges) for the stock Welcome Hub bundle.
+
+    addr is None when no stock hub is resident. bridges counts hub copies that
+    carry our bridge patches: a resident wh payload swaps one in, and dumping it
+    would hand the matcher our own 13.20-derived output instead of this
+    firmware's hub."""
+    bridges = 0
     for m in d.maps(pid):
         if not (m["prot"] & 1):                 # must be readable
             continue
@@ -77,8 +84,11 @@ def find_hub(d, pid):
             # Cheap server-side confirm: is the hub needle inside this bundle?
             if not d.scan_aob_multi(pid, hit, flen, [HUB_NEEDLE])[0]:
                 continue
-            return hit, flen
-    return None, None
+            if d.scan_aob_multi(pid, hit, flen, [BRIDGE_NEEDLE])[0]:
+                bridges += 1
+                continue
+            return hit, flen, bridges
+    return None, None, bridges
 
 
 def read_all(d, pid, addr, length, chunk=0x40000):
@@ -97,11 +107,18 @@ def main(argv):
         fw = d.fw()                             # e.g. 1320 == FW 13.20
         pid = d.find_pid("SceShellUI")
         print(f"console fw={fw // 100}.{fw % 100:02d}  SceShellUI pid={pid}")
-        addr, flen = find_hub(d, pid)
+        addr, flen, bridges = find_hub(d, pid)
         if addr is None:
-            print("hub bundle not found. Open the Welcome Hub on the console, then "
-                  "run this again.", file=sys.stderr)
+            if bridges:
+                print("only a wh-patched hub is resident. Reboot the console, do not "
+                      "load the wh payload, open the Welcome Hub, then run this again.",
+                      file=sys.stderr)
+            else:
+                print("hub bundle not found. Open the Welcome Hub on the console, then "
+                      "run this again.", file=sys.stderr)
             return 1
+        if bridges:
+            print(f"skipped {bridges} wh-patched hub copy(ies)")
         print(f"hub bundle @ {addr:#x}  fileLength={flen} ({flen / 1048576:.2f} MB); reading...")
         data = read_all(d, pid, addr, flen)
         if len(data) != flen or data[:8] != HBC_MAGIC:

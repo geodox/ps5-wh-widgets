@@ -314,7 +314,7 @@ int wh_asset_open(unsigned* gen, const char** why){
   LOG("assets: serving %s on 127.0.0.1:%d (gen %u)\n", WH_WIDGETS_DIR, WH_ASSET_PORT, my);
   return s;
 }
-void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, uint64_t bhash){
+void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br){
   signal(SIGPIPE, SIG_IGN);
   fflush(stdout); fflush(stderr);
   int dn = open("/dev/null", O_RDWR);        /* detach stdio so the loader connection ends */
@@ -346,7 +346,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
           candidate_since = t;               /* a retry waits another full window */
           wh_flog("assets", "widget sources stable for %us (sig %016llx); refreshing prelude in place",
                   (unsigned)(WH_STABLE_MS / 1000u), (unsigned long long)candidate);
-          int rr = wh_refresh_in_place(shell, dlen, blen, bhash);
+          int rr = wh_refresh_in_place(shell, br);
           if (rr == 0) { applied = candidate = wh_prelude_sig; attempts = 0; }
           else if (++attempts >= 3) {
             wh_flog("assets", "in-place refresh failed 3x (rc=%d); waiting for the next change", rr);
@@ -358,7 +358,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, size_t dlen, size_t blen, ui
     pid_t np = find_pid("SceShellUI");
     if (np > 0 && np != shell) {             /* ShellUI respawned: our hook is gone with it */
       wh_flog("installer", "SceShellUI pid %d -> %d, reinstalling", (int)shell, (int)np);
-      int rr = wh_rehook(np, my, dlen, blen, bhash);
+      int rr = wh_rehook(np, my, br);
       if (rr < 0) { wh_flog("assets", "server gen %u handed over to a newer install, exiting", my); close(s); _exit(0); }
       shell = np;
       applied = candidate = wh_prelude_sig; candidate_since = 0; attempts = 0;

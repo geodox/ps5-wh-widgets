@@ -617,23 +617,25 @@
   };
 
   // --- Stock tile frame --------------------------------------------------------
-  // Hub module 106 is the stock widget frame and 77 the stock header. They are
-  // fetched through the bridge's __whRequire; null when unavailable, in which
-  // case tiles are drawn in a FocusLayer instead.
+  // The stock widget frame and header are hub modules fetched through the
+  // bridge's __whRequire. Their module ids move between firmware builds, so the
+  // payload passes this firmware's ids in __wh_hubmods (0 = not available). null
+  // when unavailable, in which case tiles are drawn in a FocusLayer instead.
   wh.__hubFrame = function () {
     if (wh.__hf !== undefined) return wh.__hf;
     var hubRequire = root.__whRequire;
     if (typeof hubRequire !== 'function') return null;
+    var mods = root.__wh_hubmods || {};
     var Frame = null;
     try {
-      var frameModule = hubRequire(106);
+      var frameModule = mods.frame ? hubRequire(mods.frame) : null;
       Frame = frameModule && (frameModule['default'] || null);
       if (Frame && typeof Frame !== 'function' && !Frame.$$typeof) Frame = null;
     } catch (e) {
       logLine('stock frame unavailable: ' + errorText(e));
     }
     try {
-      var headerModule = hubRequire(77);
+      var headerModule = mods.header ? hubRequire(mods.header) : null;
       wh.__hubHeader = (headerModule && headerModule['default']) || null;
     } catch (e) {
       wh.__hubHeader = null;

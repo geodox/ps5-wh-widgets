@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <ps5/kernel.h>
 #include "install.h"
+#include "bridge.h"
 #include "cave.h"
 #include "hookpoint.h"
 #include "prelude.h"
@@ -17,15 +18,14 @@
 #include "util.h"
 #include "wh_detour.h"
 
-/* bridge delta (tools/make_delta.js): the detour rebuilds the bridge from the
- * hub's own bytecode, so the payload never carries the full bridge HBC */
-extern const uint8_t wh_delta_start[];
-
-int wh_install_once(pid_t pid, size_t dlen, size_t blen, uint64_t bhash, int* reload_out){
+/* br->delta (tools/make_delta.js): the detour rebuilds the bridge from the hub's
+ * own bytecode, so the payload never carries the full bridge HBC */
+int wh_install_once(pid_t pid, const struct wh_bridge* br, int* reload_out){
+  size_t dlen = br->dlen, blen = br->blen; uint64_t bhash = br->bhash;
   wh_wok = 0; wh_wbad = 0; wh_wmore = 0; wh_wfail[0] = 0;
   *reload_out = 0;
   char* prelude = 0; size_t plen = 0;
-  build_prelude(&prelude, &plen);
+  build_prelude(&prelude, &plen, br);
   if (!prelude || !plen) { free(prelude); return WH_RC_PRELUDE; }
   size_t imgcap = CV_PRELUDE + plen + 1;
   size_t cavesz = (imgcap + 0xfff) & ~((size_t)0xfff);
@@ -76,7 +76,7 @@ int wh_install_once(pid_t pid, size_t dlen, size_t blen, uint64_t bhash, int* re
         if (!xb) rc=WH_RC_DELTA_MMAP;
         else if (!(xcave = remote_mmap(pid,g,xpg,0))) rc=WH_RC_DELTA_MMAP;
         else {
-          memcpy(xb, wh_delta_start, dlen);
+          memcpy(xb, br->delta, dlen);
           put64(xb+8, hcave); put64(xb+24, 0); put64(xb+64, 0);
           if (remote_write_chunked(pid,xcave,xb,dlen)) rc=WH_RC_DELTA_WRITE;
         }
@@ -151,7 +151,7 @@ int wh_install_once(pid_t pid, size_t dlen, size_t blen, uint64_t bhash, int* re
   return rc;
 }
 
-int wh_rehook(pid_t np, unsigned my, size_t dlen, size_t blen, uint64_t bhash){
+int wh_rehook(pid_t np, unsigned my, const struct wh_bridge* br){
   uint32_t h = 0; int ready = 0;
   for (int t = 0; t < 150; t++) {            /* up to ~15 s for libhermes to map */
     if (my && wh_gen_read() > my) return -1;
@@ -162,7 +162,7 @@ int wh_rehook(pid_t np, unsigned my, size_t dlen, size_t blen, uint64_t bhash){
   int rc = 0, reload = 0;
   for (int a = 0; a < 5; a++) {
     if (my && wh_gen_read() > my) return -1;
-    rc = wh_install_once(np, dlen, blen, bhash, &reload);
+    rc = wh_install_once(np, br, &reload);
     if (!(rc >= WH_RC_NO_GADGET && rc <= WH_RC_CAVE_VERIFY)) break;   /* retry only allocation/write hiccups */
     usleep(300000);
   }
@@ -174,9 +174,9 @@ int wh_rehook(pid_t np, unsigned my, size_t dlen, size_t blen, uint64_t bhash){
  * in-flight evaluations finish, and one 8-byte slot write points the detour at
  * the new prelude. The revision stamp makes the hub take the new widget set the
  * next time it evaluates its bundle (leave and re-enter Explore Hub). */
-int wh_refresh_in_place(pid_t pid, size_t dlen, size_t blen, uint64_t bhash){
+int wh_refresh_in_place(pid_t pid, const struct wh_bridge* br){
   int reload = 0;
-  int rc = wh_install_once(pid, dlen, blen, bhash, &reload);
+  int rc = wh_install_once(pid, br, &reload);
   if (rc == WH_OK) {
     char sum[220];
     if (wh_wbad) snprintf(sum, sizeof sum, "%d widgets loaded, %d failed - applies at the next hub start", wh_wok, wh_wbad);

@@ -1,0 +1,217 @@
+{
+  "fw": 1320,
+  "source_sha1": "12c6c475d9c4dc8a7166b8f379e236671dce85cb",
+  "ref_sha1": "12c6c475d9c4dc8a7166b8f379e236671dce85cb",
+  "targets": [
+    {
+      "name": "(lock A)",
+      "fid_1320": 5916,
+      "hook": "lock",
+      "fid": 5916,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (22 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "(lock B)",
+      "fid_1320": 19960,
+      "hook": "lock",
+      "fid": 19960,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "__whWidgetMap",
+      "fid_1320": 7374,
+      "hook": "global",
+      "fid": 7374,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (56 insns); all numbers identical; WIDGET_MAP export true; require=param3 true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whWidgetMap",
+            "valReg": 1,
+            "at": null
+          },
+          {
+            "name": "__whRequire",
+            "valReg": 7,
+            "at": 12
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whEditable",
+      "fid_1320": 128,
+      "hook": "global",
+      "fid": 128,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (65 insns); all numbers identical; EDITABLE true; ACCESSIBILITY true; FRIENDS_ONLINE true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whEditable",
+            "valReg": 3,
+            "at": 267
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whTitles",
+      "fid_1320": 5162,
+      "hook": "global",
+      "fid": 5162,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (88 insns); all numbers identical; 15 I18n getters, e.g. msgid_accessibility, msgid_battery_level, msgid_discover_tips",
+      "params": {
+        "inj": [
+          {
+            "name": "__whTitles",
+            "valReg": 1,
+            "at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whIcons",
+      "fid_1320": 20067,
+      "hook": "global",
+      "fid": 20067,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (83 insns); all numbers identical; icon ids accessibility,battery_full,ps_store",
+      "params": {
+        "inj": [
+          {
+            "name": "__whIcons",
+            "valReg": 1,
+            "at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whDescs",
+      "fid_1320": 20068,
+      "hook": "global",
+      "fid": 20068,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (88 insns); all numbers identical; 15 I18n getters, e.g. msgid_review_ps5_accessibility_options, msgid_display_battery_status, msgid_learn_new_features",
+      "params": {
+        "inj": [
+          {
+            "name": "__whDescs",
+            "valReg": 1,
+            "at": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whSizeDown",
+      "fid_1320": 19931,
+      "hook": "sizeStep",
+      "fid": 19931,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; Math.max true",
+      "params": {
+        "at": 46,
+        "env": 0,
+        "res": 2,
+        "s": [
+          1,
+          3,
+          4,
+          3
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whSizeUp",
+      "fid_1320": 19932,
+      "hook": "sizeStep",
+      "fid": 19932,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (73 insns); all numbers identical; Math.min true FULL true",
+      "params": {
+        "at": 71,
+        "env": 2,
+        "res": 8,
+        "s": [
+          0,
+          1,
+          7,
+          1
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whScrollTo",
+      "fid_1320": 19985,
+      "hook": "prefix",
+      "fid": 19985,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (27 insns); all numbers identical; scroll ref .current/.start/.end true",
+      "params": {
+        "frame": 0,
+        "prologue_ok": true,
+        "envDepth": 1,
+        "envSlot": 4
+      }
+    },
+    {
+      "name": "__whLayoutResize",
+      "fid_1320": 1674,
+      "hook": "prefix",
+      "fid": 1674,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (81 insns); all numbers identical; Array.fill true",
+      "params": {
+        "frame": 6,
+        "prologue_ok": true
+      }
+    },
+    {
+      "name": "__whFind",
+      "fid_1320": 1665,
+      "hook": "prefix",
+      "fid": 1665,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (19 insns); all numbers identical; returns {id,position,size} true",
+      "params": {
+        "frame": 5,
+        "prologue_ok": true
+      }
+    }
+  ],
+  "modules": [
+    {
+      "name": "stockFrame",
+      "id_1320": 106,
+      "fid_1320": 1186,
+      "id": 106,
+      "fid": 1186,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (178 insns); all numbers identical"
+    },
+    {
+      "name": "stockHeader",
+      "id_1320": 77,
+      "fid_1320": 922,
+      "id": 77,
+      "fid": 922,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (123 insns); all numbers identical"
+    }
+  ]
+}
