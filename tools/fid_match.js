@@ -284,10 +284,29 @@ function moduleTable(h) {
 }
 
 // Hub modules the loader require()s by id (framework/loader.js); ids move per fw.
+// `need`: strings the module's closure tree must contain, so an aligned (non-exact)
+// match can never hand the loader a different module.
 const MODULES = [
   { name: 'stockFrame', id_1320: 106 },
   { name: 'stockHeader', id_1320: 77 },
+  // The MINI ("transient") widget registry: WIDGET_MAP / WIDGET_CONFIGS keyed by id
+  // and WIDGET_PRIORITY, the order of the MINI row above (or below) the hub tiles.
+  { name: 'miniWidgets', id_1320: 199, need: ['WIDGET_MAP', 'WIDGET_CONFIGS', 'WIDGET_PRIORITY', 'TRANSFERS', 'PS_PLUS', 'HIGHLIGHTS', 'newWidget'] },
 ];
+
+// Every string operand in fid and the closures it creates.
+function treeStrings(h, fid, out = new Set(), seen = new Set()) {
+  if (seen.has(fid)) return out;
+  seen.add(fid);
+  for (const x of h.disassemble(fid)) {
+    const def = h.opByName[x.op];
+    x.args.forEach((v, a) => {
+      if (def.strOps.has(a)) out.add(h.strings[v]);
+      else if (def.fnOps.has(a)) treeStrings(h, v, out, seen);
+    });
+  }
+  return out;
+}
 
 // Locate ref function rfid on the target: exact normalized match, else alignment.
 function matchFid(ref, h, byKey, rfid) {
@@ -345,7 +364,13 @@ function main() {
   const modules = MODULES.map(md => {
     const rfid = refMods.get(md.id_1320);
     const r = matchFid(ref, h, byKey, rfid);
-    const id = r.ok && tgtIdOf.has(r.fid) ? tgtIdOf.get(r.fid) : null;
+    let id = r.ok && tgtIdOf.has(r.fid) ? tgtIdOf.get(r.fid) : null;
+    if (id !== null && md.need) {
+      const have = treeStrings(h, r.fid);
+      const miss = md.need.filter(s => !have.has(s));
+      if (miss.length) { id = null; r.evidence += `; MISSING ANCHORS: ${miss.join(', ')}`; }
+      else r.evidence += `; anchors ${md.need.join(', ')}`;
+    }
     if (id === null) ok = false;
     const e = { name: md.name, id_1320: md.id_1320, fid_1320: rfid, id, fid: r.fid, confidence: id === null ? Math.min(r.confidence, 0.5) : r.confidence, evidence: r.evidence };
     console.log(`${('module ' + md.name).padEnd(18)} ${md.id_1320} (F${rfid}) -> ${id} (F${r.fid})  conf=${e.confidence}`);

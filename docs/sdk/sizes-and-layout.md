@@ -15,6 +15,23 @@ widget in that column.
 | `FULL` | 3 | 504 | 504 | square |
 | `XL` | 6 | 1032 | 504 | double-wide (2 columns) |
 
+## MINI widgets
+
+A widget whose `config.json` `size` is a MINI value (`0`, `0.1` or `0.2`) is not a
+grid tile. It goes in the hub's MINI row, the row of temporary widgets such as
+PS Plus or Transfers. **Welcome Hub Settings > Temporary Widgets Position**
+places that row above or below the tiles. The hub owns the row, so a MINI widget
+cannot be moved, resized or removed in Edit Widgets, and it does not appear in
+the Edit Widgets list. Custom MINI widgets follow the stock ones in the row.
+
+* `MINI` (`0`) is a 56px pill that **shrinks to its content**, 100-504px wide.
+  `props.width` is `null`: give your root no `width` and no `flex: 1` children,
+  or it cannot shrink.
+* The stock MINI look is `height: 56, borderRadius: 28, padding: 8,
+  paddingRight: 16`, a 40px icon with `marginRight: 8`, and one line of
+  `FontSizePS.Size2XSmall` (21) text. `hello-mini` is the reference.
+* `size` `0.1` or `0.2` starts as `MINI` and grows to that size while focused.
+
 ## Stock metrics (`wh.StockTile`)
 
 From the hub:
@@ -36,7 +53,9 @@ Grid transform per cell: `X = column * 528`, `Y = row * 176`, rendered at
 **Practical rule:** set your root `View` to `width: 504` (single column) or
 `width: 1032` (double).
 
-`wh.dims(size)` returns the same `{width, height}` table for any size.
+`wh.dims(size)` returns the same `{width, height}` table for any size. For `MINI`
+and `MINI_EXPANDED_HEIGHT`, `width` is `null` and `minWidth` / `maxWidth` give
+the bounds.
 
 ## Font sizes (`FontSizePS`)
 

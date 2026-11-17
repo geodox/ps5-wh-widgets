@@ -141,9 +141,16 @@ per firmware. The map's `modules` array gives each one's id on the target:
 |---|---|---|
 | `stockFrame` | 106 | stock widget frame (`default` export) |
 | `stockHeader` | 77 | stock widget header (`default` export) |
+| `miniWidgets` | 199 | MINI ("transient") widget registry: `WIDGET_MAP`, `WIDGET_CONFIGS`, `WIDGET_PRIORITY` |
 
 Ids come from the global code's module table (`CreateClosure r, F; PutOwnByIndex arr, r, <id>`);
-the factory function is matched like any target.
+the factory function is matched like any target. An entry may list `need` strings
+(`miniWidgets` does): the matched factory's closure tree must contain every one,
+otherwise the module is left unresolved (`MISSING ANCHORS` in the evidence), so an
+aligned match can never hand the loader a different module.
+
+`build_deltas.js` passes each firmware's resolved modules to the loader as a JS
+object literal keyed by name (`globalThis.__wh_hubmods`).
 
 ## Validation gate (run before any dump's delta is trusted)
 

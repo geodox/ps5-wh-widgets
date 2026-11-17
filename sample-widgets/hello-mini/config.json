@@ -1,0 +1,7 @@
+{
+  "id": "hello-mini",
+  "title": "Hello Mini",
+  "description": "A reference MINI widget: one line in the MINI row above (or below) the hub tiles.",
+  "iconId": "app_welcome",
+  "size": 0
+}

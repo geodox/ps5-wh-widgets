@@ -7,7 +7,7 @@
 static const struct {
   unsigned fw;
   const uint8_t *start, *end;
-  unsigned frame_mod, header_mod;
+  const char *hubmods;
 } wh_deltas[] = { WH_DELTA_TABLE };
 
 const char wh_bridge_fws[] = WH_DELTA_FWS;
@@ -25,8 +25,7 @@ const struct wh_bridge *wh_bridge_for_fw(uint32_t fw){
       LOG("embedded delta for %x.%02x is corrupt (%zuB)\n", wh_deltas[i].fw >> 8, wh_deltas[i].fw & 0xff, n);
       return 0;
     }
-    b = (struct wh_bridge){ wh_deltas[i].fw, d, n, blen, fnv1a64(d, n),
-                            wh_deltas[i].frame_mod, wh_deltas[i].header_mod };
+    b = (struct wh_bridge){ wh_deltas[i].fw, d, n, blen, fnv1a64(d, n), wh_deltas[i].hubmods };
     return &b;
   }
   return 0;

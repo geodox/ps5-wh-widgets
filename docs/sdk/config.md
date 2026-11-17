@@ -10,7 +10,7 @@ Every widget folder holds a `config.json`:
   "glyph": "glyph.png",         // white-on-transparent PNG in this folder -> icon "wh:<id>"
   "iconId": "trophies",         // OR a stock IconPS glyph (default: "wh:<id>" if glyph, else app_welcome)
   "iconFallback": "grid",       // stock glyph used if the image glyph can't load
-  "size": 1,                    // starting WidgetSize (DEFAULT=1, LARGE=2, FULL=3)
+  "size": 1,                    // starting WidgetSize (DEFAULT=1, LARGE=2, FULL=3; MINI=0)
   "settings": [ ... ]           // per-widget settings schema (see settings.md)
 }
 ```
@@ -23,7 +23,7 @@ Every widget folder holds a `config.json`:
 | `glyph` | no | PNG file in the folder, used as icon `wh:<id>` |
 | `iconId` | no | stock `IconPS` id; overrides the glyph |
 | `iconFallback` | no | stock glyph shown if the image glyph fails (default `app_welcome`) |
-| `size` | no | starting `WidgetSize` value (default `1`, see [sizes](sizes-and-layout.md)) |
+| `size` | no | starting `WidgetSize` value (default `1`, see [sizes](sizes-and-layout.md)). A MINI value (`0`, `0.1`, `0.2`) makes it a [MINI widget](sizes-and-layout.md#mini-widgets) |
 | `settings` | no | settings schema, see [settings](settings.md) |
 
 Any other field you add is parsed and handed to your component on `props.config`,

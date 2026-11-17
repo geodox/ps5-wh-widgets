@@ -92,11 +92,25 @@ from the vendor module the hub already requires), literal enums
 `Label`, `TextStyles`, `Focusable`), glyph registration, the error boundary, and
 the widget scheduler. Widgets see only this handle.
 
-The stock widget frame and header are hub modules the loader requires through the
-bridge's `__whRequire`. Hub module ids move between firmware builds, so the
-prelude passes this firmware's ids as `globalThis.__wh_hubmods = {frame, header}`
-(from the firmware's map; `0` = not available, and the loader then draws its own
-frame).
+The stock widget frame and header, and the MINI widget registry, are hub modules
+the loader requires through the bridge's `__whRequire`. Hub module ids move between
+firmware builds, so the prelude passes this firmware's ids as
+`globalThis.__wh_hubmods`, keyed by the map's module names (`stockFrame`,
+`stockHeader`, `miniWidgets`). A module the matcher could not resolve is left out:
+without the frame the loader draws its own, and without the registry MINI widgets
+are not shown (`wh.log` says so).
+
+**MINI widgets.** The hub's MINI ("transient") registry (`miniWidgets`) exports
+`WIDGET_MAP` and `WIDGET_CONFIGS` keyed by widget id, and `WIDGET_PRIORITY`, the
+order of the MINI row (stock: Transfers, Campaigns, PS Plus, Store, Highlights, New
+widget). The hub root renders that row from a copy of `WIDGET_MAP` and sizes it on
+its first render. So when the hub runtime comes up (the `__whWidgetMap` setter), the
+loader adds each MINI widget to both maps and appends its id to `WIDGET_PRIORITY`.
+MINI widgets stay out of the grid's `WIDGET_MAP` and the Edit Widgets list. The row
+counts an item as shown while its callback ref holds an instance. The loader
+registers a `forwardRef` wrapper and passes that ref on to the stock frame. A new
+widget revision removes our ids from the registry first (`__miniReset`). `wh.log`:
+`MINI row registered N widget(s) [...]`.
 
 Widgets are hot-reloaded: `server.c` watches the drop folder, rebuilds the prelude
 and swaps the hook in place, so a `config.json` / `widget.js` change lands without

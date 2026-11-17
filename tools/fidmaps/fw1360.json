@@ -212,6 +212,15 @@
       "fid": 864,
       "confidence": 0.99,
       "evidence": "unique normalized match (123 insns); numbers moved: LoadConstUInt8@396 arg1 94->99, LoadConstUInt8@413 arg1 21->20"
+    },
+    {
+      "name": "miniWidgets",
+      "id_1320": 199,
+      "fid_1320": 2018,
+      "id": 205,
+      "fid": 2065,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (104 insns); all numbers identical; anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
     }
   ]
 }

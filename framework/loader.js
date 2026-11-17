@@ -227,8 +227,8 @@
       if (!Image) Image = vendor.Image;
     } catch (e) {}
   }
-  // Hub tile sizes. MINI* values exist in the hub but are not offered for custom
-  // widgets (the custom grid uses whole cells): see docs/sdk/sizes-and-layout.md.
+  // Hub tile sizes. A widget with a MINI* size goes to the hub's MINI row instead of
+  // the grid: see docs/sdk/sizes-and-layout.md.
   wh.WidgetSize = {
     MINI: 0,
     MINI_EXPANDED: 0.1,
@@ -619,7 +619,7 @@
   // --- Stock tile frame --------------------------------------------------------
   // The stock widget frame and header are hub modules fetched through the
   // bridge's __whRequire. Their module ids move between firmware builds, so the
-  // payload passes this firmware's ids in __wh_hubmods (0 = not available). null
+  // payload passes this firmware's ids in __wh_hubmods (absent = not available). null
   // when unavailable, in which case tiles are drawn in a FocusLayer instead.
   wh.__hubFrame = function () {
     if (wh.__hf !== undefined) return wh.__hf;
@@ -628,14 +628,14 @@
     var mods = root.__wh_hubmods || {};
     var Frame = null;
     try {
-      var frameModule = mods.frame ? hubRequire(mods.frame) : null;
+      var frameModule = mods.stockFrame ? hubRequire(mods.stockFrame) : null;
       Frame = frameModule && (frameModule['default'] || null);
       if (Frame && typeof Frame !== 'function' && !Frame.$$typeof) Frame = null;
     } catch (e) {
       logLine('stock frame unavailable: ' + errorText(e));
     }
     try {
-      var headerModule = mods.header ? hubRequire(mods.header) : null;
+      var headerModule = mods.stockHeader ? hubRequire(mods.stockHeader) : null;
       wh.__hubHeader = (headerModule && headerModule['default']) || null;
     } catch (e) {
       wh.__hubHeader = null;
@@ -652,9 +652,20 @@
 
   // --- Drawing helpers -----------------------------------------------------------
   // Pixel size of a tile at a given WidgetSize.
+  // MINI and MINI_EXPANDED_HEIGHT have no fixed width: like the stock MINI tiles they
+  // shrink to their content (width null) within minWidth/maxWidth.
   wh.dims = function (size) {
-    var heights = { 0: 56, 0.1: 56, 0.2: 120, 1: 152, 2: 328, 3: 504, 6: 504 };
-    return { width: size === 6 ? 1032 : 504, height: heights[size] != null ? heights[size] : 152 };
+    if (size === 0) return { width: null, minWidth: 100, maxWidth: 504, height: 56, borderRadius: 28 };
+    if (size === 0.1) return { width: 504, height: 56, borderRadius: 28 };
+    if (size === 0.2) return { width: null, maxWidth: 504, height: 120, borderRadius: 16 };
+    var heights = { 1: 152, 2: 328, 3: 504, 6: 504 };
+    return { width: size === 6 ? 1032 : 504, height: heights[size] != null ? heights[size] : 152, borderRadius: 16 };
+  };
+  // The outer box of a tile: fixed width, or the MINI bounds when it shrinks to fit.
+  wh.__box = function (dims) {
+    return dims.width != null
+      ? { width: dims.width, height: dims.height }
+      : { minWidth: dims.minWidth, maxWidth: dims.maxWidth, height: dims.height };
   };
   var fontScaling = { maxLevel: 'large' };
   wh.fontScalingOptions = fontScaling;
@@ -981,6 +992,11 @@
   root.__wh_widgets = {};
   root.__wh_cfgs = {};
   root.__wh_order = [];
+  root.__wh_mini = [];
+  // A MINI widget (config.json size below DEFAULT) goes to the MINI row, not the grid.
+  wh.__isMini = function (size) {
+    return typeof size === 'number' && size >= 0 && size < 1;
+  };
   // Validate config.json `settings` into { list, values } (values = defaults).
   wh.__normSettings = function (entries, id) {
     var settings = [],
@@ -1389,7 +1405,7 @@
             focusable: focusable,
             name: id,
             focusCustomSettings: active ? wh.__LOCKED : undefined,
-            style: { width: width, height: dims.height, borderRadius: 16, overflow: 'hidden' },
+            style: root.Object.assign(wh.__box(dims), { borderRadius: dims.borderRadius, overflow: 'hidden' }),
             onFocus: function (e) {
               root.__wh_focusId = id;
               setFocused(true);
@@ -1556,6 +1572,7 @@
             createElement(
               Frame,
               root.Object.assign({}, props, {
+                ref: props.__whRef,
                 name: id,
                 id: id,
                 data: frameData,
@@ -1573,7 +1590,7 @@
         null,
         createElement(
           FocusLayer,
-          { style: { width: width } },
+          { style: width != null ? { width: width } : null },
           renderTileView(props.focusable !== false)
         ),
         renderOptionsMenu(),
@@ -1590,8 +1607,19 @@
       id
     );
     WidgetTile.__whId = id;
-    root.__wh_widgets[id] = WidgetTile;
     root.__wh_cfgs[id] = cfg;
+    if (wh.__isMini(cfg.size) && React.forwardRef) {
+      // The MINI row hands each item a callback ref and counts an item as shown
+      // while that ref holds an instance, so the ref goes on to the stock frame.
+      var MiniTile = React.forwardRef(function (props, ref) {
+        return createElement(WidgetTile, root.Object.assign({}, props, { __whRef: ref }));
+      });
+      MiniTile.__whId = id;
+      root.__wh_widgets[id] = MiniTile;
+      root.__wh_mini.push(id);
+      return;
+    }
+    root.__wh_widgets[id] = WidgetTile;
     root.__wh_order.push(id);
   };
 
@@ -1627,6 +1655,56 @@
       );
     }
     return true;
+  };
+  // MINI widgets: the hub's MINI ("transient") registry module holds WIDGET_MAP and
+  // WIDGET_CONFIGS keyed by id, and WIDGET_PRIORITY, the order of the MINI row. The
+  // hub copies the map and sizes the row on its first render, so this runs as soon
+  // as the hub runtime is up (the __whWidgetMap setter), before that render.
+  wh.__miniReg = function () {
+    var hubRequire = root.__whRequire,
+      id = (root.__wh_hubmods || {}).miniWidgets;
+    if (typeof hubRequire !== 'function' || !id) return null;
+    var reg = hubRequire(id);
+    return reg && reg.WIDGET_MAP && reg.WIDGET_CONFIGS && root.Array.isArray(reg.WIDGET_PRIORITY) ? reg : null;
+  };
+  wh.__registerMini = function () {
+    var ids = root.__wh_mini;
+    if (!ids.length) return;
+    try {
+      var reg = wh.__miniReg();
+      if (!reg) {
+        logLine('MINI widgets [' + ids.join(', ') + '] not shown: MINI registry not found on this firmware', 0, 1);
+        return;
+      }
+      for (var i = 0; i < ids.length; i++) {
+        var cfg = root.__wh_cfgs[ids[i]] || {};
+        reg.WIDGET_MAP[ids[i]] = root.__wh_widgets[ids[i]];
+        // The row grows a focused item to expandedSize (MINI when unset).
+        reg.WIDGET_CONFIGS[ids[i]] = cfg.size > 0 ? { expandedSize: cfg.size } : {};
+        if (reg.WIDGET_PRIORITY.indexOf(ids[i]) < 0) reg.WIDGET_PRIORITY.push(ids[i]);
+      }
+      if (!wh.__miniLogged) {
+        wh.__miniLogged = 1;
+        logLine('MINI row registered ' + ids.length + ' widget(s) [' + ids.join(', ') + ']');
+      }
+    } catch (e) {
+      logLine('registering MINI widgets failed: ' + errorText(e), 0, 1);
+    }
+  };
+  // Drop our ids from the MINI registry (a new widget revision registers afresh).
+  wh.__miniReset = function () {
+    var ids = root.__wh_mini;
+    try {
+      var reg = ids.length ? wh.__miniReg() : null;
+      for (var i = 0; reg && i < ids.length; i++) {
+        delete reg.WIDGET_MAP[ids[i]];
+        delete reg.WIDGET_CONFIGS[ids[i]];
+        var at = reg.WIDGET_PRIORITY.indexOf(ids[i]);
+        if (at >= 0) reg.WIDGET_PRIORITY.splice(at, 1);
+      }
+    } catch (e) {}
+    root.__wh_mini = [];
+    wh.__miniLogged = 0;
   };
   // [global the bridge assigns, config field it is filled from]
   wh.__metaKeys = [
@@ -1708,6 +1786,7 @@
           } catch (e) {
             logLine('registering into WIDGET_MAP failed: ' + errorText(e), 0, 1);
           }
+          wh.__registerMini();
         },
       });
       root.Object.defineProperty(root, '__whEditable', {

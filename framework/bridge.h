@@ -13,8 +13,8 @@ struct wh_bridge {
   size_t dlen;
   size_t blen;              /* size of the bridge the delta rebuilds */
   uint64_t bhash;           /* FNV-1a64 of the delta: spots an identical bridge on reload */
-  unsigned frame_mod;       /* hub module ids the loader requires (0 = not available) */
-  unsigned header_mod;
+  const char *hubmods;      /* hub module ids by name: a JS object literal the prelude
+                             * sets as globalThis.__wh_hubmods (tools/fid_match.js) */
 };
 
 /* The bridge for kernel firmware version `fw` (kernel_get_fw_version()), or NULL

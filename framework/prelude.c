@@ -145,10 +145,11 @@ void build_prelude(char** outbuf, size_t* outlen, const struct wh_bridge* br){
   char* out = (char*)malloc(cap); out[0] = 0;
   wh_prelude_sig = wh_widget_fingerprint();
   /* Hub module ids move between firmware builds (tools/fid_match.js); the loader
-   * requires the stock frame and header by these ids. 0 = not available. */
-  char mods[96]; snprintf(mods, sizeof mods, "globalThis.__wh_hubmods={frame:%u,header:%u};\n",
-                          br->frame_mod, br->header_mod);
-  WHAPP(mods);
+   * requires hub modules (stock frame/header, MINI registry) by these ids, keyed
+   * by the map's module names. A module the matcher could not resolve is absent. */
+  WHAPP("globalThis.__wh_hubmods=");
+  WHAPP(br->hubmods);
+  WHAPP(";\n");
   WHAPP(wh_loader);
   /* Revision stamp. The hub re-evaluates its bundle every time Explore Hub is
    * entered, so this prelude runs again on each hub load. Same revision -> stop,
@@ -164,6 +165,7 @@ void build_prelude(char** outbuf, size_t* outlen, const struct wh_bridge* br){
       "try{if(W.__map)delete W.__map[id];}catch(e){}"
       "try{if(W.__editable)delete W.__editable['__wh_'+id];}catch(e){}"
       "for(var j=0;j<k.length;j++){try{if(m[k[j][0]])delete m[k[j][0]][id];}catch(e){}}}"
+      "try{if(W.__miniReset)W.__miniReset();}catch(e){}"
       "G.__wh_widgets={};G.__wh_cfgs={};G.__wh_order=[];"
       "W.__sourceRevision=R;W.__loaded=0;W.__regLogged=0;})();\n", rev);
     if (n > 0 && (size_t)n < sizeof js) wh_app(&out, &len, &cap, js, (size_t)n);

@@ -212,6 +212,15 @@
       "fid": 922,
       "confidence": 0.99,
       "evidence": "unique normalized match (123 insns); all numbers identical"
+    },
+    {
+      "name": "miniWidgets",
+      "id_1320": 199,
+      "fid_1320": 2018,
+      "id": 199,
+      "fid": 2018,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (104 insns); all numbers identical; anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
     }
   ]
 }
