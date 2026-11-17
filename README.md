@@ -102,12 +102,24 @@ The hub only evaluates that prelude when its JS runtime starts, so **sign out an
 
 ## Installation
 
-Send `wh_bridge.elf` with your payload loader (elfldr, or whatever you normally use), or install it through Payload Manager:
-
-- Add this repository as a custom source in Payload Manager, pointing it at the raw [`repo.json`](repo.json): `https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/repo.json`
-- Install **Welcome Hub Bridge** from that source.
-
 There is nothing else to install: the widget loader lives inside the payload. It stays resident as the widget asset server, and everything it does is in memory — a reboot removes it, so run the payload again to bring the widgets back.
+
+### Payload Manager (custom source)
+
+[PS5 Payload Manager](https://github.com/itsPLK/ps5-payload-manager) can install and update the payload from this repository's catalog ([`repo.json`](repo.json)):
+
+1. Open Payload Manager, then **Settings** (gear icon) > **Manage Sources**.
+2. Choose **Add Source**, paste this URL and press **Add**:
+
+   ```text
+   https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/repo.json
+   ```
+
+3. Find **Welcome Hub Bridge** (source "Welcome Hub") and install it.
+
+### Manual
+
+Send `wh_bridge.elf` from the [releases](https://github.com/geodox/ps5-wh-widgets/releases) with your payload loader (elfldr, or whatever you normally use).
 
 ### Adding Widgets
 
