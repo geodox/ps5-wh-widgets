@@ -1,0 +1,7 @@
+{
+  "id": "payload-launcher",
+  "title": "Payload Launcher",
+  "description": "Open the web pages of running payloads in the console's browser.",
+  "iconId": "discover",
+  "size": 1
+}

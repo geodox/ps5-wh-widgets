@@ -56,10 +56,12 @@ The `__sourceRevision` guard inside the prelude is for evaluations inside one
 runtime (the hub bundle is evaluated more than once per load); it keeps re-running
 the prelude idempotent instead of dropping widgets registered earlier.
 
-`GET /__launch?action=homehub` is kept in `server.c` as a programmatic trigger for
-that new runtime: it asks ShellUI to launch `pshome:explorehub` via
-`libSceShellUIUtil.sprx`. Nothing binds it at the moment - the options-menu row it
-was written for has been removed - so it is dormant until something calls it.
+There is no in-hub reload. The hub reached after sign-in is embedded in Home
+(Hub SDK, `isStandaloneMode: false`). Launching `pshome:explorehub` opens a second,
+standalone hub on top of it instead of replacing it. Calling `exitApp` on the
+embedded hub leaves Home blank until the next sign-in. Home only drops and remounts
+its hub after focus has stayed away from it for an unknown time. Signing out and
+back in is the supported reload.
 
 `wh_kill` / `install --race` (SIGKILL SceShellUI) is a recovery hatch for a wedged
 shell, not the reload path.
@@ -111,8 +113,10 @@ validated once and passed on `props.settings`.
   names validated by `wh_name_ok`.
 * settings get/set endpoints used by the prelude, persisted under
   `/data/wh-widgets/<id>/.settings.json`.
-* `GET /__launch?action=homehub` - one fixed action only; asks ShellUI to navigate
-  back to Explore Hub (rate limited, loopback only).
+* `GET /__launch?uri=<url-encoded URI>` - `wh.launch`: asks ShellUI to launch the
+  URI via `libSceShellUIUtil.sprx` (`sceShellUIUtilLaunchByUri`). Any URI with a
+  scheme; refused if it is not fully decodable, has spaces or control characters,
+  or is 512 characters or longer. 6 launches per minute, loopback only.
 * the log shim that appends widget lines to `wh.log`.
 
 ## Build chain

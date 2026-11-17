@@ -10,7 +10,7 @@
  *   - image types only (.png .jpg .jpeg), <= 1 MB; no listings, no other methods
  *
  * It also carries the loader's log/settings endpoints (/__log, /__wget, /__wset),
- * the re-eval trigger (/__launch) and keeps the hook alive: if ShellUI respawns,
+ * app launch (/__launch) and keeps the hook alive: if ShellUI respawns,
  * it reinstalls before the next focus, it rebuilds the prelude when the widget
  * sources change, and it retires when a newer install bumps the generation file. */
 #include <errno.h>
@@ -35,7 +35,7 @@
 #include "remote.h"
 #include "util.h"
 
-/* System services for the re-eval trigger (see wh_launch_action). */
+/* System services for app launch (see wh_launch_action). */
 int sceKernelLoadStartModule(const char*, size_t, const void*, uint32_t, void*, uint32_t*);
 int sceUserServiceInitialize(void*);
 int sceUserServiceGetForegroundUser(uint32_t*);
@@ -86,12 +86,10 @@ static void wh_hexdecode(const char* in, char* out, size_t cap){
   }
   out[o] = 0;
 }
-/* ---- Re-eval trigger: ShellUI URI launch (loopback only) -------------------
- * The hub evaluates its bundle when Explore Hub is entered, and that is when the
- * prelude re-registers widgets. This asks ShellUI to navigate back to Explore
- * Hub, so a rebuilt prelude is picked up in a new runtime. Nothing calls it since
- * the options-menu row was removed; it is kept as the trigger for whatever binds
- * it next. Exactly one fixed action exists; there is no arbitrary-URI entry point. */
+/* ---- App launch: ShellUI URI launch (loopback only) ----------------------
+ * Lets widgets launch apps (wh.launch). Any URI is accepted: the user decides
+ * which widgets to trust. The URI must decode completely, have a scheme and
+ * contain no spaces or control characters; anything else is refused unlaunched. */
 static void wh_reply_json(int c, int status, const char* body){
   const char* phrase = status == 200 ? "OK" : status == 400 ? "Bad Request"
     : status == 429 ? "Too Many Requests" : "Bad Gateway";
@@ -136,20 +134,42 @@ static int wh_native_launch(const char* uri){
   }
   return g_shellui_launch(uri, &param);
 }
-/* GET /__launch?action=homehub -> navigate ShellUI back to Explore Hub. */
+/* GET /__launch?uri=<url-encoded URI> -> sceShellUIUtilLaunchByUri(uri). */
+#define WH_URI_MAX 512
+static int wh_uri_decode(const char* in, char* out, size_t cap){
+  size_t o = 0;
+  for (; *in && *in != '&'; in++) {
+    int c = (unsigned char)*in;
+    if (c == '%') {
+      if (wh_hexv(in[1]) < 0 || wh_hexv(in[2]) < 0) return -1;
+      c = wh_hexv(in[1]) * 16 + wh_hexv(in[2]); in += 2;
+    }
+    if (c <= ' ' || c >= 127 || o + 1 >= cap) return -1;   /* no spaces/controls; no truncation */
+    out[o++] = (char)c;
+  }
+  out[o] = 0;
+  size_t k = 0;                              /* scheme: ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) ":" */
+  if (!((out[0] >= 'a' && out[0] <= 'z') || (out[0] >= 'A' && out[0] <= 'Z'))) return -1;
+  while (out[k] && out[k] != ':') {
+    char ch = out[k++];
+    if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '+' || ch == '-' || ch == '.')) return -1;
+  }
+  return out[k] == ':' ? 0 : -1;
+}
 static void wh_launch_action(int c, char* q){
   static time_t win = 0; static int cnt = 0;
   time_t now = time(0);
   if (now - win >= 60) { win = now; cnt = 0; }
   if (++cnt > 6) { wh_reply_json(c, 429, "{\"ok\":false,\"error\":\"rate-limited\"}"); return; }
-  char action[32] = "";
+  char uri[WH_URI_MAX] = "";
+  int bad = 1;
   for (char* t = q; t && *t; ) {
-    if (!strncmp(t, "action=", 7)) wh_urldecode(t + 7, action, sizeof action);
+    if (!strncmp(t, "uri=", 4)) bad = wh_uri_decode(t + 4, uri, sizeof uri);
     t = strchr(t, '&'); if (t) t++;
   }
-  if (strcmp(action, "homehub")) { wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"unknown action\"}"); return; }
-  int rc = wh_native_launch("pshome:explorehub");
-  wh_flog("assets", "launch: explorehub rc=%d", rc);
+  if (bad) { wh_flog("assets", "launch refused: bad uri"); wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"bad uri\"}"); return; }
+  int rc = wh_native_launch(uri);
+  wh_flog("assets", "launch: %s rc=%d", uri, rc);
   if (rc) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"launch failed\"}"); return; }
   wh_reply_json(c, 200, "{\"ok\":true}");
 }

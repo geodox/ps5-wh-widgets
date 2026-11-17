@@ -16,6 +16,7 @@
 | `registerGlyph(name, spec)` | register a `wh:<name>` icon from code |
 | `register(Component)` | register your widget component |
 | `logger(id)` | write to `wh.log` with a `[widget:<id>]` tag |
+| `launch(uri)` | ask the console to launch a URI, see [Launching apps](#launching-apps) |
 | `config` | your parsed `config.json` |
 
 Any PS-only primitive may be `undefined` on older firmware - guard before use.
@@ -87,3 +88,25 @@ log('fetched ' + items.length + ' items');
 
 Lines are queued and sent by the loader shortly after; at most 120 lines/minute
 are kept. See [Troubleshooting](troubleshooting.md).
+
+## Launching apps
+
+```js
+// in your component; props.config.launchUri is a field in your config.json
+wh.onPressed(wh.Button.Cross, function () {
+  wh.launch(props.config.launchUri).then(function (ok) {
+    if (!ok) log('launch failed');
+  });
+});
+```
+
+`wh.launch(uri)` hands the URI to the console's own launcher (ShellUI
+`LaunchByUri`) and returns a promise that resolves to `true` once the console
+accepted it, or `false`. Any URI with a scheme is passed through; it must not
+contain spaces or control characters and is at most 511 characters. Launches are
+rate limited to 6 per minute across all widgets. Every launch is written to
+`wh.log` as `launch: <uri> rc=<n>`.
+
+Launch from a user action (a button press), not on a timer or on mount. Any
+installed widget can launch any URI, so users should only install widgets they
+trust.

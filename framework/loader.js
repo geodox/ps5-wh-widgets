@@ -952,6 +952,29 @@
       logLine(message, widgetId);
     };
   };
+  // Ask ShellUI to launch a URI (an app, a store page, ...) through the payload's
+  // /__launch endpoint. Resolves true once the launch was accepted, else false.
+  wh.launch = function (uri) {
+    if (typeof uri !== 'string' || !uri) {
+      logLine('launch ignored: uri must be a non-empty string');
+      return root.Promise.resolve(false);
+    }
+    try {
+      return root.fetch('http://127.0.0.1:8098/__launch?uri=' + root.encodeURIComponent(uri)).then(
+        function (r) {
+          if (!r.ok) logLine('launch failed: ' + uri + ' (HTTP ' + r.status + ')');
+          return !!r.ok;
+        },
+        function (e) {
+          logLine('launch failed: ' + uri + ' (' + errorText(e) + ')');
+          return false;
+        }
+      );
+    } catch (e) {
+      logLine('launch failed: ' + uri + ' (' + errorText(e) + ')');
+      return root.Promise.resolve(false);
+    }
+  };
   root.__wh = wh;
   root.__wh_c = 1;
   wh.__vend = !!vendor;

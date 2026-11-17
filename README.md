@@ -34,8 +34,9 @@ Two widgets ship with the project, as working examples and as the starting point
 | :--- | :--- |
 | **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks and a timer. The smallest complete widget. |
 | **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. |
+| **Payload Launcher** | Lists the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...); press X on one to open it in the console's browser. |
 
-Drop either folder into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
+Drop any of these folders into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
 
 ## 📸 Community Showcase
 
