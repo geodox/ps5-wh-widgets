@@ -1691,6 +1691,52 @@
       logLine('registering MINI widgets failed: ' + errorText(e), 0, 1);
     }
   };
+  // Keep our widget ids out of the hub's telemetry. The hub's widget telemetry module
+  // reports the placed layout at startup: widgetConfiguration(layout) sends unknown
+  // ids raw, widgetEncodedLayout(layout) sends them as -1. Both skip empty (null)
+  // cells, and callers look the exports up at call time, so the wrappers below blank
+  // our ids in a copy of the layout before the stock functions see it.
+  wh.__hideTelemetry = function () {
+    var hubRequire = root.__whRequire,
+      id = (root.__wh_hubmods || {}).widgetTelemetry;
+    if (wh.__telemetryHidden || typeof hubRequire !== 'function' || !id) return;
+    try {
+      var telemetry = hubRequire(id);
+      if (!telemetry) return;
+      var blankOurs = function (layout) {
+        if (!root.Array.isArray(layout)) return layout;
+        return layout.map(function (column) {
+          if (!root.Array.isArray(column)) return column;
+          return column.map(function (cell) {
+            return typeof cell === 'string' && root.__wh_widgets[cell] ? null : cell;
+          });
+        });
+      };
+      var wrapped = 0;
+      ['widgetConfiguration', 'widgetEncodedLayout'].forEach(function (name) {
+        var original = telemetry[name];
+        if (typeof original !== 'function') return;
+        telemetry[name] = function (layout) {
+          var args = root.Array.prototype.slice.call(arguments);
+          try {
+            args[0] = blankOurs(layout);
+          } catch (e) {}
+          return original.apply(this, args);
+        };
+        if (telemetry[name] !== original) wrapped++;
+      });
+      wh.__telemetryHidden = 1;
+      logLine(
+        wrapped === 2
+          ? 'telemetry: custom widget ids filtered'
+          : 'telemetry: custom widget ids NOT filtered (' + wrapped + '/2 hooks)',
+        0,
+        wrapped === 2 ? 0 : 1
+      );
+    } catch (e) {
+      logLine('telemetry: filter failed: ' + errorText(e), 0, 1);
+    }
+  };
   // Drop our ids from the MINI registry (a new widget revision registers afresh).
   wh.__miniReset = function () {
     var ids = root.__wh_mini;
@@ -1787,6 +1833,7 @@
             logLine('registering into WIDGET_MAP failed: ' + errorText(e), 0, 1);
           }
           wh.__registerMini();
+          wh.__hideTelemetry();
         },
       });
       root.Object.defineProperty(root, '__whEditable', {

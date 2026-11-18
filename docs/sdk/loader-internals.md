@@ -96,9 +96,19 @@ The stock widget frame and header, and the MINI widget registry, are hub modules
 the loader requires through the bridge's `__whRequire`. Hub module ids move between
 firmware builds, so the prelude passes this firmware's ids as
 `globalThis.__wh_hubmods`, keyed by the map's module names (`stockFrame`,
-`stockHeader`, `miniWidgets`). A module the matcher could not resolve is left out:
-without the frame the loader draws its own, and without the registry MINI widgets
-are not shown (`wh.log` says so).
+`stockHeader`, `miniWidgets`, `widgetTelemetry`). A module the matcher could not
+resolve is left out:
+- without the frame, the loader draws its own;
+- without the registry, MINI widgets are not shown (`wh.log` says so);
+- without the telemetry module, ids are not filtered (`wh.log` says so).
+
+**Telemetry.** At startup the hub reports the placed widget layout. Its widget
+telemetry module (`widgetTelemetry`) sends an unknown id raw in
+`widgetConfiguration(layout)`, and as `-1` in `widgetEncodedLayout(layout)`. Both
+skip empty (`null`) cells, and their callers look them up at call time. So the
+loader replaces both exports with wrappers that blank our widget ids in a copy of
+the layout first. Custom ids never appear in the hub's telemetry, and the stock
+widgets are reported as before. `wh.log`: `telemetry: custom widget ids filtered`.
 
 **MINI widgets.** The hub's MINI ("transient") registry (`miniWidgets`) exports
 `WIDGET_MAP` and `WIDGET_CONFIGS` keyed by widget id, and `WIDGET_PRIORITY`, the

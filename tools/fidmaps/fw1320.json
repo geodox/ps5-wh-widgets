@@ -221,6 +221,15 @@
       "fid": 2018,
       "confidence": 0.99,
       "evidence": "unique normalized match (104 insns); all numbers identical; anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
+    },
+    {
+      "name": "widgetTelemetry",
+      "id_1320": 145,
+      "fid_1320": 1539,
+      "id": 145,
+      "fid": 1539,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (179 insns); all numbers identical; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
     }
   ]
 }

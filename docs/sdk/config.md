@@ -37,7 +37,9 @@ Do not reuse these - they belong to the built-in widgets:
 `accessibility`, `activity:feed`, `activity:recent`, `recently.played`, `battery`,
 `campaigns`, `community activity`, `discovery`, `friends:online`,
 `friends:activity`, `highlights`, `media`, `messages`, `news`, `notes`, `psplus`,
-`storage`, `store`, `transfers`, `trophy:summary`, `wishlist`, `newWidget`.
+`storage`, `store`, `transfers`, `trophy:summary`, `wishlist`, `newWidget`,
+`onboarding`, and on 13.60 `flare` and `beta`. Ids are stored in the hub's saved layout, so
+keep yours unique and never rename one.
 
 ## Runtime form
 

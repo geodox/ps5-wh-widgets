@@ -142,6 +142,7 @@ per firmware. The map's `modules` array gives each one's id on the target:
 | `stockFrame` | 106 | stock widget frame (`default` export) |
 | `stockHeader` | 77 | stock widget header (`default` export) |
 | `miniWidgets` | 199 | MINI ("transient") widget registry: `WIDGET_MAP`, `WIDGET_CONFIGS`, `WIDGET_PRIORITY` |
+| `widgetTelemetry` | 145 | widget telemetry: `widgetConfiguration`, `widgetEncodedLayout` (the loader keeps custom ids out) |
 
 Ids come from the global code's module table (`CreateClosure r, F; PutOwnByIndex arr, r, <id>`);
 the factory function is matched like any target. An entry may list `need` strings

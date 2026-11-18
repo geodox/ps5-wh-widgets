@@ -221,6 +221,15 @@
       "fid": 2065,
       "confidence": 0.99,
       "evidence": "unique normalized match (104 insns); all numbers identical; anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
+    },
+    {
+      "name": "widgetTelemetry",
+      "id_1320": 145,
+      "fid_1320": 1539,
+      "id": 157,
+      "fid": 1643,
+      "confidence": 0.961,
+      "evidence": "aligned match sim=0.961 (runner-up F8273 0.111); +9/-5 insns [+ GetById r6 r6 _ \"STORE\" | + GetById r8 r6 _ \"WISHLIST\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r8 # | + GetById r6 r5 _ \"default\" | + GetById r6 r5 _ \"default\" | + GetById r7 r6 _ \"BETA\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r7 # | - GetById r9 r6 _ \"STORE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\"]; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
     }
   ]
 }

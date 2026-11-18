@@ -292,6 +292,9 @@ const MODULES = [
   // The MINI ("transient") widget registry: WIDGET_MAP / WIDGET_CONFIGS keyed by id
   // and WIDGET_PRIORITY, the order of the MINI row above (or below) the hub tiles.
   { name: 'miniWidgets', id_1320: 199, need: ['WIDGET_MAP', 'WIDGET_CONFIGS', 'WIDGET_PRIORITY', 'TRANSFERS', 'PS_PLUS', 'HIGHLIGHTS', 'newWidget'] },
+  // Widget telemetry: widgetConfiguration / widgetEncodedLayout(layout) report the
+  // placed widgets (unknown ids go out raw / as -1). The loader filters our ids out.
+  { name: 'widgetTelemetry', id_1320: 145, need: ['widgetConfiguration', 'widgetEncodedLayout', 'widgetInfo', 'TELEMETRY_IDS', 'CODES'] },
 ];
 
 // Every string operand in fid and the closures it creates.
