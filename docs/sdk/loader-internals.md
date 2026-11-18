@@ -21,7 +21,7 @@ structure) live in `docs/INTERNALS.md`, which is kept locally and not published.
 4. **Install the prelude.** The prelude runs before every evaluation. It passes
    this firmware's hub module ids (`__wh_hubmods`, see below), registers the
    payload's own `globalThis.__wh` surface and starts the loader; the bridge hands
-   the hub's tables to it.
+   the hub's widget map and module `require` to it.
 5. **Load widgets.** `framework/loader.js` scans `/data/wh-widgets/<id>/`, parses
    `config.json`, evaluates `widget.js` in an error boundary, and registers each
    component with the hub's widget map and Edit Widgets lists.
@@ -92,15 +92,57 @@ from the vendor module the hub already requires), literal enums
 `Label`, `TextStyles`, `Focusable`), glyph registration, the error boundary, and
 the widget scheduler. Widgets see only this handle.
 
-The stock widget frame and header, and the MINI widget registry, are hub modules
-the loader requires through the bridge's `__whRequire`. Hub module ids move between
-firmware builds, so the prelude passes this firmware's ids as
-`globalThis.__wh_hubmods`, keyed by the map's module names (`stockFrame`,
-`stockHeader`, `miniWidgets`, `widgetTelemetry`). A module the matcher could not
-resolve is left out:
-- without the frame, the loader draws its own;
+The bridge patches the module that builds the hub's grid `WIDGET_MAP`. It hands
+the map to `__whWidgetMap` and the hub's module `require` to `__whRequire`. Every
+other hub table the loader touches is a module it requires through `__whRequire`:
+the stock widget frame and header, the MINI widget registry, the telemetry module,
+and the Edit Widgets tables. Hub module ids move between firmware builds, so the
+prelude passes this firmware's ids as `globalThis.__wh_hubmods`, keyed by the map's
+module names (`stockFrame`, `stockHeader`, `miniWidgets`, `widgetTelemetry`,
+`widgetIds`, `editTitles`, `editIcons`, `editDescs`). A module the matcher could
+not resolve is left out:
+- without the frame, the loader draws its own tile mat and settings menu;
+- without the Edit Widgets tables, custom widgets cannot be added in Edit Widgets
+  (`wh.log` says so);
 - without the registry, MINI widgets are not shown (`wh.log` says so);
 - without the telemetry module, ids are not filtered (`wh.log` says so).
+
+**Stock frame.** Each tile renders inside the hub's own widget frame, with the
+loader's tile as the frame's `Template`. The frame always draws the stock mat
+(`#17191E` with the native light-mat effect) behind the template, so widgets draw
+no background of their own. A widget's `config.json` settings become the frame's
+`options` (`MenuListItemPS` rows), the menu the stock widgets use. The frame binds
+Options on its own view, which never has focus (the tile view inside the template
+does), so the tile calls the frame's `onOptionsKeyDown` to open it. While a tile is
+entered, Options stays with the tile.
+
+**Edit Widgets list.** The list offers the ids in the widget-id module's `EDITABLE`
+table, and reads each entry's title, icon and description from three tables keyed by
+widget id. They are read when the list is built, so the loader fills all four when
+the hub runtime comes up (the `__whWidgetMap` setter). `wh.log`: `edit list title
+set for N widget(s)` (and `iconId`, `description`).
+
+**Hidden MINI widgets.** The row counts an item as shown while the ref it passed
+holds an instance, and skips items without one when it lays out and scrolls the row.
+`props.setVisible(false)` makes the loader hand that ref `null` and render the frame
+in a transparent, absolutely positioned box, out of focus. (`overflow: 'hidden'` does
+not clip on the console, so a zero-size box alone still shows the pill.) The element tree does not change, so the widget
+stays mounted and can show itself again.
+
+**Layout backup.** The saved layout is AsyncStorage `widget:customTemplates`
+(`{templateId: columns of widget ids}`). A hub without the payload loads our ids as
+empty cells, and its next save stores them as `null`. So the loader wraps the hub's
+AsyncStorage: every write of that key is mirrored to `wh:customTemplates`, and when
+the hub reads the layout (`multiGet`), the custom widgets missing from it are put
+back. A save without the payload keeps a `null` where a custom widget shared a column
+with stock ones and drops columns that held only custom widgets (console-verified),
+so the backup's columns are lined up with the stored ones first and the dropped
+columns are reinserted. Each widget then goes back into its saved cells if they are
+all still empty, or else into the first free run of cells of its height. The hub sees
+the restored layout before it lays out the grid. Clearing the layout clears the
+backup.
+`wh.log`: `layout backup on`, `layout: restored N custom widget placement(s) from the
+backup`.
 
 **Telemetry.** At startup the hub reports the placed widget layout. Its widget
 telemetry module (`widgetTelemetry`) sends an unknown id raw in

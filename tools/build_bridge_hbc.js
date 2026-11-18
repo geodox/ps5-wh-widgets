@@ -18,7 +18,7 @@ const { HBC, loadOpcodes } = require('./hbc.js');
 const { rebuild } = require('./hbc_rebuild.js');
 
 // Strings appended to the HBC string table. Index into this list is the string id.
-const ADDS = ['__whWidgetMap', '__whEditable', '__whTitles', '__whIcons', '__whDescs', '__wh_lock', '__whRequire', '__whSizeUp', '__whSizeDown', '__whLayoutResize', '__whFind', '__whScrollTo'];
+const ADDS = ['__whWidgetMap', '__wh_lock', '__whRequire', '__whSizeUp', '__whSizeDown', '__whLayoutResize', '__whFind', '__whScrollTo'];
 
 // Every patched function, in output order, keyed by its map entry `name`. `hook`
 // selects the builder:
@@ -33,15 +33,9 @@ const PATCHES = [
   { name: '(lock A)', hook: 'lock' },
   { name: '(lock B)', hook: 'lock' },
   // WIDGET_MAP (r1, live at Ret) and the hub's module require (param 3, stored
-  // early; lets the loader reach the stock frame/header modules).
+  // early). Everything else the loader needs (the Edit Widgets tables, the stock
+  // frame, the MINI registry, ...) it reaches through __whRequire by module id.
   { name: '__whWidgetMap', hook: 'global' },
-  // EDITABLE: the register is reassigned by copyDataProperties after
-  // exports.EDITABLE is stored, so the map places the inject right after that store.
-  { name: '__whEditable', hook: 'global' },
-  // Edit-Widgets side list metadata (all `exports.default = r1; Ret`).
-  { name: '__whTitles', hook: 'global' },
-  { name: '__whIcons', hook: 'global' },
-  { name: '__whDescs', hook: 'global' },
   // Resize steps (edit mode L1/R1), right after the stock value is computed:
   //   if (__whSizeUp|__whSizeDown) s = fn(target, s);   [Call3, like stock]
   //   L1: s = max(1, size-1)   R1: s = min(FULL, size+1)

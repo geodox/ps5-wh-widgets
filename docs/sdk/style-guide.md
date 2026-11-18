@@ -44,6 +44,7 @@ border. Use `props.focused` to change content while the tile is focused. See
 
 ## Colours
 
-Stock surfaces use `wh.StockTile.MAT_COLOR` (`#17191E`). Prefer the theme colour
-for text and reserve custom colour for status. A typical custom card background is
-`#1b1d23`.
+The stock frame draws every tile's mat (`wh.StockTile.MAT_COLOR`, `#17191E`, with
+the native light-mat effect), so leave the widget's root transparent. An opaque
+background hides the light-mat effect. Prefer the theme colour for text and reserve
+custom colour for status.

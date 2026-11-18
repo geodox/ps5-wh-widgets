@@ -44,5 +44,5 @@ subfolder is one widget, named by its id:
   `import` / `require`.
 
 Two complete examples live in [`sample-widgets/`](../../sample-widgets/):
-`hello-wh` (minimal, reference for `wh.Focusable`) and `payload-monitor`
+`hello-wh` (minimal, reference for `wh.Focusable` and settings) and `payload-monitor`
 (polling, settings, image glyph).

@@ -4,7 +4,10 @@
 //   wh.Focusable  selectable items inside the tile: X enters the tile, arrows
 //                 (or L1/R1) move between items, X presses one, Circle leaves
 //   wh.onPressed  tile-wide button handlers (here: Square resets both chips)
-//   props         config / focused / editing / size / width / height from the loader
+//   settings      config.json "settings": Options opens the stock settings menu,
+//                 values arrive on props.settings and persist across reboots.
+//                 Here they are the clock's defaults; the chips flip them for now.
+//   props         config / settings / focused / editing / size / width / height
 (function (wh) {
   var React = wh.React;
   var View = wh.View;
@@ -15,11 +18,6 @@
 
   var styles = wh.StyleSheet.create({
     card: { borderRadius: 16, overflow: 'hidden' },
-    // stock mat: #17191E + native lightMat sheen
-    mat: {
-      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: '#17191ef0', borderRadius: 16
-    },
     body: { flex: 1, padding: 16 },
     row: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
     clock: { fontSize: F.SizeLarge, flex: 1 },                 // 36
@@ -47,8 +45,12 @@
   function HelloWH(props) {
     var s = React.useState(Date.now());
     var now = s[0], setNow = s[1];
-    var h12 = React.useState(false), use12 = h12[0], set12 = h12[1];
-    var sec = React.useState(true), showSec = sec[0], setSec = sec[1];
+    var settings = props.settings || {};
+    var default12 = settings.format === '12h', defaultSec = settings.seconds !== false;
+    var h12 = React.useState(default12), use12 = h12[0], set12 = h12[1];
+    var sec = React.useState(defaultSec), showSec = sec[0], setSec = sec[1];
+    // A change in the settings menu (or the saved values loading) resets the chips.
+    React.useEffect(function () { set12(default12); setSec(defaultSec); }, [default12, defaultSec]);
     var mounted = React.useRef(true);
     React.useEffect(function () {
       mounted.current = true;
@@ -56,8 +58,8 @@
       return function () { mounted.current = false; clearInterval(id); };
     }, []);
 
-    // Tile-wide handler: works whichever chip is selected.
-    wh.onPressed(B.Square, function () { set12(false); setSec(true); });
+    // Tile-wide handler: works whichever chip is selected. Square resets to the settings.
+    wh.onPressed(B.Square, function () { set12(default12); setSec(defaultSec); });
 
     var d = new Date(now);
     function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -69,7 +71,6 @@
     // Fill the tile the grid gives us (L1/R1 resize changes size/width/height in edit mode).
     var dims = { width: props.width || 504, height: props.height || 152 };
     return ce(View, { style: [styles.card, dims] },
-      ce(View, { lightMat: 'auto', style: styles.mat }),
       ce(View, { style: styles.body },
         ce(wh.Title, {
           iconId: cfg.iconId || 'app_welcome',
@@ -81,7 +82,7 @@
           ce(Chip, { label: showSec ? 'Seconds' : 'No seconds', onPress: function () { setSec(function (v) { return !v; }); } })
         ),
         props.size > 1
-          ? ce(Label, { style: styles.cap }, props.active ? 'Arrows: move  X: toggle  Square: reset' : 'reference widget - size ' + props.size)
+          ? ce(Label, { style: styles.cap }, props.active ? 'Arrows: move  X: toggle  Square: reset' : 'Options: settings - size ' + props.size)
           : null
       )
     );

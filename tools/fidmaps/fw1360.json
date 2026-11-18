@@ -48,74 +48,6 @@
       }
     },
     {
-      "name": "__whEditable",
-      "fid_1320": 128,
-      "hook": "global",
-      "fid": 128,
-      "confidence": 0.963,
-      "evidence": "aligned match sim=0.963 (runner-up F1823 0.315); +5/-0 insns [+ LoadConstString r1 \"flare\" | + PutById r3 r1 _ \"FLARE\" | + LoadConstString r4 \"beta\" | + LoadConstString r3 \"BETA\" | + PutOwnByVal r1 r4 r3 #]; EDITABLE true; ACCESSIBILITY true; FRIENDS_ONLINE true",
-      "params": {
-        "inj": [
-          {
-            "name": "__whEditable",
-            "valReg": 3,
-            "at": 277
-          }
-        ]
-      }
-    },
-    {
-      "name": "__whTitles",
-      "fid_1320": 5162,
-      "hook": "global",
-      "fid": 5382,
-      "confidence": 0.97,
-      "evidence": "aligned match sim=0.978 (runner-up F20639 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:8c86886b627fb8d0 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; 16 I18n getters, e.g. msgid_accessibility, msgid_battery_level, msgid_discover_tips",
-      "params": {
-        "inj": [
-          {
-            "name": "__whTitles",
-            "valReg": 1,
-            "at": null
-          }
-        ]
-      }
-    },
-    {
-      "name": "__whIcons",
-      "fid_1320": 20067,
-      "hook": "global",
-      "fid": 20638,
-      "confidence": 0.97,
-      "evidence": "aligned match sim=0.976 (runner-up F20671 0.423); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + LoadConstString r5 \"signal_flare\" | + PutOwnByVal r1 r5 r6 # | + GetById r5 r3 _ \"default\"]; icon ids accessibility,battery_full,ps_store",
-      "params": {
-        "inj": [
-          {
-            "name": "__whIcons",
-            "valReg": 1,
-            "at": null
-          }
-        ]
-      }
-    },
-    {
-      "name": "__whDescs",
-      "fid_1320": 20068,
-      "hook": "global",
-      "fid": 20639,
-      "confidence": 0.97,
-      "evidence": "aligned match sim=0.978 (runner-up F5382 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:eaa07f0556612c86 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; 15 I18n getters, e.g. msgid_review_ps5_accessibility_options, msgid_display_battery_status, msgid_learn_new_features",
-      "params": {
-        "inj": [
-          {
-            "name": "__whDescs",
-            "valReg": 1,
-            "at": null
-          }
-        ]
-      }
-    },
-    {
       "name": "__whSizeDown",
       "fid_1320": 19931,
       "hook": "sizeStep",
@@ -230,6 +162,42 @@
       "fid": 1643,
       "confidence": 0.961,
       "evidence": "aligned match sim=0.961 (runner-up F8273 0.111); +9/-5 insns [+ GetById r6 r6 _ \"STORE\" | + GetById r8 r6 _ \"WISHLIST\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r8 # | + GetById r6 r5 _ \"default\" | + GetById r6 r5 _ \"default\" | + GetById r7 r6 _ \"BETA\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r7 # | - GetById r9 r6 _ \"STORE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\"]; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
+    },
+    {
+      "name": "widgetIds",
+      "id_1320": 17,
+      "fid_1320": 128,
+      "id": 17,
+      "fid": 128,
+      "confidence": 0.963,
+      "evidence": "aligned match sim=0.963 (runner-up F1823 0.315); +5/-0 insns [+ LoadConstString r1 \"flare\" | + PutById r3 r1 _ \"FLARE\" | + LoadConstString r4 \"beta\" | + LoadConstString r3 \"BETA\" | + PutOwnByVal r1 r4 r3 #]; anchors ACTIVITY_FEED, campaigns, EDITABLE"
+    },
+    {
+      "name": "editTitles",
+      "id_1320": 383,
+      "fid_1320": 5162,
+      "id": 403,
+      "fid": 5382,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.978 (runner-up F20639 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:8c86886b627fb8d0 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; anchors msgid_discover_tips, msgid_playstation_store"
+    },
+    {
+      "name": "editIcons",
+      "id_1320": 1938,
+      "fid_1320": 20067,
+      "id": 2004,
+      "fid": 20638,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.976 (runner-up F20671 0.423); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + LoadConstString r5 \"signal_flare\" | + PutOwnByVal r1 r5 r6 # | + GetById r5 r3 _ \"default\"]; anchors from_ps, trending"
+    },
+    {
+      "name": "editDescs",
+      "id_1320": 1939,
+      "fid_1320": 20068,
+      "id": 2005,
+      "fid": 20639,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.978 (runner-up F5382 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:eaa07f0556612c86 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; anchors msgid_learn_new_features, msgid_show_ps_store"
     }
   ]
 }

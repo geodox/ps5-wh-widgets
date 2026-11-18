@@ -2,14 +2,14 @@
 
 ## Goal
 
-`tools/build_bridge_hbc.js` patches 12 functions in the Welcome Hub's Hermes
+`tools/build_bridge_hbc.js` patches 8 functions in the Welcome Hub's Hermes
 bytecode bundle (HBC v89). The patch table `PATCHES` is keyed by **function id
 (`fid` = module-index order)**, which is only valid for the firmware the fids were
 read from (**FW 13.20**). On any other firmware the modules load in a different
 order, so every `fid` — and several per-function operands — shift.
 
 For each additional hub dump, produce the numbers that let `build_bridge_hbc.js`
-patch the **same 12 functions** on that firmware. Identify each function by its
+patch the **same 8 functions** on that firmware. Identify each function by its
 **content/structure**, never by fid. Then re-derive the per-function operands.
 
 Do **not** write any on-console or runtime patcher. Output is data only: a JSON
@@ -52,7 +52,7 @@ kind. If a function cannot be matched with confidence >= 0.9, still emit the ent
 with your best candidate, `confidence` below 0.9, and `params: null`; the build
 will reject it rather than patch blindly.
 
-## The 12 targets (13.20 ground truth)
+## The 8 targets (13.20 ground truth)
 
 `hook` is the builder in `build_bridge_hbc.js`. Registers/offsets are 13.20 values,
 shown so you know what each re-derived number must mean.
@@ -62,10 +62,6 @@ shown so you know what each re-derived number must mean.
 | (lock A) | 5916 | `lock` | hub tile key handler with `onCircleKeyDown`/`onBackKeyDown`; frameSize >= 2; no exception handlers |
 | (lock B) | 19960 | `lock` | second key handler, same shape |
 | `__whWidgetMap` + `__whRequire` | 7374 | `global` | module that builds WIDGET_MAP; exports table in r1 live at the final `Ret`; the hub `require` arrives as param 3 (r7) |
-| `__whEditable` | 128 | `global` | module doing `exports.EDITABLE = r3` then `copyDataProperties`; references the upper-case widget-id constants (`ACCESSIBILITY`, `FRIENDS_ONLINE`, ...) |
-| `__whTitles` | 5162 | `global` | edit-list **titles** table: `exports.default = r1; Ret`; values are human-readable widget titles |
-| `__whIcons` | 20067 | `global` | edit-list **icons** table: `exports.default = r1; Ret`; values are lower-case icon ids (`accessibility`, `battery_full`, `ps_store`, ...) |
-| `__whDescs` | 20068 | `global` | edit-list **descriptions** table: `exports.default = r1; Ret`; values are longer description strings (avg length > titles) |
 | `__whSizeDown` | 19931 | `sizeStep` | L1 resize step: computes `max(1, size-1)` |
 | `__whSizeUp` | 19932 | `sizeStep` | R1 resize step: computes `min(FULL, size+1)` |
 | `__whScrollTo` | 19985 | `prefix` | grid `scrollTo(col)`; **first instruction is `LoadParam r3, 1`** |
@@ -92,10 +88,9 @@ Per injected value:
 - `valReg`: register holding the value to export.
 - `at`: instruction-boundary **ip** to inject before. `null` = inject before the
   final `Ret`; then the instruction before `Ret` must be `PutById ..., <valReg>, ...`
-  (the `exports.default`/`exports.EDITABLE` store).
-- For a non-null `at` (like `__whRequire` at ip 12, `__whEditable` at ip 267),
-  give the ip **on the target dump** where that register first holds the wanted
-  value (require param load; the store after which EDITABLE's r3 is reassigned).
+  (the `exports.WIDGET_MAP` store).
+- For a non-null `at` (like `__whRequire` at ip 12), give the ip **on the target
+  dump** where that register first holds the wanted value (the require param load).
 - The function must be `Ret`-terminated, have **no jumps/switches**, and
   frameSize > 14 (scratch r13/r14 are used).
 
@@ -143,6 +138,10 @@ per firmware. The map's `modules` array gives each one's id on the target:
 | `stockHeader` | 77 | stock widget header (`default` export) |
 | `miniWidgets` | 199 | MINI ("transient") widget registry: `WIDGET_MAP`, `WIDGET_CONFIGS`, `WIDGET_PRIORITY` |
 | `widgetTelemetry` | 145 | widget telemetry: `widgetConfiguration`, `widgetEncodedLayout` (the loader keeps custom ids out) |
+| `widgetIds` | 17 | widget-id enum: `EDITABLE` (ids the Edit Widgets list offers) and `default` (EDITABLE plus the non-editable ids) |
+| `editTitles` | 383 | Edit Widgets list titles: `default`, keyed by widget id |
+| `editIcons` | 1938 | Edit Widgets list icons (`IconPS` ids): `default`, keyed by widget id |
+| `editDescs` | 1939 | Edit Widgets list descriptions: `default`, keyed by widget id |
 
 Ids come from the global code's module table (`CreateClosure r, F; PutOwnByIndex arr, r, <id>`);
 the factory function is matched like any target. An entry may list `need` strings

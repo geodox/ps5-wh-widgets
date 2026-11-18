@@ -25,6 +25,7 @@ Every widget folder holds a `config.json`:
 | `iconFallback` | no | stock glyph shown if the image glyph fails (default `app_welcome`) |
 | `size` | no | starting `WidgetSize` value (default `1`, see [sizes](sizes-and-layout.md)). A MINI value (`0`, `0.1`, `0.2`) makes it a [MINI widget](sizes-and-layout.md#mini-widgets) |
 | `settings` | no | settings schema, see [settings](settings.md) |
+| `visible` | no | MINI widgets only: `false` starts the widget hidden until it calls `props.setVisible(true)` (see [MINI widgets](sizes-and-layout.md#showing-and-hiding-a-mini-widget)) |
 
 Any other field you add is parsed and handed to your component on `props.config`,
 so a widget can carry its own configuration (e.g. `"url": "..."`,

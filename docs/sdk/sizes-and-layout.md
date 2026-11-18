@@ -32,6 +32,35 @@ the Edit Widgets list. Custom MINI widgets follow the stock ones in the row.
   `FontSizePS.Size2XSmall` (21) text. `hello-mini` is the reference.
 * `size` `0.1` or `0.2` starts as `MINI` and grows to that size while focused.
 
+### Showing and hiding a MINI widget
+
+Stock MINI widgets show only when they have something to say: Transfers appears
+while a download runs. A custom MINI widget decides the same way with
+`props.setVisible(visible)`. `props.visible` is the current state. Both are
+`undefined` for grid widgets.
+
+* A hidden MINI widget takes no space in the row and cannot be focused. Its
+  component **stays mounted**, so its timers and fetches keep running and it can
+  call `setVisible(true)` when there is something to show.
+* It starts shown. Add `"visible": false` to `config.json` to start hidden, so
+  the pill does not flash before the first check.
+* Call `setVisible` from an effect, a timer or a handler, not during render.
+
+```js
+function Updates(props) {
+  var count = wh.React.useState(0), n = count[0], setN = count[1];
+  wh.React.useEffect(function () {
+    var timer = setInterval(function () {
+      fetch('http://127.0.0.1:9090/updates').then(function (r) { return r.json(); })
+        .then(function (list) { setN(list.length); }, function () { setN(0); });
+    }, 30000);
+    return function () { clearInterval(timer); };
+  }, []);
+  wh.React.useEffect(function () { props.setVisible(n > 0); }, [n]);
+  return wh.React.createElement(wh.Label, null, n + ' updates');
+}
+```
+
 ## Stock metrics (`wh.StockTile`)
 
 From the hub:

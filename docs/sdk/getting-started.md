@@ -23,8 +23,6 @@ No JSX - use `React.createElement`. Minimal example:
           flex: 1,
           width: 504,
           padding: 16,
-          borderRadius: 16,
-          backgroundColor: '#1b1d23',
         },
       },
       React.createElement(

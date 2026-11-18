@@ -59,10 +59,6 @@
 
   var styles = wh.StyleSheet.create({
     card: { borderRadius: 16, overflow: 'hidden' },
-    mat: {
-      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: '#17191ef0', borderRadius: 16
-    },
     body: { flex: 1, padding: 16 },
     row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, borderRadius: 8 },
     rowOn: { backgroundColor: '#ffffff' },
@@ -134,7 +130,6 @@
     var cfg = props.config || {};
     var badge = props.active ? 'X: open' : (pages && pages.length ? pages.length + ' found' : null);
     return ce(View, { style: [styles.card, { width: W, height: H }] },
-      ce(View, { lightMat: 'auto', style: styles.mat }),
       ce(View, { style: styles.body },
         ce(wh.Title, { iconId: cfg.iconId, badge: badge, style: { marginBottom: 8 } }, cfg.title || 'Payload Launcher'),
         body

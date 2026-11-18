@@ -48,74 +48,6 @@
       }
     },
     {
-      "name": "__whEditable",
-      "fid_1320": 128,
-      "hook": "global",
-      "fid": 128,
-      "confidence": 0.99,
-      "evidence": "unique normalized match (65 insns); all numbers identical; EDITABLE true; ACCESSIBILITY true; FRIENDS_ONLINE true",
-      "params": {
-        "inj": [
-          {
-            "name": "__whEditable",
-            "valReg": 3,
-            "at": 267
-          }
-        ]
-      }
-    },
-    {
-      "name": "__whTitles",
-      "fid_1320": 5162,
-      "hook": "global",
-      "fid": 5162,
-      "confidence": 0.99,
-      "evidence": "unique normalized match (88 insns); all numbers identical; 15 I18n getters, e.g. msgid_accessibility, msgid_battery_level, msgid_discover_tips",
-      "params": {
-        "inj": [
-          {
-            "name": "__whTitles",
-            "valReg": 1,
-            "at": null
-          }
-        ]
-      }
-    },
-    {
-      "name": "__whIcons",
-      "fid_1320": 20067,
-      "hook": "global",
-      "fid": 20067,
-      "confidence": 0.99,
-      "evidence": "unique normalized match (83 insns); all numbers identical; icon ids accessibility,battery_full,ps_store",
-      "params": {
-        "inj": [
-          {
-            "name": "__whIcons",
-            "valReg": 1,
-            "at": null
-          }
-        ]
-      }
-    },
-    {
-      "name": "__whDescs",
-      "fid_1320": 20068,
-      "hook": "global",
-      "fid": 20068,
-      "confidence": 0.99,
-      "evidence": "unique normalized match (88 insns); all numbers identical; 15 I18n getters, e.g. msgid_review_ps5_accessibility_options, msgid_display_battery_status, msgid_learn_new_features",
-      "params": {
-        "inj": [
-          {
-            "name": "__whDescs",
-            "valReg": 1,
-            "at": null
-          }
-        ]
-      }
-    },
-    {
       "name": "__whSizeDown",
       "fid_1320": 19931,
       "hook": "sizeStep",
@@ -230,6 +162,42 @@
       "fid": 1539,
       "confidence": 0.99,
       "evidence": "unique normalized match (179 insns); all numbers identical; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
+    },
+    {
+      "name": "widgetIds",
+      "id_1320": 17,
+      "fid_1320": 128,
+      "id": 17,
+      "fid": 128,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (65 insns); all numbers identical; anchors ACTIVITY_FEED, campaigns, EDITABLE"
+    },
+    {
+      "name": "editTitles",
+      "id_1320": 383,
+      "fid_1320": 5162,
+      "id": 383,
+      "fid": 5162,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (88 insns); all numbers identical; anchors msgid_discover_tips, msgid_playstation_store"
+    },
+    {
+      "name": "editIcons",
+      "id_1320": 1938,
+      "fid_1320": 20067,
+      "id": 1938,
+      "fid": 20067,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (83 insns); all numbers identical; anchors from_ps, trending"
+    },
+    {
+      "name": "editDescs",
+      "id_1320": 1939,
+      "fid_1320": 20068,
+      "id": 1939,
+      "fid": 20068,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (88 insns); all numbers identical; anchors msgid_learn_new_features, msgid_show_ps_store"
     }
   ]
 }

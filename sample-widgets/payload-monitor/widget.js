@@ -136,22 +136,9 @@
       style: { marginBottom: 8 }
     }, 'Payload Monitor');
 
-    // Stock widget shell: solid mat color (#17191E) with the native lightMat
-    // sheen behind the content, rounded + clipped. Focus is handled natively by
-    // the loader's FocusLayerPS, so no manual border (matches stock).
-    return ce(View, {
-      style: { width: W, height: H, borderRadius: 16, overflow: 'hidden' }
-    },
-      ce(View, {
-        lightMat: 'auto',
-        style: {
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: '#17191ef0', // stock mat, slight transparency
-          borderRadius: 16
-        }
-      }),
-      ce(View, { style: { padding: 16 } }, header, body)
-    );
+    // The stock frame draws the tile mat and the focus highlight, so the content
+    // sits on a transparent view.
+    return ce(View, { style: { width: W, height: H, padding: 16 } }, header, body);
   }
 
   wh.register(PayloadMonitor);

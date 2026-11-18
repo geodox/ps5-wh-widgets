@@ -3,7 +3,7 @@
 //
 //   node tools/fid_match.js <ref_fw1320.hbc> <target.hbc> [out.json]
 //
-// Finds the 12 patched functions of the 13.20 reference on a target dump by
+// Finds the 8 patched functions of the 13.20 reference on a target dump by
 // content, never by fid, and re-derives each one's patch operands. Output is data
 // only; build_bridge_hbc.js consumes it, and any doubt must fail that build.
 //
@@ -24,10 +24,6 @@ const TARGETS = [
   { name: '(lock A)', fid: 5916, hook: 'lock' },
   { name: '(lock B)', fid: 19960, hook: 'lock' },
   { name: '__whWidgetMap', fid: 7374, hook: 'global', inj: [{ name: '__whWidgetMap', valReg: 1, at: null }, { name: '__whRequire', valReg: 7, at: 12 }] },
-  { name: '__whEditable', fid: 128, hook: 'global', inj: [{ name: '__whEditable', valReg: 3, at: 267 }] },
-  { name: '__whTitles', fid: 5162, hook: 'global', inj: [{ name: '__whTitles', valReg: 1, at: null }] },
-  { name: '__whIcons', fid: 20067, hook: 'global', inj: [{ name: '__whIcons', valReg: 1, at: null }] },
-  { name: '__whDescs', fid: 20068, hook: 'global', inj: [{ name: '__whDescs', valReg: 1, at: null }] },
   { name: '__whSizeDown', fid: 19931, hook: 'sizeStep', at: 46, env: 0, res: 2, s: [1, 3, 4, 3], slot: 22 },
   { name: '__whSizeUp', fid: 19932, hook: 'sizeStep', at: 71, env: 2, res: 8, s: [0, 1, 7, 1], slot: 22 },
   { name: '__whScrollTo', fid: 19985, hook: 'prefix', frame: 0, envDepth: 1, envSlot: 4 },
@@ -255,14 +251,6 @@ function evidence(t, h, fid, tn) {
   const say = [];
   if (t.hook === 'lock') say.push('editing/repeat key handler, ends `LoadConstTrue; Ret`');
   if (t.name === '__whWidgetMap') say.push(`WIDGET_MAP export ${has('WIDGET_MAP')}`, `require=param3 ${tn.ins.some(x => x.op === 'LoadParam' && x.args[0] === 7 && x.args[1] === 3)}`);
-  if (t.name === '__whEditable') say.push(`EDITABLE ${has('EDITABLE')}`, `ACCESSIBILITY ${has('ACCESSIBILITY')}`, `FRIENDS_ONLINE ${has('FRIENDS_ONLINE')}`);
-  if (t.name === '__whTitles' || t.name === '__whDescs') {
-    // Values are getters returning I18nPS.t(<msgid>); report the msgids they use.
-    const ids = tn.ins.filter(x => baseOp(x.op) === 'CreateClosure')
-      .flatMap(x => normalize(h, x.args[2]).loose.filter(l => /"msgid_/.test(l)).map(l => JSON.parse(l.match(/"(?:[^"\\]|\\.)*"/)[0])));
-    say.push(`${ids.length} I18n getters, e.g. ${ids.slice(0, 3).join(', ')}`);
-  }
-  if (t.name === '__whIcons') say.push(`icon ids ${['accessibility', 'battery_full', 'ps_store'].filter(has).join(',')}`);
   if (t.hook === 'sizeStep') say.push(t.name === '__whSizeDown' ? `Math.max ${has('max')}` : `Math.min ${has('min')} FULL ${has('FULL')}`);
   if (t.name === '__whScrollTo') say.push(`scroll ref .current/.start/.end ${['current', 'start', 'end'].every(has)}`);
   if (t.name === '__whLayoutResize') say.push(`Array.fill ${has('fill')}`);
@@ -295,6 +283,13 @@ const MODULES = [
   // Widget telemetry: widgetConfiguration / widgetEncodedLayout(layout) report the
   // placed widgets (unknown ids go out raw / as -1). The loader filters our ids out.
   { name: 'widgetTelemetry', id_1320: 145, need: ['widgetConfiguration', 'widgetEncodedLayout', 'widgetInfo', 'TELEMETRY_IDS', 'CODES'] },
+  // Edit Widgets list: the widget-id enum (EDITABLE = the ids the list offers) and
+  // the title, icon and description tables it reads, each a `default` object keyed
+  // by widget id. The loader adds our ids to all four.
+  { name: 'widgetIds', id_1320: 17, need: ['ACTIVITY_FEED', 'campaigns', 'EDITABLE'] },
+  { name: 'editTitles', id_1320: 383, need: ['msgid_discover_tips', 'msgid_playstation_store'] },
+  { name: 'editIcons', id_1320: 1938, need: ['from_ps', 'trending'] },
+  { name: 'editDescs', id_1320: 1939, need: ['msgid_learn_new_features', 'msgid_show_ps_store'] },
 ];
 
 // Every string operand in fid and the closures it creates.

@@ -1126,7 +1126,48 @@
         tileRef = React.useRef(null),
         settingsLoadedRef = React.useRef(false),
         rerender = React.useState(0)[1],
-        controllerRef = React.useRef(null);
+        controllerRef = React.useRef(null),
+        frameRef = React.useRef(null),
+        outerRefRef = React.useRef(null),
+        // MINI widgets only: props.setVisible(false) hides the pill (config.json
+        // "visible": false starts hidden).
+        visibleState = React.useState(cfg.visible !== false),
+        visible = visibleState[0],
+        setVisibleState = visibleState[1],
+        visibleRef = React.useRef(visible),
+        isMini = wh.__isMini(cfg.size);
+      // The stock frame instance (its Options handler opens the settings menu), also
+      // handed on to the ref the hub passed (the MINI row's). Stable, so React does
+      // not detach and reattach the ref on every render. The MINI row counts an item
+      // as shown while that ref holds an instance, so a hidden MINI hands it null:
+      // the row then gives it no space and no focus.
+      outerRefRef.current = props.__whRef;
+      visibleRef.current = visible;
+      var forwardRef = React.useCallback(function (instance) {
+        var outer = outerRefRef.current;
+        if (typeof outer === 'function') outer(instance);
+        else if (outer && typeof outer === 'object') outer.current = instance;
+      }, []);
+      var setFrameRef = React.useCallback(function (instance) {
+        frameRef.current = instance;
+        forwardRef(visibleRef.current ? instance : null);
+      }, []);
+      React.useEffect(
+        function () {
+          if (isMini) forwardRef(visible ? frameRef.current : null);
+        },
+        [visible]
+      );
+      var setVisible = React.useCallback(function (next) {
+        next = !!next;
+        if (next === visibleRef.current) return;
+        setVisibleState(next);
+        if (!wh.__visLog) wh.__visLog = {};
+        if (!wh.__visLog[id + next]) {
+          wh.__visLog[id + next] = 1;
+          logLine('MINI ' + (next ? 'shown' : 'hidden') + ' by the widget', id);
+        }
+      }, []);
       // Per-tile controller: registered button handlers (hs) and Focusables (items).
       if (!controllerRef.current) {
         var newController = { id: id, hs: [], items: [], bump: rerender };
@@ -1261,6 +1302,8 @@
             size: size,
             width: dims.width,
             height: dims.height,
+            visible: isMini ? visible : undefined,
+            setVisible: isMini ? setVisible : undefined,
           })
         )
       );
@@ -1284,6 +1327,9 @@
         wh.OptionsMenuPS &&
         wh.MenuListItemPS
       );
+      // The stock frame draws the tile mat and owns the settings menu (Options). Without
+      // it (unknown firmware) the tile draws both itself.
+      var Frame = wh.__hubFrame();
       // Buttons some wh.onPressed handler asked for.
       var wanted = {};
       for (var wi = 0; wi < controller.hs.length; wi++) wanted[controller.hs[wi].b] = 1;
@@ -1363,7 +1409,19 @@
             return true;
           }
         } else if (key === 'Options' && hasSettings && focused) {
-          var menu = optionsMenuRef.current;
+          // The stock frame binds Options on its own view, which never has focus
+          // (the tile view does), so call its handler: it opens the frame's menu.
+          var frame = Frame ? frameRef.current : null;
+          var menu = frame ? null : optionsMenuRef.current;
+          if (frame && typeof frame.onOptionsKeyDown === 'function') {
+            frame.onOptionsKeyDown(event);
+            stopBubble(event, key);
+            if (!wh.__omLog) {
+              wh.__omLog = 1;
+              logLine('settings menu opened', id);
+            }
+            return true;
+          }
           if (menu && menu.open) {
             menu.open();
             stopBubble(event, key);
@@ -1405,7 +1463,11 @@
             focusable: focusable,
             name: id,
             focusCustomSettings: active ? wh.__LOCKED : undefined,
-            style: root.Object.assign(wh.__box(dims), { borderRadius: dims.borderRadius, overflow: 'hidden' }),
+            style: root.Object.assign(
+              wh.__box(dims),
+              { borderRadius: dims.borderRadius, overflow: 'hidden' },
+              Frame ? null : { backgroundColor: wh.StockTile.MAT_COLOR }
+            ),
             onFocus: function (e) {
               root.__wh_focusId = id;
               setFocused(true);
@@ -1561,29 +1623,36 @@
           return null;
         }
       }
-      var Frame = wh.__hubFrame();
+      // A hidden MINI stays mounted (so the widget can show itself again) in a
+      // transparent box taken out of the row's layout, out of focus. Overflow does not
+      // clip on the console, so opacity hides it. The element tree is the same either
+      // way, so hiding and showing never remounts the widget.
+      var hidden = isMini && !visible;
       if (Frame)
         return createElement(
           View,
-          null,
+          hidden ? { style: { position: 'absolute', opacity: 0, width: 0, height: 0 } } : null,
           createElement(
             ErrorBoundary,
             { wid: id },
             createElement(
               Frame,
               root.Object.assign({}, props, {
-                ref: props.__whRef,
+                ref: setFrameRef,
                 name: id,
                 id: id,
                 data: frameData,
                 Template: FrameTemplate,
                 templateFocusable: true,
                 templateProps: { __whMk: renderTileView },
-              })
+                // Menu rows are MenuListItemPS elements; each row applies its own change.
+                options: hasSettings ? wh.__buildOpts(cfg.settings, settings, setSetting) : undefined,
+                initialFocusOption: 0,
+              },
+              hidden ? { focusable: false } : null)
             )
           ),
-          renderOptionsMenu(),
-          renderKeyGuide()
+          hidden ? null : renderKeyGuide()
         );
       return createElement(
         View,
@@ -1624,11 +1693,10 @@
   };
 
   // --- Hub hand-off ----------------------------------------------------------------
-  // The patched bridge assigns the hub's WIDGET_MAP, editable-widget set and edit
-  // list tables (titles, icons, descriptions) to these globals. Setters installed
-  // by __install add our widgets the moment the hub provides each table.
+  // The patched bridge assigns the hub's WIDGET_MAP to __whWidgetMap (and its module
+  // require to __whRequire) while the hub builds that map, before the first render.
+  // The setter installed by __install registers our widgets at that moment.
   wh.__map = null;
-  wh.__editable = null;
   wh.__register = function () {
     var widgetMap = wh.__map;
     if (!widgetMap) {
@@ -1737,6 +1805,211 @@
       logLine('telemetry: filter failed: ' + errorText(e), 0, 1);
     }
   };
+  // Custom placements survive a boot without the payload. The hub keeps the saved
+  // layout in AsyncStorage 'widget:customTemplates' ({templateId: columns of widget
+  // ids}). Without the payload it loads our ids as empty (null) cells, and the next
+  // save (leaving Edit Widgets, a layout change) stores those nulls. So while the
+  // payload runs, every save of that key is mirrored to WH_LAYOUT_BACKUP, and when the
+  // hub reads the layout, our ids from the backup go back into the cells that are
+  // still empty. The read is wrapped, so the hub sees the restored layout before it
+  // first lays out the grid.
+  var HUB_LAYOUT_KEY = 'widget:customTemplates',
+    WH_LAYOUT_BACKUP = 'wh:customTemplates';
+  // Restore our grid widgets from backupJson into storedJson. A save without the
+  // payload keeps a null where one of our widgets shared a column with stock ones,
+  // and drops columns that held only ours (console-verified). So the saved columns
+  // are lined up with the stored ones first: a saved column holding only our
+  // widgets, all missing, comes back whole; every other one matches the next stored
+  // column (the editor keeps their order). Then each missing widget goes back into
+  // its cells if they are all still empty, or else into the first free run of cells
+  // of its height. Returns {json, count}, or null when nothing changes.
+  wh.__restoreLayout = function (storedJson, backupJson) {
+    var stored = root.JSON.parse(storedJson),
+      backup = root.JSON.parse(backupJson),
+      restored = 0,
+      isArray = root.Array.isArray;
+    if (!stored || typeof stored !== 'object' || !backup || typeof backup !== 'object') return null;
+    var ours = function (id) {
+      return typeof id === 'string' && root.__wh_order.indexOf(id) >= 0;
+    };
+    for (var key in stored) {
+      var columns = stored[key],
+        saved = backup[key];
+      if (!isArray(columns) || !isArray(saved)) continue;
+      var present = {};
+      for (var c = 0; c < columns.length; c++)
+        if (isArray(columns[c]))
+          for (var r = 0; r < columns[c].length; r++) if (columns[c][r]) present[columns[c][r]] = 1;
+      var missing = function (id) {
+        return ours(id) && !present[id];
+      };
+      // 1. Line up the columns: where[i] is the result column of saved column i.
+      var result = [],
+        where = [],
+        inserted = [],
+        next = 0;
+      for (var i = 0; i < saved.length; i++) {
+        var col = saved[i],
+          onlyOurs = isArray(col) && col.length > 0,
+          anyMissing = false;
+        for (var k = 0; onlyOurs && k < col.length; k++) {
+          if (col[k] != null && !ours(col[k])) onlyOurs = false;
+          if (missing(col[k])) anyMissing = true;
+        }
+        if (onlyOurs && anyMissing) {
+          where[i] = result.length;
+          inserted.push(result.length);
+          result.push(col.map(function () {
+            return null;
+          }));
+        } else if (next < columns.length) {
+          where[i] = result.length;
+          result.push(columns[next++]);
+        } else where[i] = -1;
+      }
+      while (next < columns.length) result.push(columns[next++]);
+      // 2. The cells each missing widget held, in result coordinates.
+      var spots = {},
+        order = [];
+      for (var i2 = 0; i2 < saved.length; i2++)
+        if (isArray(saved[i2]))
+          for (var r2 = 0; r2 < saved[i2].length; r2++) {
+            var id = saved[i2][r2];
+            if (!missing(id)) continue;
+            if (!spots[id]) {
+              spots[id] = [];
+              order.push(id);
+            }
+            spots[id].push([where[i2], r2]);
+          }
+      var free = function (cells) {
+        for (var q = 0; q < cells.length; q++) {
+          var column = cells[q][0] >= 0 ? result[cells[q][0]] : null;
+          if (!isArray(column) || cells[q][1] >= column.length || column[cells[q][1]] != null) return false;
+        }
+        return true;
+      };
+      var place = function (widgetId, cells) {
+        for (var q = 0; q < cells.length; q++) result[cells[q][0]][cells[q][1]] = widgetId;
+        restored++;
+      };
+      // Own cells first, so a widget never takes the cells of another one of ours.
+      var blocked = [];
+      for (var o = 0; o < order.length; o++) {
+        if (free(spots[order[o]])) place(order[o], spots[order[o]]);
+        else blocked.push(order[o]);
+      }
+      // Then the first free run of the same height, for widgets in one column.
+      for (var bi = 0; bi < blocked.length; bi++) {
+        var cellsOf = spots[blocked[bi]],
+          height = cellsOf.length,
+          oneColumn = true;
+        for (var h = 1; h < height; h++) if (cellsOf[h][0] !== cellsOf[0][0]) oneColumn = false;
+        if (!oneColumn) continue;
+        search: for (var rc = 0; rc < result.length; rc++) {
+          if (!isArray(result[rc])) continue;
+          for (var start = 0; start + height <= result[rc].length; start++) {
+            var run = [];
+            for (var z = 0; z < height; z++) run.push([rc, start + z]);
+            if (free(run)) {
+              place(blocked[bi], run);
+              break search;
+            }
+          }
+        }
+      }
+      // A reinserted column whose widgets could not come back is dropped again.
+      stored[key] = result.filter(function (column, index) {
+        if (inserted.indexOf(index) < 0) return true;
+        for (var q = 0; q < column.length; q++) if (column[q] != null) return true;
+        return false;
+      });
+    }
+    return restored ? { json: root.JSON.stringify(stored), count: restored } : null;
+  };
+  wh.__layoutBackup = function () {
+    var storage = vendor && vendor.AsyncStorage;
+    if (!storage || typeof storage.multiGet !== 'function' || typeof storage.setItem !== 'function') {
+      logLine('layout backup off: AsyncStorage not found', 0, 1);
+      return;
+    }
+    // A new widget revision runs the loader again; the wrappers stay installed.
+    if (storage.multiGet.__wh) return;
+    var multiGet = storage.multiGet,
+      setItem = storage.setItem,
+      removeItem = storage.removeItem;
+    try {
+      storage.setItem = function (key, value) {
+        var result = setItem.apply(this, arguments);
+        if (key === HUB_LAYOUT_KEY)
+          try {
+            root.Promise.resolve(setItem.call(storage, WH_LAYOUT_BACKUP, value)).then(function () {
+              if (!wh.__lbSaved) {
+                wh.__lbSaved = 1;
+                logLine('layout backup saved');
+              }
+            }, function () {});
+          } catch (e) {}
+        return result;
+      };
+      if (typeof removeItem === 'function')
+        storage.removeItem = function (key) {
+          var result = removeItem.apply(this, arguments);
+          // The user reset the layout: forget the backup too.
+          if (key === HUB_LAYOUT_KEY)
+            try {
+              root.Promise.resolve(removeItem.call(storage, WH_LAYOUT_BACKUP)).then(null, function () {});
+            } catch (e) {}
+          return result;
+        };
+      storage.multiGet = function (keys) {
+        var result = multiGet.apply(this, arguments);
+        if (
+          !root.Array.isArray(keys) ||
+          keys.indexOf(HUB_LAYOUT_KEY) < 0 ||
+          typeof arguments[1] === 'function' ||
+          !result ||
+          typeof result.then !== 'function'
+        )
+          return result;
+        return result.then(function (pairs) {
+          var at = -1;
+          for (var i = 0; root.Array.isArray(pairs) && i < pairs.length; i++)
+            if (pairs[i] && pairs[i][0] === HUB_LAYOUT_KEY) at = i;
+          var stored = at >= 0 ? pairs[at][1] : null;
+          if (!stored) return pairs;
+          return root.Promise.resolve(multiGet.call(storage, [WH_LAYOUT_BACKUP])).then(
+            function (backupPairs) {
+              var backup = backupPairs && backupPairs[0] && backupPairs[0][1];
+              try {
+                if (!backup) {
+                  // First run with this feature: start the backup from the saved layout.
+                  setItem.call(storage, WH_LAYOUT_BACKUP, stored);
+                  logLine('layout backup started from the saved layout');
+                  return pairs;
+                }
+                var change = wh.__restoreLayout(stored, backup);
+                if (change) {
+                  pairs[at] = [HUB_LAYOUT_KEY, change.json];
+                  logLine('layout: restored ' + change.count + ' custom widget placement(s) from the backup');
+                }
+              } catch (e) {
+                logLine('layout restore failed: ' + errorText(e), 0, 1);
+              }
+              return pairs;
+            },
+            function () {
+              return pairs;
+            }
+          );
+        });
+      };
+      storage.multiGet.__wh = 1;
+      logLine('layout backup on');
+    } catch (e) {
+      logLine('layout backup off: ' + errorText(e), 0, 1);
+    }
+  };
   // Drop our ids from the MINI registry (a new widget revision registers afresh).
   wh.__miniReset = function () {
     var ids = root.__wh_mini;
@@ -1752,58 +2025,85 @@
     root.__wh_mini = [];
     wh.__miniLogged = 0;
   };
-  // [global the bridge assigns, config field it is filled from]
-  wh.__metaKeys = [
-    ['__whTitles', 'title'],
-    ['__whIcons', 'iconId'],
-    ['__whDescs', 'description'],
+  // Edit Widgets list. The hub offers the ids in the widget-id module's EDITABLE
+  // table and reads each entry's title, icon and description from three tables
+  // keyed by widget id. All four are read when the list is built, so filling them
+  // when the hub runtime comes up (the __whWidgetMap setter) is early enough.
+  // [hub module name in __wh_hubmods, config field the table is filled from]
+  wh.__editFields = [
+    ['editTitles', 'title'],
+    ['editIcons', 'iconId'],
+    ['editDescs', 'description'],
   ];
-  wh.__meta = {};
-  wh.__metaFill = function (globalName, field) {
-    var table = wh.__meta[globalName];
-    if (!table || typeof table !== 'object') return;
-    var order = root.__wh_order;
-    for (var i = 0; i < order.length; i++) {
-      try {
-        var widgetCfg = root.__wh_cfgs[order[i]] || {};
-        var value = widgetCfg[field];
-        if (!value && field === 'title') value = order[i];
-        if (!value && field === 'iconId') value = 'app_welcome';
-        if (
-          field === 'iconId' &&
-          typeof value === 'string' &&
-          value.indexOf('wh:') === 0 &&
-          !wh.__iconPatched
-        )
-          value = widgetCfg.iconFallback || 'app_welcome';
-        table[order[i]] = value || '';
-      } catch (e) {
-        logLine('edit list ' + field + ' not set: ' + errorText(e), order[i]);
+  wh.__registerEditList = function () {
+    var hubRequire = root.__whRequire,
+      mods = root.__wh_hubmods || {},
+      order = root.__wh_order;
+    if (typeof hubRequire !== 'function' || !order.length) return;
+    try {
+      var widgetIds = mods.widgetIds ? hubRequire(mods.widgetIds) : null;
+      if (!widgetIds || !widgetIds.EDITABLE || typeof widgetIds.EDITABLE !== 'object')
+        throw new Error('widget id table not found on this firmware');
+      // The module's `default` is a copy of EDITABLE plus the non-editable ids;
+      // our ids go in both, like the stock editable ones.
+      var copy = widgetIds['default'];
+      for (var i = 0; i < order.length; i++) {
+        widgetIds.EDITABLE['__wh_' + order[i]] = order[i];
+        if (copy && typeof copy === 'object' && copy !== widgetIds.EDITABLE) copy['__wh_' + order[i]] = order[i];
+      }
+    } catch (e) {
+      if (!wh.__editErr) {
+        wh.__editErr = 1;
+        logLine('marking widgets editable failed (edit mode would drop them): ' + errorText(e), 0, 1);
       }
     }
-    if (!wh['__ml_' + globalName]) {
-      wh['__ml_' + globalName] = 1;
-      logLine('edit list ' + field + ' set for ' + order.length + ' widget(s)');
-    }
-  };
-  wh.__metaAll = function () {
-    var keys = wh.__metaKeys;
-    for (var i = 0; i < keys.length; i++) wh.__metaFill(keys[i][0], keys[i][1]);
-  };
-  // Turn the hand-off globals into accessors. Values assigned before the loader
-  // ran are re-assigned through the new setters.
-  wh.__install = function () {
-    var hookedGlobals = ['__whWidgetMap', '__whEditable'],
-      metaKeys = wh.__metaKeys,
-      previousValues = {};
-    for (var gi = 0; gi < metaKeys.length; gi++) hookedGlobals.push(metaKeys[gi][0]);
-    for (var gi = 0; gi < hookedGlobals.length; gi++) {
+    for (var f = 0; f < wh.__editFields.length; f++) {
+      var moduleName = wh.__editFields[f][0],
+        field = wh.__editFields[f][1],
+        table = null;
       try {
-        var descriptor = root.Object.getOwnPropertyDescriptor(root, hookedGlobals[gi]);
-        if (descriptor && 'value' in descriptor && descriptor.value)
-          previousValues[hookedGlobals[gi]] = descriptor.value;
+        var tableModule = mods[moduleName] ? hubRequire(mods[moduleName]) : null;
+        table = tableModule && tableModule['default'];
       } catch (e) {}
+      if (!table || typeof table !== 'object') {
+        if (!wh['__el_' + field]) {
+          wh['__el_' + field] = 1;
+          logLine('edit list ' + field + ' not set: ' + moduleName + ' not found on this firmware', 0, 1);
+        }
+        continue;
+      }
+      for (var j = 0; j < order.length; j++) {
+        try {
+          var widgetCfg = root.__wh_cfgs[order[j]] || {};
+          var value = widgetCfg[field];
+          if (!value && field === 'title') value = order[j];
+          if (!value && field === 'iconId') value = 'app_welcome';
+          if (
+            field === 'iconId' &&
+            typeof value === 'string' &&
+            value.indexOf('wh:') === 0 &&
+            !wh.__iconPatched
+          )
+            value = widgetCfg.iconFallback || 'app_welcome';
+          table[order[j]] = value || '';
+        } catch (e) {
+          logLine('edit list ' + field + ' not set: ' + errorText(e), order[j]);
+        }
+      }
+      if (!wh['__el_' + field]) {
+        wh['__el_' + field] = 1;
+        logLine('edit list ' + field + ' set for ' + order.length + ' widget(s)');
+      }
     }
+  };
+  // Turn the bridge's hand-off global into an accessor. A value assigned before the
+  // loader ran is re-assigned through the new setter.
+  wh.__install = function () {
+    var previousMap = null;
+    try {
+      var descriptor = root.Object.getOwnPropertyDescriptor(root, '__whWidgetMap');
+      if (descriptor && 'value' in descriptor && descriptor.value) previousMap = descriptor.value;
+    } catch (e) {}
     try {
       root.Object.defineProperty(root, '__whWidgetMap', {
         configurable: true,
@@ -1816,7 +2116,6 @@
             root.__wh_ishub = 1;
             try {
               if (wh.__hubInit) wh.__hubInit();
-              wh.__metaAll();
             } catch (e) {}
             wh.__errHook();
             logLine(
@@ -1832,47 +2131,13 @@
           } catch (e) {
             logLine('registering into WIDGET_MAP failed: ' + errorText(e), 0, 1);
           }
+          wh.__registerEditList();
+          wh.__layoutBackup();
           wh.__registerMini();
           wh.__hideTelemetry();
         },
       });
-      root.Object.defineProperty(root, '__whEditable', {
-        configurable: true,
-        get: function () {
-          return wh.__editable;
-        },
-        set: function (editable) {
-          wh.__editable = editable;
-          try {
-            var order = root.__wh_order;
-            for (var i = 0; i < order.length; i++) {
-              editable['__wh_' + order[i]] = order[i];
-            }
-          } catch (e) {
-            logLine('marking widgets editable failed (edit mode would drop them): ' + errorText(e));
-          }
-        },
-      });
-      var metaGlobals = wh.__metaKeys;
-      for (var mi = 0; mi < metaGlobals.length; mi++) {
-        (function (globalName, field) {
-          root.Object.defineProperty(root, globalName, {
-            configurable: true,
-            get: function () {
-              return wh.__meta[globalName];
-            },
-            set: function (table) {
-              wh.__meta[globalName] = table;
-              wh.__metaFill(globalName, field);
-            },
-          });
-        })(metaGlobals[mi][0], metaGlobals[mi][1]);
-      }
-      for (var name in previousValues) {
-        try {
-          root[name] = previousValues[name];
-        } catch (e) {}
-      }
+      if (previousMap) root.__whWidgetMap = previousMap;
     } catch (e) {
       logLine('installing registry hooks failed: ' + errorText(e), 0, 1);
     }
@@ -1880,7 +2145,6 @@
   // Called after the last widget section: register now, or poll for up to 8 s.
   wh.__flush = function () {
     wh.__install();
-    wh.__metaAll();
     if (wh.__register()) return;
     var attempts = 0;
     var timer = root.setInterval(function () {

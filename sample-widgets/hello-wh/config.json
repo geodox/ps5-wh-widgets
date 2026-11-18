@@ -3,5 +3,29 @@
   "title": "Hello Hub",
   "description": "A reference widget: a live clock built with the Welcome Hub SDK.",
   "iconId": "date_time",
-  "size": 1
+  "size": 1,
+  "settings": [
+    {
+      "id": "format",
+      "title": "Clock format",
+      "type": "choice",
+      "options": [
+        {
+          "value": "24h",
+          "label": "24-hour"
+        },
+        {
+          "value": "12h",
+          "label": "12-hour"
+        }
+      ],
+      "default": "24h"
+    },
+    {
+      "id": "seconds",
+      "title": "Show seconds",
+      "type": "toggle",
+      "default": true
+    }
+  ]
 }
