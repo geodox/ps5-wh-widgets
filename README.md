@@ -35,7 +35,7 @@ Two widgets ship with the project, as working examples and as the starting point
 | **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks, a timer and a settings menu (clock format, following the console's 12/24-hour setting by default; seconds). The smallest complete widget. |
 | **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. |
 | **Hello Mini** | A MINI widget: a pill with an icon and a live clock in the hub's MINI row, sized to its content like the stock ones. |
-| **Console Stats** | CPU and SoC temperature, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
+| **Console Stats** | CPU and SoC temperature, fan speed, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
 | **Payload Launcher** | Lists the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...); press X on one to open it in the console's browser. |
 
 Drop any of these folders into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).

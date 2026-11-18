@@ -46,6 +46,8 @@ int sceUserServiceGetForegroundUser(uint32_t*);
  * oversized in case a firmware writes more. */
 int sceKernelGetCpuTemperature(int*);
 int sceKernelGetSocSensorTemperature(int, int*);
+int sceKernelGetCurrentFanDuty(uint16_t*, uint64_t*);
+int sceKernelIccIsThermalAlert(int*);
 
 #define WH_ASSET_PORT 8098
 #define WH_ASSET_MAX  (1024*1024)
@@ -213,11 +215,12 @@ static void wh_notify_action(int c, char* q){
   wh_flog("assets", "notify: %.80s", text);
   wh_reply_json(c, 200, "{\"ok\":true}");
 }
-/* GET /__stats -> {cpuTemp, socTemp, uptime, storage[]} for the Console Stats widget.
- * Read-only; a field the console does not report is null. Memory is not reported:
- * the kernel refuses the vm/hw memory sysctls to the payload (ENOENT, by name and
- * by number). Fan duty is not reported either: sceKernelGetCurrentFanDuty(int*)
- * returns EINVAL, and its real argument shape is unknown. */
+/* GET /__stats -> {cpuTemp, socTemp, fan, thermalAlert, uptime, storage[]} for the
+ * Console Stats widget. Read-only; a field the console does not report is null.
+ * fan is the fan duty in percent: sceKernelGetCurrentFanDuty(u16 *duty, u64 *chassis)
+ * gives duty out of 1024 (both pointers are required). Memory is not reported: the
+ * FreeBSD memory sysctls do not exist for the payload, and Sony's own OIDs give only
+ * per-process budgets. */
 static void wh_json_int(char* b, size_t cap, size_t* o, const char* key, int ok, long long v){
   if (*o >= cap) return;
   int n = ok ? snprintf(b + *o, cap - *o, "\"%s\":%lld,", key, v) : snprintf(b + *o, cap - *o, "\"%s\":null,", key);
@@ -232,6 +235,12 @@ static void wh_stats_action(int c){
   wh_json_int(b, sizeof b, &o, "cpuTemp", ok, t[0]);
   memset(t, 0, sizeof t); ok = sceKernelGetSocSensorTemperature(0, t) == 0;
   wh_json_int(b, sizeof b, &o, "socTemp", ok, t[0]);
+  uint16_t duty = 0; uint64_t chassis = 0;
+  ok = sceKernelGetCurrentFanDuty(&duty, &chassis) == 0 && duty <= 1024;
+  wh_json_int(b, sizeof b, &o, "fan", ok, ok ? (duty * 100 + 512) / 1024 : 0);
+  int alert = 0;
+  ok = sceKernelIccIsThermalAlert(&alert) == 0;
+  wh_json_int(b, sizeof b, &o, "thermalAlert", ok, alert ? 1 : 0);
   struct timespec up;
   ok = clock_gettime(CLOCK_UPTIME, &up) == 0;
   wh_json_int(b, sizeof b, &o, "uptime", ok, ok ? (long long)up.tv_sec : 0);

@@ -222,11 +222,13 @@ validated once and passed on `props.settings`.
   characters other than newline are refused. 6 per minute, loopback only.
 * `GET /__stats` - console readings for the Console Stats widget, as JSON:
   `cpuTemp` and `socTemp` in °C (`sceKernelGetCpuTemperature`,
-  `sceKernelGetSocSensorTemperature(0)`), `uptime` in seconds, and `storage`: one
-  `{name, total, free}` (bytes) per mounted drive (`internal` = `/user`, `m2`,
-  `extended`, `usb0`..`usb3`). A reading the console refuses is `null`. Memory and
-  fan speed are not available to the payload (the memory sysctls return ENOENT;
-  `sceKernelGetCurrentFanDuty` returns EINVAL).
+  `sceKernelGetSocSensorTemperature(0)`), `fan` in percent
+  (`sceKernelGetCurrentFanDuty(u16 *duty, u64 *chassis)`, duty out of 1024),
+  `thermalAlert` 0 / 1 (`sceKernelIccIsThermalAlert`), `uptime` in seconds, and
+  `storage`: one `{name, total, free}` (bytes) per mounted drive (`internal` =
+  `/user`, `m2`, `extended`, `usb0`..`usb3`). A reading the console refuses is
+  `null`. Memory is not reported: the FreeBSD memory sysctls do not exist for the
+  payload, and Sony's own OIDs only give per-process budgets.
 * the log shim that appends widget lines to `wh.log`.
 
 ## Build chain

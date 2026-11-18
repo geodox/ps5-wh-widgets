@@ -1,7 +1,7 @@
 {
   "id": "console-stats",
   "title": "Console Stats",
-  "description": "Temperatures, storage and uptime of your console.",
+  "description": "Temperatures, fan speed, storage and uptime of your console.",
   "iconId": "ps5",
   "size": 1,
   "settings": [

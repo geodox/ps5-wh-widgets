@@ -223,6 +223,7 @@
       wh.MenuListItemPS = vendor.MenuListItemPS;
       wh.AlertDialogPS = vendor.AlertDialogPS;
       wh.TextInput = vendor.TextInput;
+      wh.Picker = vendor.Picker; // Picker.Item elements for MenuListItemPS.Dropdown items
       wh.ScrollView = vendor.ScrollView;
       wh.LayoutAnimation = vendor.LayoutAnimation;
       wh.findNodeHandle = vendor.findNodeHandle;
@@ -1259,6 +1260,56 @@
       return root.Promise.resolve(false);
     }
   };
+
+  // --- Lists ---------------------------------------------------------------------
+  // wh.List: the stock scrolling list (vendor ListViewPS over the native list) for
+  // pages. The native list owns scrolling and focus; rows bring their own focus
+  // target (a wh.MenuListItemPS cell, or a View with focusable: true), as in the
+  // hub's Settings screen.
+  //   data           array of rows (anything)
+  //   renderItem     (row, index) -> element
+  //   onFocusIndex   (index) -> void, when the focused row changes
+  //   initialIndex   row focused first
+  // Any other prop (style, itemMargin, ...) goes to ListViewPS. A ref gets the
+  // list's methods: setFocusIndex({itemIndex, animated}), scrollTo({firstVisibleItemIndex}).
+  // A row re-renders when it is a different value than before (rows are compared
+  // with !==), so pass plain data for long lists and build elements in renderItem.
+  var ListView = vendor && vendor.ListViewPS;
+  if (ListView && ListView.DataSource && React.forwardRef) {
+    var renderList = function (props, ref) {
+      var source = React.useMemo(function () {
+        return new ListView.DataSource({
+          rowHasChanged: function (a, b) {
+            return a !== b;
+          },
+        });
+      }, []);
+      var data = props.data || [],
+        initialIndex = props.initialIndex;
+      var dataSource = React.useMemo(
+        function () {
+          return source.cloneWithRows(data, undefined, initialIndex);
+        },
+        [data]
+      );
+      var listProps = {};
+      for (var key in props)
+        if (key !== 'data' && key !== 'renderItem' && key !== 'onFocusIndex' && key !== 'initialIndex')
+          listProps[key] = props[key];
+      listProps.ref = ref;
+      listProps.dataSource = dataSource;
+      listProps.renderRow = function (row, sectionId, rowId) {
+        return props.renderItem(row, +rowId);
+      };
+      if (!('rowItemFocusable' in listProps)) listProps.rowItemFocusable = false;
+      if (props.onFocusIndex)
+        listProps.onFocusItemChanged = function (e) {
+          props.onFocusIndex(e && e.itemIndex);
+        };
+      return createElement(ListView, listProps);
+    };
+    wh.List = React.forwardRef(renderList);
+  }
 
   // --- System sounds -------------------------------------------------------------
   // wh.playSound(name) plays a stock UI sound through vendor SystemSoundPS.playByID.

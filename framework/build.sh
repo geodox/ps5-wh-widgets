@@ -31,7 +31,7 @@ for d in "$BUILD"/fw*.delta; do echo "embedded $(basename "$d") = $(stat -c %s "
 rc=0
 ( cd "$BUILD"
   "$CC" -Wall -g -o wh_bridge.elf main.c util.c remote.c hookpoint.c \
-        prelude.c server.c install.c bridge.c embed.S deltas.S -lSceUserService 2>&1 | tail -15
+        prelude.c server.c install.c bridge.c embed.S deltas.S -lSceUserService -lkernel_sys 2>&1 | tail -15
   "$CC" -Wall -g -o wh_kill.elf wh_kill.c util.c remote.c 2>&1 | tail -15 )
 for e in wh_bridge.elf wh_kill.elf; do
   if [ -f "$BUILD/$e" ]; then cp "$BUILD/$e" "$SDK_ROOT/out/$e"; echo "OK -> out/$e ($(stat -c %s "$SDK_ROOT/out/$e") bytes)"

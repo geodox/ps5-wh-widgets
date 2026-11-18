@@ -8,7 +8,7 @@
       "description": "Custom native-backed widgets in the PS5 Welcome Hub (drop unzipped widgets into /data/wh-widgets/).",
       "version": "26.11.18 beta",
       "category": "Customization",
-      "checksum": "156629b67d357d0b211f59c42fe76e9de823b99e4e1eb9618808493883e777d4",
+      "checksum": "d9a48e47ecd1cda5c84c7dcce96cbba027535dc1354cd3d798b7ed28ea9b66d6",
       "author": "geodox"
     }
   ]

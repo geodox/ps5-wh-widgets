@@ -24,6 +24,7 @@
 | `getLocale()`, `useLocale()` | the console's language and date and time formats, see [Locale](#locale) |
 | `AlertDialogPS` | the stock alert dialog, see [Dialogs](#dialogs) |
 | `TextInput` | a text field with the system keyboard, for pages, see [pages](pages.md#text-input) |
+| `List`, `MenuListItemPS`, `Picker` | the stock scrolling list and its Settings-style rows, for pages, see [pages](pages.md#lists) |
 | `config` | your parsed `config.json` |
 
 `wh.IconPS.iconIds` is the console's list of valid stock icon ids; see

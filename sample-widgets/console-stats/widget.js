@@ -1,4 +1,4 @@
-// console-stats - temperatures, storage and uptime, read from the payload's
+// console-stats - temperatures, fan, storage and uptime, read from the payload's
 // /__stats endpoint. Reference for:
 //   props.hubVisible  polling stops while a page, Settings or the screensaver
 //                     covers the tiles
@@ -102,11 +102,14 @@
     var internal = drives.filter(function (d) { return d.name === 'internal'; })[0];
 
     var body = [
-      ce(wh.Title, { key: 't', iconId: cfg.iconId || 'ps5', badge: s.uptime != null ? 'Up ' + uptime(s.uptime) : null },
+      // The console's own thermal alert outranks the uptime badge.
+      ce(wh.Title, { key: 't', iconId: cfg.iconId || 'ps5',
+        badge: s.thermalAlert ? 'Thermal alert' : s.uptime != null ? 'Up ' + uptime(s.uptime) : null },
         cfg.title || 'Console Stats'),
       ce(View, { key: 'c', style: styles.cells },
         ce(Cell, { value: temp(s.cpuTemp, unit), caption: 'CPU', style: tempStyle(s.cpuTemp) }),
         ce(Cell, { value: temp(s.socTemp, unit), caption: 'SoC', style: tempStyle(s.socTemp) }),
+        ce(Cell, { value: s.fan == null ? '-' : s.fan + '%', caption: 'Fan' }),
         ce(Cell, { value: internal ? gb(internal.free) : '-', caption: 'Free' }))
     ];
     if (!stats && err) body.push(ce(Label, { key: 'e', style: styles.error }, 'Stats unavailable: ' + err));

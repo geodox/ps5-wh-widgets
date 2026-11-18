@@ -75,8 +75,74 @@ var styles = wh.StyleSheet.create({
 });
 ```
 
-Settings fills that box with `wh.MenuListItemPS` rows. These are the stock values,
-read from the hub's code; Hello Hub's page centers its content instead.
+Settings fills that box with a [list](#lists) of `wh.MenuListItemPS` rows. These
+are the stock values, read from the hub's code; Hello Hub's page centers its
+content instead.
+
+## Lists
+
+`wh.List` is the console's scrolling list, the one the Settings screen uses. The
+list scrolls and moves the focus by itself; each row brings its own focusable
+element, usually a `wh.MenuListItemPS` row.
+
+```js
+var ce = wh.React.createElement, M = wh.MenuListItemPS;
+var ROWS = ['Wi-Fi', 'Sound', 'Close'];
+
+function SettingsPage(props) {
+  var s = wh.React.useState(false), quiet = s[0], setQuiet = s[1];
+  var d = wh.React.useState('med'), level = d[0], setLevel = d[1];
+  // A row re-renders only when its value changes (!==): put what it shows in the row.
+  var rows = wh.React.useMemo(function () {
+    return [{ kind: 'switch', on: quiet }, { kind: 'level', value: level }, { kind: 'close' }];
+  }, [quiet, level]);
+  function renderItem(row, index) {
+    if (row.kind === 'switch')
+      return ce(M.Switch, { label: 'Quiet mode', value: row.on, onValueChange: setQuiet });
+    if (row.kind === 'level')
+      return ce(M.Dropdown, {
+        label: 'Level', value: row.value, onValueChange: setLevel,
+        items: [['Low', 'low'], ['Medium', 'med'], ['High', 'high']].map(function (x) {
+          return ce(wh.Picker.Item, { key: x[1], label: x[0], value: x[1] });
+        })
+      });
+    return ce(M.Button, { label: 'Close', description: 'Circle also closes', onPress: props.close });
+  }
+  return ce(wh.View, { style: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' } },
+    ce(wh.View, { style: { width: 1500, height: 918, marginTop: 162 } },
+      ce(wh.List, { data: rows, renderItem: renderItem, style: { flex: 1, width: '100%' } })));
+}
+```
+
+| `wh.List` prop | meaning |
+|---|---|
+| `data` | the rows, an array of anything |
+| `renderItem(row, index)` | returns the row's element |
+| `onFocusIndex(index)` | the focused row changed |
+| `initialIndex` | the row focused first |
+| `style`, `itemMargin`, ... | passed on to the stock list |
+
+A ref has `setFocusIndex({itemIndex, animated})` to move the focus and
+`scrollTo({firstVisibleItemIndex})` to scroll.
+
+Rows (`wh.MenuListItemPS`), each with `label` and an optional `description`:
+
+| row | own props |
+|---|---|
+| `Button` | `onPress` |
+| `Switch` | `value` (true / false), `onValueChange(value)` |
+| `Dropdown` | `items` (an array of `wh.Picker.Item` elements `{label, value}`), `value`, `onValueChange(value)` |
+| `Selectable` | `selected`, `onPress` |
+| `Slider` | `value`, `onValueChange(value)` (untested) |
+
+* Up and down (and the left stick) move between rows; the list scrolls with the
+  focus. Focus stops at the first and last rows: it does not wrap. L1 / R1 do
+  nothing.
+* A row re-renders only when its row value is a different value than before (`!==`).
+  Keep rows as plain data and build elements in `renderItem`, as above, so a long
+  list stays fast.
+* Console-verified on 13.20 with 50 rows: `Button`, `Switch`, `Dropdown`, focus
+  reporting, `setFocusIndex` and `scrollTo`.
 
 ## Text input
 
