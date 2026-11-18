@@ -195,6 +195,5 @@ function Cleaner(props) {
 | `buttons.positive`, `buttons.negative` | `{text, onPress}`; `negative` is optional |
 | `onRequestClose` | called when the user dismisses the dialog (Circle) |
 
-The dialog opens over the whole screen and takes focus. The buttons are
-console-verified from a tile; `onRequestClose` is the hub's own wiring and was not
-exercised separately.
+The dialog opens over the whole screen and takes focus. Console-verified from a
+tile: both buttons, and Circle through `onRequestClose`.
