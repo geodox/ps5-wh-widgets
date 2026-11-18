@@ -12,6 +12,7 @@ The hub is **React Native, not the web**. There is no DOM, no `div`, no CSS, no
 
 | page | what it covers |
 |---|---|
+| [Handoff: building a widget](handoff.md) | start here when handing widget work to a model: working order, hard rules, skeleton, test loop |
 | [Getting started](getting-started.md) | a minimal widget end to end, and how to deploy it |
 | [config.json](config.md) | id, title, icon, size, reserved ids |
 | [API reference](api.md) | the `wh` handle, primitives, hooks, storage, logging, launching, notifications, sounds, locale, dialogs |

@@ -4,6 +4,7 @@ The SDK documentation is split into [`docs/sdk/`](sdk/README.md). Start with the
 index:
 
 * [SDK overview](sdk/README.md)
+* [Handoff: building a widget](sdk/handoff.md)
 * [Getting started](sdk/getting-started.md)
 * [config.json](sdk/config.md)
 * [API reference](sdk/api.md)
