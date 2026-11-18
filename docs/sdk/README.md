@@ -18,8 +18,10 @@ The hub is **React Native, not the web**. There is no DOM, no `div`, no CSS, no
 | [Sizes and layout](sizes-and-layout.md) | `WidgetSize`, tile dimensions, XL tiles |
 | [Input and focus](input-and-focus.md) | focus, controller buttons, `wh.Focusable` |
 | [Settings](settings.md) | per-widget options and persistence |
+| [Full-screen pages](pages.md) | a page of the widget's own, opened over the hub |
 | [Style guide](style-guide.md) | stock look, type, spacing, colours |
 | [Glyphs and images](glyphs.md) | stock icons, image glyphs, asset URLs |
+| [Stock icon ids](icons.md) | every stock `iconId` |
 | [Troubleshooting](troubleshooting.md) | `wh.log`, common errors, reloading |
 | [Loader internals](loader-internals.md) | how the framework hooks the hub |
 
@@ -44,5 +46,5 @@ subfolder is one widget, named by its id:
   `import` / `require`.
 
 Two complete examples live in [`sample-widgets/`](../../sample-widgets/):
-`hello-wh` (minimal, reference for `wh.Focusable` and settings) and `payload-monitor`
+`hello-wh` (minimal, reference for `wh.Focusable`, settings and a full-screen page) and `payload-monitor`
 (polling, settings, image glyph).

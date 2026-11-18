@@ -198,6 +198,15 @@
       "fid": 20068,
       "confidence": 0.99,
       "evidence": "unique normalized match (88 insns); all numbers identical; anchors msgid_learn_new_features, msgid_show_ps_store"
+    },
+    {
+      "name": "mainNavigator",
+      "id_1320": 1068,
+      "fid_1320": 12589,
+      "id": 1068,
+      "fid": 12589,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (93 insns); all numbers identical; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
     }
   ]
 }

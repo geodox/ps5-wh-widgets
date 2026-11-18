@@ -32,7 +32,8 @@ the ids the hub itself passes to `IconPS`:
 
 Other ids seen in the hub UI: `app_welcome` (default), `ps_button`,
 `key_arrow_up`, `key_arrow_down`, `key_arrow_left`, `key_arrow_right`,
-`battery_full_charged`. Any id the stock `IconPS` accepts works.
+`battery_full_charged`. Any id the stock `IconPS` accepts works: [Stock icon ids](icons.md)
+lists all of them.
 
 ## 2. Your own image glyph
 

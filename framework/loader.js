@@ -221,6 +221,7 @@
       wh.KeyGuidePS = vendor.KeyGuidePS;
       wh.OptionsMenuPS = vendor.OptionsMenuPS;
       wh.MenuListItemPS = vendor.MenuListItemPS;
+      wh.AlertDialogPS = vendor.AlertDialogPS;
       wh.ScrollView = vendor.ScrollView;
       wh.LayoutAnimation = vendor.LayoutAnimation;
       wh.findNodeHandle = vendor.findNodeHandle;
@@ -949,11 +950,178 @@
   }
   wh._c = null;
 
+  // --- Widget storage ----------------------------------------------------------------
+  // props.storage: a small key/value store per widget, kept by the hub in the signed-in
+  // user's AsyncStorage under 'wh:data:<widget id>' as one JSON object. It is per user
+  // and survives reboots, also without the payload. get/set/remove return promises;
+  // values must be JSON. Writes run in call order (each one stores the whole object).
+  var WH_STORAGE_PREFIX = 'wh:data:';
+  wh.__stores = {};
+  wh.__storage = function (id) {
+    if (wh.__stores[id]) return wh.__stores[id];
+    var key = WH_STORAGE_PREFIX + id,
+      loaded = null,
+      queue = null;
+    var asyncStorage = function () {
+      var storage = vendor && vendor.AsyncStorage;
+      if (!storage || typeof storage.getItem !== 'function') throw new Error('AsyncStorage not found');
+      return storage;
+    };
+    var load = function () {
+      if (!loaded)
+        loaded = root.Promise.resolve()
+          .then(function () {
+            return asyncStorage().getItem(key);
+          })
+          .then(function (text) {
+            var data = text ? root.JSON.parse(text) : null;
+            return data && typeof data === 'object' && !root.Array.isArray(data) ? data : {};
+          })
+          .then(null, function (e) {
+            loaded = null;
+            throw e;
+          });
+      return loaded;
+    };
+    var write = function (change) {
+      // Wait for the previous write, failed or not, then apply this one.
+      queue = (queue || root.Promise.resolve())
+        .then(null, function () {})
+        .then(load)
+        .then(function (data) {
+          change(data);
+          return asyncStorage().setItem(key, root.JSON.stringify(data));
+        });
+      return queue.then(null, function (e) {
+        logLine('storage write failed: ' + errorText(e), id, 1);
+        throw e;
+      });
+    };
+    var store = {
+      get: function (name, fallback) {
+        return load().then(function (data) {
+          return name in data ? data[name] : fallback;
+        });
+      },
+      set: function (name, value) {
+        if (value === undefined) return store.remove(name);
+        root.JSON.stringify(value); // throws now for values JSON cannot store
+        return write(function (data) {
+          data[name] = value;
+        });
+      },
+      remove: function (name) {
+        return write(function (data) {
+          delete data[name];
+        });
+      },
+    };
+    return (wh.__stores[id] = store);
+  };
+
+  // --- Full-screen pages -----------------------------------------------------------
+  // A widget registers a page with wh.registerPage(Page) and opens it with
+  // props.openPage(params). The page is a route of the hub's main stack navigator,
+  // like Settings, so it slides in over the hub and Circle closes it through the
+  // stock back handling. The route table is closed (the router builds it once), so
+  // the loader wraps the router's methods in place to add one route, WH_PAGE_ROUTE,
+  // whose params name the widget.
+  var WH_PAGE_ROUTE = 'WhPage',
+    pageSeq = 0;
+  root.__wh_pages = root.__wh_pages || {};
+  function WhPageScreen(props) {
+    var navigation = props.navigation || {},
+      params = (navigation.state && navigation.state.params) || {},
+      id = params.__wh,
+      Page = root.__wh_pages[id],
+      pageParams = {};
+    for (var k in params) if (k !== '__wh') pageParams[k] = params[k];
+    var close = function () {
+      try {
+        navigation.goBack();
+      } catch (e) {
+        logLine('page close failed: ' + errorText(e), id);
+      }
+    };
+    var body = Page
+      ? createElement(
+          ErrorBoundary,
+          { wid: id },
+          createElement(Page, {
+            config: root.__wh_cfgs[id] || {},
+            params: pageParams,
+            close: close,
+            storage: wh.__storage(id),
+          })
+        )
+      : null;
+    return createElement(
+      View,
+      { style: { flex: 1, backgroundColor: wh.StockTile.MAT_COLOR } },
+      FocusLayer ? createElement(FocusLayer, { name: 'wh-page:' + id, style: { flex: 1 } }, body) : body
+    );
+  }
+  // Add WH_PAGE_ROUTE to the main navigator's router, once. False when it is missing.
+  wh.__pageRoute = function () {
+    if (wh.__pr !== undefined) return wh.__pr;
+    wh.__pr = false;
+    try {
+      var hubRequire = root.__whRequire,
+        id = (root.__wh_hubmods || {}).mainNavigator,
+        navigator = typeof hubRequire === 'function' && id ? hubRequire(id) : null,
+        router = navigator && navigator['default'] && navigator['default'].router;
+      if (!router || typeof router.getStateForAction !== 'function' || typeof router.getComponentForRouteName !== 'function')
+        throw new Error('main navigator not found on this firmware');
+      var getState = router.getStateForAction,
+        getComponent = router.getComponentForRouteName,
+        getComponentForState = router.getComponentForState,
+        getOptions = router.getScreenOptions;
+      var top = function (state) {
+        return state && state.routes ? state.routes[state.index] : null;
+      };
+      var isPage = function (route) {
+        return !!route && route.routeName === WH_PAGE_ROUTE;
+      };
+      router.getComponentForRouteName = function (name) {
+        return name === WH_PAGE_ROUTE ? WhPageScreen : getComponent.apply(this, arguments);
+      };
+      if (typeof getComponentForState === 'function')
+        router.getComponentForState = function (state) {
+          return isPage(top(state)) ? WhPageScreen : getComponentForState.apply(this, arguments);
+        };
+      if (typeof getOptions === 'function')
+        router.getScreenOptions = function (navigation) {
+          return navigation && isPage(navigation.state) ? {} : getOptions.apply(this, arguments);
+        };
+      router.getStateForAction = function (action, state) {
+        if (action && action.type === 'Navigation/NAVIGATE' && action.routeName === WH_PAGE_ROUTE && state && state.routes) {
+          var route = { key: 'wh-page-' + ++pageSeq, routeName: WH_PAGE_ROUTE, params: action.params || {} };
+          var pushed = root.Object.assign({}, state, { routes: state.routes.concat([route]), index: state.routes.length });
+          if ('isTransitioning' in state) pushed.isTransitioning = true;
+          logLine('page opened', route.params.__wh);
+          return pushed;
+        }
+        var next = getState.apply(this, arguments);
+        if (isPage(top(state)) && next && !isPage(top(next))) logLine('page closed', top(state).params.__wh);
+        return next;
+      };
+      wh.__pr = true;
+      logLine('pages: route ' + WH_PAGE_ROUTE + ' added to the main navigator');
+    } catch (e) {
+      logLine('pages unavailable: ' + errorText(e), 0, 1);
+    }
+    return wh.__pr;
+  };
+
   // --- Widget registration -------------------------------------------------------
   // Each widget section in the prelude runs: __begin(cfg, rawConfigJson), then the
   // widget.js body (which calls wh.register), then __end(). __fail records a throw.
   wh.register = function (Component) {
     wh._c = Component;
+  };
+  // The widget's full-screen page; the widget opens it with props.openPage(params).
+  wh.registerPage = function (Page) {
+    wh._p = Page;
   };
   wh.log = function (message) {
     logLine(message);
@@ -965,6 +1133,29 @@
   };
   // Ask ShellUI to launch a URI (an app, a store page, ...) through the payload's
   // /__launch endpoint. Resolves true once the launch was accepted, else false.
+  // Show a system notification (the toast at the top right) with `text`. Resolves to
+  // true once the payload sent it. Plain text, at most 256 bytes, newlines allowed.
+  wh.notify = function (text) {
+    if (typeof text !== 'string' || !text) {
+      logLine('notify ignored: text must be a non-empty string');
+      return root.Promise.resolve(false);
+    }
+    try {
+      return root.fetch('http://127.0.0.1:8098/__notify?text=' + root.encodeURIComponent(text)).then(
+        function (r) {
+          if (!r.ok) logLine('notify failed (HTTP ' + r.status + ')');
+          return !!r.ok;
+        },
+        function (e) {
+          logLine('notify failed: ' + errorText(e));
+          return false;
+        }
+      );
+    } catch (e) {
+      logLine('notify failed: ' + errorText(e));
+      return root.Promise.resolve(false);
+    }
+  };
   wh.launch = function (uri) {
     if (typeof uri !== 'string' || !uri) {
       logLine('launch ignored: uri must be a non-empty string');
@@ -1079,10 +1270,12 @@
     cfg.__settingDefaults = normalized.values;
     wh.config = cfg;
     wh._c = null;
+    wh._p = null;
     wh.__ferr = null;
   };
   wh.__fail = function (e) {
     wh._c = null;
+    wh._p = null;
     wh.__ferr = e;
   };
   // Wrap the registered component in a hub tile and record it under its id.
@@ -1108,7 +1301,9 @@
     }
     // The component the hub mounts for this widget id. Props come from the hub:
     // size, editing, focusable, onFocus, onPressEdit, ...
-    function WidgetTile(props) {
+    // `context` is the legacy context: the hub's screens provide `navigation` to
+    // everything they render, the grid and our tiles included (WidgetTile.contextTypes).
+    function WidgetTile(props, context) {
       props = props || {};
       var focusState = React.useState(false),
         focused = focusState[0],
@@ -1282,6 +1477,16 @@
         },
         [settings]
       );
+      function openPage(params) {
+        var navigation = context && context.navigation;
+        if (!navigation || typeof navigation.navigate !== 'function') {
+          logLine('page not opened: no navigation here', id, 1);
+          return false;
+        }
+        if (!wh.__pageRoute()) return false;
+        navigation.navigate(WH_PAGE_ROUTE, root.Object.assign({}, params, { __wh: id }));
+        return true;
+      }
       var size = props.size != null ? props.size : cfg.size != null ? cfg.size : 1,
         dims = wh.dims(size),
         width = dims.width;
@@ -1304,6 +1509,8 @@
             height: dims.height,
             visible: isMini ? visible : undefined,
             setVisible: isMini ? setVisible : undefined,
+            openPage: root.__wh_pages[id] ? openPage : undefined,
+            storage: wh.__storage(id),
           })
         )
       );
@@ -1676,6 +1883,12 @@
       id
     );
     WidgetTile.__whId = id;
+    WidgetTile.contextTypes = {
+      navigation: function () {
+        return null;
+      },
+    };
+    root.__wh_pages[id] = wh._p || null;
     root.__wh_cfgs[id] = cfg;
     if (wh.__isMini(cfg.size) && React.forwardRef) {
       // The MINI row hands each item a callback ref and counts an item as shown

@@ -290,6 +290,9 @@ const MODULES = [
   { name: 'editTitles', id_1320: 383, need: ['msgid_discover_tips', 'msgid_playstation_store'] },
   { name: 'editIcons', id_1320: 1938, need: ['from_ps', 'trending'] },
   { name: 'editDescs', id_1320: 1939, need: ['msgid_learn_new_features', 'msgid_show_ps_store'] },
+  // The hub's main stack navigator (StackNavigatorPS of Root, Settings, ...). The
+  // loader wraps its router's methods in place to add the WhPage route.
+  { name: 'mainNavigator', id_1320: 1068, need: ['accessibilitySpeakOnSceneChangeEnabled', 'Root', 'ScreenSaverSettings'] },
 ];
 
 // Every string operand in fid and the closures it creates.

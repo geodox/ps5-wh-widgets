@@ -10,7 +10,7 @@
  *   - image types only (.png .jpg .jpeg), <= 1 MB; no listings, no other methods
  *
  * It also carries the loader's log/settings endpoints (/__log, /__wget, /__wset),
- * app launch (/__launch) and keeps the hook alive: if ShellUI respawns,
+ * app launch (/__launch), widget notifications (/__notify) and keeps the hook alive: if ShellUI respawns,
  * it reinstalls before the next focus, it rebuilds the prelude when the widget
  * sources change, and it retires when a newer install bumps the generation file. */
 #include <errno.h>
@@ -173,6 +173,39 @@ static void wh_launch_action(int c, char* q){
   if (rc) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"launch failed\"}"); return; }
   wh_reply_json(c, 200, "{\"ok\":true}");
 }
+/* GET /__notify?text=<url-encoded UTF-8> -> a system notification. Control characters
+ * other than newline are refused; at most WH_NOTIFY_MAX bytes after decoding. */
+#define WH_NOTIFY_MAX 256
+static int wh_text_decode(const char* in, char* out, size_t cap){
+  size_t o = 0;
+  for (; *in && *in != '&'; in++) {
+    int c = (unsigned char)*in;
+    if (c == '%') {
+      if (wh_hexv(in[1]) < 0 || wh_hexv(in[2]) < 0) return -1;
+      c = wh_hexv(in[1]) * 16 + wh_hexv(in[2]); in += 2;
+    }
+    if ((c < ' ' && c != '\n') || c == 127 || o + 1 >= cap) return -1;
+    out[o++] = (char)c;
+  }
+  out[o] = 0;
+  return o ? 0 : -1;
+}
+static void wh_notify_action(int c, char* q){
+  static time_t win = 0; static int cnt = 0;
+  time_t now = time(0);
+  if (now - win >= 60) { win = now; cnt = 0; }
+  if (++cnt > 6) { wh_reply_json(c, 429, "{\"ok\":false,\"error\":\"rate-limited\"}"); return; }
+  char text[WH_NOTIFY_MAX + 1] = "";
+  int bad = 1;
+  for (char* t = q; t && *t; ) {
+    if (!strncmp(t, "text=", 5)) bad = wh_text_decode(t + 5, text, sizeof text);
+    t = strchr(t, '&'); if (t) t++;
+  }
+  if (bad) { wh_flog("assets", "notify refused: bad text"); wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"bad text\"}"); return; }
+  notify("%s", text);
+  wh_flog("assets", "notify: %.80s", text);
+  wh_reply_json(c, 200, "{\"ok\":true}");
+}
 static char g_fseen[16][72]; static int g_fns = 0;   /* widgets already notified this hub load */
 static void wh_fail_notify(const char* w, const char* m){
   char (*seen)[72] = g_fseen; int ns = g_fns;
@@ -274,6 +307,7 @@ static void wh_asset_conn(int c){
   if (!strncmp(path, "__wget?", 7)) { wh_settings_get(c, path + 7); return; }
   if (!strncmp(path, "__wset?", 7)) { wh_settings_set(c, path + 7); return; }
   if (!strncmp(path, "__launch?", 9)) { wh_launch_action(c, path + 9); return; }
+  if (!strncmp(path, "__notify?", 9)) { wh_notify_action(c, path + 9); return; }
   char shown[100]; snprintf(shown, sizeof shown, "%s", path);   /* for refused-request log lines */
   char* q = strchr(path, '?');  if (q) *q = 0;
   char* sl = strchr(path, '/');

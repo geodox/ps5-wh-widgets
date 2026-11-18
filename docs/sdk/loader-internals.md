@@ -144,6 +144,21 @@ backup.
 `wh.log`: `layout backup on`, `layout: restored N custom widget placement(s) from the
 backup`.
 
+**Widget storage.** `props.storage` is a per-widget JSON object in the hub's
+AsyncStorage (the signed-in user's database) under `wh:data:<id>`. It is loaded once
+per hub runtime; writes are queued and each one stores the whole object.
+
+**Full-screen pages.** The hub has one stack navigator (`mainNavigator`) for its
+screens (`Root`, `Settings`, `Background`, ...). Its router builds the route table
+once and rejects unknown names, but every caller looks its methods up per call. On the
+first `openPage`, the loader wraps `getStateForAction` (a NAVIGATE to `WhPage` pushes
+a route whose params name the widget), `getComponentForRouteName`,
+`getComponentForState` and `getScreenOptions`. Back and the transition stay stock:
+Circle pops the route by key, and at the top level Circle reaches lock A as before.
+Tiles get `navigation` from the legacy context every hub screen provides
+(`WidgetTile.contextTypes`). `wh.log`: `pages: route WhPage added to the main
+navigator`, `page opened`, `page closed`.
+
 **Telemetry.** At startup the hub reports the placed widget layout. Its widget
 telemetry module (`widgetTelemetry`) sends an unknown id raw in
 `widgetConfiguration(layout)`, and as `-1` in `widgetEncodedLayout(layout)`. Both
@@ -183,6 +198,9 @@ validated once and passed on `props.settings`.
   URI via `libSceShellUIUtil.sprx` (`sceShellUIUtilLaunchByUri`). Any URI with a
   scheme; refused if it is not fully decodable, has spaces or control characters,
   or is 512 characters or longer. 6 launches per minute, loopback only.
+* `GET /__notify?text=<url-encoded UTF-8>` - `wh.notify`: a system notification
+  (`sceKernelSendNotificationRequest`). At most 256 bytes after decoding; control
+  characters other than newline are refused. 6 per minute, loopback only.
 * the log shim that appends widget lines to `wh.log`.
 
 ## Build chain

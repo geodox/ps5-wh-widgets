@@ -198,6 +198,15 @@
       "fid": 20639,
       "confidence": 0.97,
       "evidence": "aligned match sim=0.978 (runner-up F5382 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:eaa07f0556612c86 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; anchors msgid_learn_new_features, msgid_show_ps_store"
+    },
+    {
+      "name": "mainNavigator",
+      "id_1320": 1068,
+      "fid_1320": 12589,
+      "id": 1291,
+      "fid": 14897,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (93 insns); numbers moved: LoadConstUInt8@65 arg1 58->51, LoadConstUInt8@85 arg1 86->78, LoadConstInt@146 arg1 764->793, LoadConstInt@194 arg1 421->445, LoadConstInt@210 arg1 2100->2166, LoadConstInt@226 arg1 785->814, LoadConstInt@264 arg1 2110->2176, LoadConstInt@280 arg1 2115->2181, LoadConstInt@296 arg1 276->286; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
     }
   ]
 }
