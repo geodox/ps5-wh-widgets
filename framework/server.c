@@ -10,7 +10,7 @@
  *   - image types only (.png .jpg .jpeg), <= 1 MB; no listings, no other methods
  *
  * It also carries the loader's log/settings endpoints (/__log, /__wget, /__wset),
- * app launch (/__launch), widget notifications (/__notify) and keeps the hook alive: if ShellUI respawns,
+ * app launch (/__launch), widget notifications (/__notify), console stats (/__stats) and keeps the hook alive: if ShellUI respawns,
  * it reinstalls before the next focus, it rebuilds the prelude when the widget
  * sources change, and it retires when a newer install bumps the generation file. */
 #include <errno.h>
@@ -24,6 +24,9 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/mount.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <poll.h>
@@ -39,6 +42,10 @@
 int sceKernelLoadStartModule(const char*, size_t, const void*, uint32_t, void*, uint32_t*);
 int sceUserServiceInitialize(void*);
 int sceUserServiceGetForegroundUser(uint32_t*);
+/* Console sensors (see wh_stats_action). Each writes an int; the out buffers are
+ * oversized in case a firmware writes more. */
+int sceKernelGetCpuTemperature(int*);
+int sceKernelGetSocSensorTemperature(int, int*);
 
 #define WH_ASSET_PORT 8098
 #define WH_ASSET_MAX  (1024*1024)
@@ -206,6 +213,47 @@ static void wh_notify_action(int c, char* q){
   wh_flog("assets", "notify: %.80s", text);
   wh_reply_json(c, 200, "{\"ok\":true}");
 }
+/* GET /__stats -> {cpuTemp, socTemp, uptime, storage[]} for the Console Stats widget.
+ * Read-only; a field the console does not report is null. Memory is not reported:
+ * the kernel refuses the vm/hw memory sysctls to the payload (ENOENT, by name and
+ * by number). Fan duty is not reported either: sceKernelGetCurrentFanDuty(int*)
+ * returns EINVAL, and its real argument shape is unknown. */
+static void wh_json_int(char* b, size_t cap, size_t* o, const char* key, int ok, long long v){
+  if (*o >= cap) return;
+  int n = ok ? snprintf(b + *o, cap - *o, "\"%s\":%lld,", key, v) : snprintf(b + *o, cap - *o, "\"%s\":null,", key);
+  if (n > 0) *o += (size_t)n;
+}
+static void wh_stats_action(int c){
+  static int logged = 0;
+  char b[1024]; size_t o = 0;
+  int t[16];                                   /* oversized: one int is expected */
+  b[o++] = '{';
+  memset(t, 0, sizeof t); int ok = sceKernelGetCpuTemperature(t) == 0;
+  wh_json_int(b, sizeof b, &o, "cpuTemp", ok, t[0]);
+  memset(t, 0, sizeof t); ok = sceKernelGetSocSensorTemperature(0, t) == 0;
+  wh_json_int(b, sizeof b, &o, "socTemp", ok, t[0]);
+  struct timespec up;
+  ok = clock_gettime(CLOCK_UPTIME, &up) == 0;
+  wh_json_int(b, sizeof b, &o, "uptime", ok, ok ? (long long)up.tv_sec : 0);
+  /* Drives: the internal user partition and any extended / USB storage mounted. */
+  static const char* const drives[][2] = {
+    {"internal", "/user"}, {"m2", "/mnt/ext1"}, {"extended", "/mnt/ext0"},
+    {"usb0", "/mnt/usb0"}, {"usb1", "/mnt/usb1"}, {"usb2", "/mnt/usb2"}, {"usb3", "/mnt/usb3"},
+  };
+  o += (size_t)snprintf(b + o, sizeof b - o, "\"storage\":[");
+  int first = 1;
+  for (size_t i = 0; i < sizeof drives / sizeof drives[0] && o < sizeof b - 160; i++) {
+    struct statfs fs;
+    if (statfs(drives[i][1], &fs) || strcmp(fs.f_mntonname, drives[i][1]) || !fs.f_blocks) continue;  /* not its own mount */
+    o += (size_t)snprintf(b + o, sizeof b - o, "%s{\"name\":\"%s\",\"total\":%llu,\"free\":%llu}", first ? "" : ",",
+                          drives[i][0], (unsigned long long)fs.f_blocks * fs.f_bsize, (unsigned long long)fs.f_bavail * fs.f_bsize);
+    first = 0;
+  }
+  if (o < sizeof b - 3) { b[o++] = ']'; b[o++] = '}'; }
+  b[o < sizeof b ? o : sizeof b - 1] = 0;
+  if (!logged) { logged = 1; wh_flog("assets", "stats: %.400s", b); }
+  wh_reply_json(c, 200, b);
+}
 static char g_fseen[16][72]; static int g_fns = 0;   /* widgets already notified this hub load */
 static void wh_fail_notify(const char* w, const char* m){
   char (*seen)[72] = g_fseen; int ns = g_fns;
@@ -308,6 +356,7 @@ static void wh_asset_conn(int c){
   if (!strncmp(path, "__wset?", 7)) { wh_settings_set(c, path + 7); return; }
   if (!strncmp(path, "__launch?", 9)) { wh_launch_action(c, path + 9); return; }
   if (!strncmp(path, "__notify?", 9)) { wh_notify_action(c, path + 9); return; }
+  if (!strcmp(path, "__stats") || !strncmp(path, "__stats?", 8)) { wh_stats_action(c); return; }
   char shown[100]; snprintf(shown, sizeof shown, "%s", path);   /* for refused-request log lines */
   char* q = strchr(path, '?');  if (q) *q = 0;
   char* sl = strchr(path, '/');

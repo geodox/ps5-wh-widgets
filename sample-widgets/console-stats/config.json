@@ -1,0 +1,15 @@
+{
+  "id": "console-stats",
+  "title": "Console Stats",
+  "description": "Temperatures, storage and uptime of your console.",
+  "iconId": "ps5",
+  "size": 1,
+  "settings": [
+    { "id": "unit", "title": "Temperature", "type": "choice",
+      "options": [ { "value": "c", "label": "Celsius" }, { "value": "f", "label": "Fahrenheit" } ],
+      "default": "c" },
+    { "id": "refresh", "title": "Refresh every", "type": "choice",
+      "options": [ { "value": "2", "label": "2 seconds" }, { "value": "5", "label": "5 seconds" }, { "value": "10", "label": "10 seconds" } ],
+      "default": "5" }
+  ]
+}

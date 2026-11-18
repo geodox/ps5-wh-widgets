@@ -220,6 +220,13 @@ validated once and passed on `props.settings`.
 * `GET /__notify?text=<url-encoded UTF-8>` - `wh.notify`: a system notification
   (`sceKernelSendNotificationRequest`). At most 256 bytes after decoding; control
   characters other than newline are refused. 6 per minute, loopback only.
+* `GET /__stats` - console readings for the Console Stats widget, as JSON:
+  `cpuTemp` and `socTemp` in °C (`sceKernelGetCpuTemperature`,
+  `sceKernelGetSocSensorTemperature(0)`), `uptime` in seconds, and `storage`: one
+  `{name, total, free}` (bytes) per mounted drive (`internal` = `/user`, `m2`,
+  `extended`, `usb0`..`usb3`). A reading the console refuses is `null`. Memory and
+  fan speed are not available to the payload (the memory sysctls return ENOENT;
+  `sceKernelGetCurrentFanDuty` returns EINVAL).
 * the log shim that appends widget lines to `wh.log`.
 
 ## Build chain
