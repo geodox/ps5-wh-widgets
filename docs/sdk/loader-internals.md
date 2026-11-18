@@ -159,6 +159,25 @@ Tiles get `navigation` from the legacy context every hub screen provides
 (`WidgetTile.contextTypes`). `wh.log`: `pages: route WhPage added to the main
 navigator`, `page opened`, `page closed`.
 
+**Hub state.** `props.hubVisible` comes from the `mainNavigator` router wrap (the
+pages wrap above, installed on the first tile mount): the tiles are visible while
+the stack's index is 0 (`Root` on top). `props.hubFocused` is `AppState` not
+`inactive` / `background` (the Control Center makes it `inactive`) and, embedded,
+`HubAppContext.isHubFocused` from the `hubSdk` module (false on the game row).
+Console-verified on 13.20: a game stops the hub runtime (no unmount, timers
+stop) and Home starts a new one on return. `wh.log`: `hub tiles covered by
+<route>`, `hub tiles shown`, `hub app inactive`, `hub app active`.
+
+**Sounds.** `wh.playSound(name)` maps a curated name to a `psfx_*` id and calls
+vendor `SystemSoundPS.playByID(id)`, only when the id is in `SystemSoundPS.SoundIds`
+on this firmware, at most once every 100 ms.
+
+**Locale.** At hub start the loader requires `dateFormats` (the hub's wrapper over
+the system registry), reads `getFormats()` (`{dateFormat, timeFormat}`) and
+registers `registerDateTimeFormatChangeHandler` for later changes. The language is
+`I18nPS.getCurrentLocale()`, read on each `wh.getLocale()`. `wh.log`: `locale: 12 h,
+MM/DD/YYYY`.
+
 **Telemetry.** At startup the hub reports the placed widget layout. Its widget
 telemetry module (`widgetTelemetry`) sends an unknown id raw in
 `widgetConfiguration(layout)`, and as `-1` in `widgetEncodedLayout(layout)`. Both

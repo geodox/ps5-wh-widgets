@@ -207,6 +207,24 @@
       "fid": 14897,
       "confidence": 0.99,
       "evidence": "unique normalized match (93 insns); numbers moved: LoadConstUInt8@65 arg1 58->51, LoadConstUInt8@85 arg1 86->78, LoadConstInt@146 arg1 764->793, LoadConstInt@194 arg1 421->445, LoadConstInt@210 arg1 2100->2166, LoadConstInt@226 arg1 785->814, LoadConstInt@264 arg1 2110->2176, LoadConstInt@280 arg1 2115->2181, LoadConstInt@296 arg1 276->286; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
+    },
+    {
+      "name": "hubSdk",
+      "id_1320": 32,
+      "fid_1320": 345,
+      "id": 32,
+      "fid": 346,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (74 insns); all numbers identical; anchors HubAppContext, HubAppContextProvider, isFromHubSDK, useHubConfig"
+    },
+    {
+      "name": "dateFormats",
+      "id_1320": 319,
+      "fid_1320": 3101,
+      "id": 307,
+      "fid": 2988,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (59 insns); numbers moved: LoadConstUInt8@151 arg1 61->62, LoadConstUInt8@175 arg1 44->45; anchors getFormats, registerDateTimeFormatChangeHandler, dateTimeFormatChanged, timeFormat"
     }
   ]
 }

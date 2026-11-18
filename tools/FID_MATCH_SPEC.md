@@ -143,6 +143,8 @@ per firmware. The map's `modules` array gives each one's id on the target:
 | `editIcons` | 1938 | Edit Widgets list icons (`IconPS` ids): `default`, keyed by widget id |
 | `editDescs` | 1939 | Edit Widgets list descriptions: `default`, keyed by widget id |
 | `mainNavigator` | 1068 | main stack navigator: `default.router` (the loader adds the `WhPage` route) |
+| `hubSdk` | 32 | Hub SDK index: `HubAppContext` (`isHubFocused`, `isStandaloneMode`; the loader's `props.hubFocused`) |
+| `dateFormats` | 319 | date and time format settings: `getFormats()`, `registerDateTimeFormatChangeHandler(fn)` (`wh.getLocale` / `wh.useLocale`) |
 
 Ids come from the global code's module table (`CreateClosure r, F; PutOwnByIndex arr, r, <id>`);
 the factory function is matched like any target. An entry may list `need` strings

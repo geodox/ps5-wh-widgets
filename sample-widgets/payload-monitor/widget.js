@@ -34,8 +34,12 @@
     var err = errState[0];
     var setErr = errState[1];
     var mounted = useRef(true);
+    // Poll only while the tiles can be seen: a page, Settings or the screensaver on
+    // top sets props.hubVisible to false (older loaders leave it undefined).
+    var hubVisible = props.hubVisible !== false;
 
     useEffect(function () {
+      if (!hubVisible) return;
       mounted.current = true;
       function load() {
         try {
@@ -57,7 +61,7 @@
       load();
       var id = setInterval(load, 3000);
       return function () { mounted.current = false; clearInterval(id); };
-    }, []);
+    }, [hubVisible]);
 
     // Tile size comes from the grid (L1/R1 resize in edit mode): fill the given
     // height and show as many rows as fit (padding 32 + header 38, ~30px per row).

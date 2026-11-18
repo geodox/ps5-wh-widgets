@@ -14,7 +14,7 @@ The hub is **React Native, not the web**. There is no DOM, no `div`, no CSS, no
 |---|---|
 | [Getting started](getting-started.md) | a minimal widget end to end, and how to deploy it |
 | [config.json](config.md) | id, title, icon, size, reserved ids |
-| [API reference](api.md) | the `wh` handle, primitives, hooks, logging |
+| [API reference](api.md) | the `wh` handle, primitives, hooks, storage, logging, launching, notifications, sounds, locale, dialogs |
 | [Sizes and layout](sizes-and-layout.md) | `WidgetSize`, tile dimensions, XL tiles |
 | [Input and focus](input-and-focus.md) | focus, controller buttons, `wh.Focusable` |
 | [Settings](settings.md) | per-widget options and persistence |

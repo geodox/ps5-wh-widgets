@@ -7,6 +7,7 @@
 //   settings      config.json "settings": Options opens the stock settings menu,
 //                 values arrive on props.settings and persist across reboots.
 //                 Here they are the clock's defaults; the chips flip them for now.
+//   wh.useLocale  the console's own 12/24-hour setting ("Console setting" format)
 //   pages         wh.registerPage: the "Full screen" chip calls props.openPage(),
 //                 which slides a full-screen page in over the hub; Circle closes it
 //   props         config / settings / focused / editing / size / width / height
@@ -69,7 +70,12 @@
   function HelloWH(props) {
     var now = useNow();
     var settings = props.settings || {};
-    var default12 = settings.format === '12h', defaultSec = settings.seconds !== false;
+    var locale = wh.useLocale();
+    // "system" (the default) follows the console's clock setting; 24 h until it is known.
+    var default12 = settings.format === 'system' || !settings.format
+      ? locale.timeFormat === 12
+      : settings.format === '12h';
+    var defaultSec = settings.seconds !== false;
     var h12 = React.useState(default12), use12 = h12[0], set12 = h12[1];
     var sec = React.useState(defaultSec), showSec = sec[0], setSec = sec[1];
     // A change in the settings menu (or the saved values loading) resets the chips.

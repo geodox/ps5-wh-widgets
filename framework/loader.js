@@ -222,6 +222,7 @@
       wh.OptionsMenuPS = vendor.OptionsMenuPS;
       wh.MenuListItemPS = vendor.MenuListItemPS;
       wh.AlertDialogPS = vendor.AlertDialogPS;
+      wh.TextInput = vendor.TextInput;
       wh.ScrollView = vendor.ScrollView;
       wh.LayoutAnimation = vendor.LayoutAnimation;
       wh.findNodeHandle = vendor.findNodeHandle;
@@ -921,6 +922,9 @@
       for (var key in StockIconPS) {
         if (!(key in WrappedIconPS)) WrappedIconPS[key] = StockIconPS[key];
       }
+      // iconIds (the full stock id list, for wh.IconPS.iconIds.includes(id)) may be
+      // a non-enumerable static the loop above skips.
+      if (!WrappedIconPS.iconIds && StockIconPS.iconIds) WrappedIconPS.iconIds = StockIconPS.iconIds;
     } catch (e) {}
     try {
       WrappedIconPS.displayName = 'IconPS';
@@ -1094,15 +1098,19 @@
           return navigation && isPage(navigation.state) ? {} : getOptions.apply(this, arguments);
         };
       router.getStateForAction = function (action, state) {
+        var next;
         if (action && action.type === 'Navigation/NAVIGATE' && action.routeName === WH_PAGE_ROUTE && state && state.routes) {
           var route = { key: 'wh-page-' + ++pageSeq, routeName: WH_PAGE_ROUTE, params: action.params || {} };
-          var pushed = root.Object.assign({}, state, { routes: state.routes.concat([route]), index: state.routes.length });
-          if ('isTransitioning' in state) pushed.isTransitioning = true;
+          next = root.Object.assign({}, state, { routes: state.routes.concat([route]), index: state.routes.length });
+          if ('isTransitioning' in state) next.isTransitioning = true;
           logLine('page opened', route.params.__wh);
-          return pushed;
+        } else {
+          next = getState.apply(this, arguments);
+          if (isPage(top(state)) && next && !isPage(top(next))) logLine('page closed', top(state).params.__wh);
         }
-        var next = getState.apply(this, arguments);
-        if (isPage(top(state)) && next && !isPage(top(next))) logLine('page closed', top(state).params.__wh);
+        // The hub's tiles show only while the first route (Root) is on top: a page,
+        // Settings or the screensaver covers them (props.hubVisible).
+        if (next && next.routes) setHubState('visible', next.index === 0, top(next) && top(next).routeName);
         return next;
       };
       wh.__pr = true;
@@ -1111,6 +1119,80 @@
       logLine('pages unavailable: ' + errorText(e), 0, 1);
     }
     return wh.__pr;
+  };
+
+  // --- Hub state: props.hubVisible / props.hubFocused, wh.useHubState() -------------
+  // visible: no screen (a widget page, Settings, the screensaver) covers the hub's
+  //   tiles; the main navigator's router wrap above reports it. Pause polling while
+  //   false. In a game the hub does not run at all, so nothing else is needed there.
+  // focused: the hub area has the focus (embedded: Home's HubAppContext.isHubFocused,
+  //   false while the user is on the game row) and the app is active (AppState is
+  //   'inactive' while the Control Center is open). The tiles stay on screen then.
+  var hubState = { visible: true, appActive: true },
+    hubListeners = [];
+  function setHubState(key, value, why) {
+    if (hubState[key] === value) return;
+    var next = root.Object.assign({}, hubState);
+    next[key] = value;
+    hubState = next;
+    if (key === 'visible') logLine(value ? 'hub tiles shown' : 'hub tiles covered by ' + (why || 'a screen'));
+    else logLine('hub app ' + (value ? 'active' : 'inactive'));
+    var listeners = hubListeners.slice();
+    for (var i = 0; i < listeners.length; i++) {
+      try {
+        listeners[i]();
+      } catch (e) {}
+    }
+  }
+  wh.__hubStateInit = function () {
+    var appState = vendor && vendor.AppState;
+    if (!appState || typeof appState.addEventListener !== 'function') {
+      logLine('hub state: AppState unavailable, hubFocused ignores overlays');
+      return;
+    }
+    var isActive = function (s) {
+      return s !== 'inactive' && s !== 'background';
+    };
+    try {
+      hubState.appActive = isActive(appState.currentState);
+      appState.addEventListener('change', function (s) {
+        setHubState('appActive', isActive(s));
+      });
+    } catch (e) {
+      logLine('hub state: AppState subscribe failed: ' + errorText(e));
+    }
+  };
+  // Home's HubAppContext (hub module hubSdk), or null when unavailable.
+  wh.__hubContext = function () {
+    if (wh.__hc !== undefined) return wh.__hc;
+    wh.__hc = null;
+    try {
+      var id = (root.__wh_hubmods || {}).hubSdk,
+        mod = id && typeof root.__whRequire === 'function' ? root.__whRequire(id) : null;
+      wh.__hc = (mod && mod.HubAppContext) || null;
+    } catch (e) {}
+    if (!wh.__hc) logLine('hub state: HubAppContext unavailable, hubFocused ignores the game row');
+    return wh.__hc;
+  };
+  // { visible, focused } for any component in the hub (tiles and pages).
+  wh.useHubState = function () {
+    var HubContext = wh.__hubContext(), // fixed per hub runtime, so the hook order is stable
+      context = HubContext ? React.useContext(HubContext) : null,
+      state = React.useState(hubState),
+      setState = state[1];
+    React.useEffect(function () {
+      function update() {
+        setState(hubState);
+      }
+      hubListeners.push(update);
+      update();
+      return function () {
+        var i = hubListeners.indexOf(update);
+        if (i >= 0) hubListeners.splice(i, 1);
+      };
+    }, []);
+    var areaFocused = !context || context.isStandaloneMode || context.isHubFocused !== false;
+    return { visible: state[0].visible, focused: state[0].appActive && areaFocused };
   };
 
   // --- Widget registration -------------------------------------------------------
@@ -1131,8 +1213,6 @@
       logLine(message, widgetId);
     };
   };
-  // Ask ShellUI to launch a URI (an app, a store page, ...) through the payload's
-  // /__launch endpoint. Resolves true once the launch was accepted, else false.
   // Show a system notification (the toast at the top right) with `text`. Resolves to
   // true once the payload sent it. Plain text, at most 256 bytes, newlines allowed.
   wh.notify = function (text) {
@@ -1156,6 +1236,8 @@
       return root.Promise.resolve(false);
     }
   };
+  // Ask ShellUI to launch a URI (a game, a game hub, ...) through the payload's
+  // /__launch endpoint. Resolves true once the launch was accepted, else false.
   wh.launch = function (uri) {
     if (typeof uri !== 'string' || !uri) {
       logLine('launch ignored: uri must be a non-empty string');
@@ -1176,6 +1258,135 @@
       logLine('launch failed: ' + uri + ' (' + errorText(e) + ')');
       return root.Promise.resolve(false);
     }
+  };
+
+  // --- System sounds -------------------------------------------------------------
+  // wh.playSound(name) plays a stock UI sound through vendor SystemSoundPS.playByID.
+  // Only this curated set: system-event sounds (game boot, trophies, log out, ...)
+  // would mislead the user. A sound plays only when this firmware lists its id in
+  // SystemSoundPS.SoundIds, and at most one every 100 ms.
+  var WH_SOUNDS = {
+    move: 'psfx_focus_move',
+    blocked: 'psfx_cannot_move_focus',
+    enter: 'psfx_enter',
+    back: 'psfx_cancel',
+    error: 'psfx_error',
+    optionsOpen: 'psfx_open_option_menu',
+    optionsClose: 'psfx_close_option_menu',
+    dialogOpen: 'psfx_open_dialog',
+    errorDialogOpen: 'psfx_open_error_dialog',
+    positive: 'psfx_button_for_positive_in_dialog',
+    negative: 'psfx_button_for_negative_in_dialog',
+    neutral: 'psfx_neutral_in_dialog',
+    switchOn: 'psfx_switch_on',
+    switchOff: 'psfx_switch_off',
+    checkOn: 'psfx_checkbox_on',
+    checkOff: 'psfx_checkbox_off',
+    toastInfo: 'psfx_informative_toasts_something_to_read',
+    toastAction: 'psfx_interactive_toasts_something_to_do',
+    toastError: 'psfx_error_toasts_something_is_broken',
+  };
+  var lastSoundAt = 0;
+  // SoundIds is the firmware's list of playable ids (an array or an object of ids).
+  function soundIdKnown(list, id) {
+    if (!list) return false;
+    if (root.Array.isArray(list)) return list.indexOf(id) >= 0;
+    for (var key in list) if (list[key] === id) return true;
+    return false;
+  }
+  wh.playSound = function (name) {
+    var id = root.Object.prototype.hasOwnProperty.call(WH_SOUNDS, name) ? WH_SOUNDS[name] : null;
+    if (!id) {
+      logLine('playSound ignored: unknown sound "' + name + '"');
+      return false;
+    }
+    var sound = vendor && vendor.SystemSoundPS;
+    if (!sound || typeof sound.playByID !== 'function' || !soundIdKnown(sound.SoundIds, id)) {
+      if (!wh.__soundWarned) logLine('playSound: ' + id + ' is not available on this firmware');
+      wh.__soundWarned = 1;
+      return false;
+    }
+    var now = root.Date.now();
+    if (now - lastSoundAt < 100) return false;
+    lastSoundAt = now;
+    try {
+      sound.playByID(id);
+      return true;
+    } catch (e) {
+      logLine('playSound failed: ' + errorText(e));
+      return false;
+    }
+  };
+
+  // --- Locale --------------------------------------------------------------------
+  // The console's language (I18nPS) and its date and time format settings (hub module
+  // dateFormats: getFormats() over the system registry, plus a change event).
+  // wh.getLocale() returns { locale, timeFormat: 12 | 24 | null, dateFormat:
+  // 'YYYY/MM/DD' | 'DD/MM/YYYY' | 'MM/DD/YYYY' | null }; null until the hub answered
+  // (a moment after the hub starts) or when the module is unavailable.
+  // wh.useLocale() is the same as a hook that re-renders on a change.
+  var whLocale = { timeFormat: null, dateFormat: null },
+    localeListeners = [];
+  function applyFormats(formats) {
+    if (!formats) return;
+    var time = formats.timeFormat === 12 || formats.timeFormat === 24 ? formats.timeFormat : null,
+      date = typeof formats.dateFormat === 'string' ? formats.dateFormat : null;
+    if (time === whLocale.timeFormat && date === whLocale.dateFormat) return;
+    whLocale = { timeFormat: time, dateFormat: date };
+    logLine('locale: ' + time + ' h, ' + date);
+    var listeners = localeListeners.slice();
+    for (var i = 0; i < listeners.length; i++) {
+      try {
+        listeners[i]();
+      } catch (e) {}
+    }
+  }
+  wh.__localeInit = function () {
+    var id = (root.__wh_hubmods || {}).dateFormats,
+      hubRequire = root.__whRequire;
+    if (!id || typeof hubRequire !== 'function') {
+      logLine('locale: date and time formats unavailable on this firmware');
+      return;
+    }
+    try {
+      var formats = hubRequire(id);
+      root.Promise.resolve(formats.getFormats()).then(applyFormats, function (e) {
+        logLine('locale: reading the formats failed: ' + errorText(e));
+      });
+      formats.registerDateTimeFormatChangeHandler(applyFormats);
+    } catch (e) {
+      logLine('locale: date and time formats unavailable: ' + errorText(e));
+    }
+  };
+  wh.getLocale = function () {
+    var locale = null;
+    try {
+      locale = (vendor && vendor.I18nPS && vendor.I18nPS.getCurrentLocale()) || null;
+    } catch (e) {}
+    return { locale: locale, timeFormat: whLocale.timeFormat, dateFormat: whLocale.dateFormat };
+  };
+  wh.useLocale = function () {
+    var state = React.useState(wh.getLocale),
+      setLocale = state[1];
+    React.useEffect(function () {
+      function update() {
+        var next = wh.getLocale();
+        setLocale(function (prev) {
+          return prev.locale === next.locale &&
+            prev.timeFormat === next.timeFormat &&
+            prev.dateFormat === next.dateFormat
+            ? prev
+            : next;
+        });
+      }
+      localeListeners.push(update);
+      update(); // the formats may have arrived between render and effect
+      return function () {
+        var i = localeListeners.indexOf(update);
+        if (i >= 0) localeListeners.splice(i, 1);
+      };
+    }, []);
+    return state[0];
   };
   root.__wh = wh;
   root.__wh_c = 1;
@@ -1477,6 +1688,12 @@
         },
         [settings]
       );
+      var hub = wh.useHubState();
+      // Watch the main navigator from the first tile on (props.hubVisible); the hub's
+      // modules are all loaded once a tile renders.
+      React.useEffect(function () {
+        wh.__pageRoute();
+      }, []);
       function openPage(params) {
         var navigation = context && context.navigation;
         if (!navigation || typeof navigation.navigate !== 'function') {
@@ -1511,6 +1728,8 @@
             setVisible: isMini ? setVisible : undefined,
             openPage: root.__wh_pages[id] ? openPage : undefined,
             storage: wh.__storage(id),
+            hubVisible: hub.visible,
+            hubFocused: hub.focused,
           })
         )
       );
@@ -2330,6 +2549,8 @@
             try {
               if (wh.__hubInit) wh.__hubInit();
             } catch (e) {}
+            wh.__localeInit();
+            wh.__hubStateInit();
             wh.__errHook();
             logLine(
               'loader ready in the hub runtime (vendor ' +

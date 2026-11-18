@@ -19,8 +19,15 @@
 | `logger(id)` | write to `wh.log` with a `[widget:<id>]` tag |
 | `launch(uri)` | ask the console to launch a URI, see [Launching apps](#launching-apps) |
 | `notify(text)` | show a system notification, see [Notifications](#notifications) |
+| `playSound(name)` | play a stock UI sound, see [Sounds](#sounds) |
+| `useHubState()` | `{visible, focused}`, the `hubVisible` / `hubFocused` props as a hook (for pages), see [Hub state](#hub-state) |
+| `getLocale()`, `useLocale()` | the console's language and date and time formats, see [Locale](#locale) |
 | `AlertDialogPS` | the stock alert dialog, see [Dialogs](#dialogs) |
+| `TextInput` | a text field with the system keyboard, for pages, see [pages](pages.md#text-input) |
 | `config` | your parsed `config.json` |
+
+`wh.IconPS.iconIds` is the console's list of valid stock icon ids; see
+[icons](icons.md).
 
 Any PS-only primitive may be `undefined` on older firmware - guard before use.
 The loader locates the primitives on the vendor module the hub already requires;
@@ -83,7 +90,40 @@ The loader passes these to your component:
 | `onPressEdit` | the hub's edit action, if your tile forwards it |
 | `openPage(params)` | opens the widget's [full-screen page](pages.md); `undefined` without one |
 | `storage` | the widget's own key/value store, see [Storage](#storage) |
+| `hubVisible` | false while a screen (a widget page, Settings, the screensaver) covers the hub's tiles: pause polling, see [Hub state](#hub-state) |
+| `hubFocused` | false while the user is on the game row, or the Control Center or the system keyboard is open; the tiles stay on screen, see [Hub state](#hub-state) |
 | `visible`, `setVisible(bool)` | MINI widgets only: show or hide the pill, see [MINI widgets](sizes-and-layout.md#showing-and-hiding-a-mini-widget) |
+
+## Hub state
+
+Two props tell a widget whether the user can see it:
+
+| prop | false while | tiles on screen? |
+|---|---|---|
+| `hubVisible` | a widget page, Settings or the screensaver is on top of the hub | no |
+| `hubFocused` | the user is on the game row, the Control Center is open, or the system keyboard is open | yes |
+
+Stop polling while `hubVisible` is false, and resume when it turns true:
+
+```js
+var hubVisible = props.hubVisible !== false;   // undefined on older loaders
+React.useEffect(function () {
+  if (!hubVisible) return;
+  load();
+  var id = setInterval(load, 3000);
+  return function () { clearInterval(id); };
+}, [hubVisible]);
+```
+
+`hubFocused` is for things only worth doing while the user looks at the hub area,
+such as an animation. Keep a clock running when it is false: the tile still shows.
+
+While a game runs, the hub does not run at all: its timers stop, and when the user
+comes back to Home the hub starts again and your widget mounts fresh. Nothing needs
+pausing for games.
+
+A page reads the same state with `wh.useHubState()`. On a page `visible` is false
+(the page covers the tiles), so a page uses `focused`.
 
 ## Storage
 
@@ -144,6 +184,17 @@ contain spaces or control characters and is at most 511 characters. Launches are
 rate limited to 6 per minute across all widgets. Every launch is written to
 `wh.log` as `launch: <uri> rc=<n>`.
 
+Console URIs a widget can use (console-verified on 13.20 with a title id such as
+`PPSA01325`):
+
+| goal | URI |
+|---|---|
+| start a game | `psgm:play?id=<titleId>` |
+| open a game's game hub | `psgamehub:main?titleId=<titleId>`, or `?conceptId=<id>` / `?productId=<id>` |
+
+There is no URI for a game's PlayStation Store page: the hub opens the game hub,
+and its Store button leads on.
+
 Launch from a user action (a button press), not on a timer or on mount. Any
 installed widget can launch any URI, so users should only install widgets they
 trust.
@@ -151,8 +202,7 @@ trust.
 ## Notifications
 
 ```js
-wh.notify('Backup finished
-12 files').then(function (ok) { /* true once sent */ });
+wh.notify('Backup finished\n12 files').then(function (ok) { /* true once sent */ });
 ```
 
 `wh.notify(text)` shows the console's system notification (the toast at the top
@@ -162,6 +212,55 @@ rate limited to 6 per minute across all widgets and logged as `notify: <text>`.
 
 Notify about something the user would want to know right away (a job finished, a
 download failed), not about every change: they also appear outside the hub.
+
+## Sounds
+
+```js
+wh.onPressed(wh.Button.Cross, function () {
+  wh.playSound('enter');
+  // ...
+});
+```
+
+`wh.playSound(name)` plays one of the console's own UI sounds and returns `true`
+when it played. Use them the way the system does: as feedback to a button press,
+not as alerts.
+
+| name | stock sound |
+|---|---|
+| `move`, `blocked` | focus moved / focus cannot move further |
+| `enter`, `back` | confirm / cancel |
+| `error` | error |
+| `optionsOpen`, `optionsClose` | options menu opens / closes |
+| `dialogOpen`, `errorDialogOpen` | dialog opens / error dialog opens |
+| `positive`, `negative`, `neutral` | dialog buttons |
+| `switchOn`, `switchOff`, `checkOn`, `checkOff` | toggles and check boxes |
+| `toastInfo`, `toastAction`, `toastError` | notification sounds |
+
+An unknown name plays nothing and returns `false`, as does a sound this firmware
+does not have. At most one sound plays every 100 ms. System-event sounds (game
+start, trophies, log out) are left out on purpose.
+
+## Locale
+
+```js
+function Clock(props) {
+  var locale = wh.useLocale();          // re-renders when the user changes the format
+  var use12 = locale.timeFormat === 12;
+  // ...
+}
+```
+
+| field | value |
+|---|---|
+| `locale` | the console language, e.g. `'en-US'` |
+| `timeFormat` | `12` or `24`: Settings > System > Date and Time |
+| `dateFormat` | `'YYYY/MM/DD'`, `'DD/MM/YYYY'` or `'MM/DD/YYYY'` |
+
+`wh.getLocale()` returns the same object once, outside a component. The formats
+are `null` for a moment after the hub starts, until the console has answered, and
+on firmware where the loader cannot read them. Plan a fallback (Hello Hub shows
+24 h). `useLocale` picks up a change in Settings without a sign-out.
 
 ## Dialogs
 

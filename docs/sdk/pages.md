@@ -56,6 +56,63 @@ its own focus layer. Give it focusable elements (`View` with `focusable: true` a
 `onPress`) so the user can move around it. `wh.Focusable` and `wh.onPressed` are
 for tiles: on a page they do nothing.
 
+## Looking like a stock page
+
+The hub's own full-screen screens (Settings, Followed games, Wishlist) share one
+layout. Copy it to make a page feel native:
+
+* **No title bar and no key guide.** Stock screens draw neither; Circle goes back.
+  If your page needs a title, use one `Text` with `wh.FontSizePS.Size2XLarge`.
+* **A centered content box 1500 px wide and 918 px high, 162 px from the top.**
+* **List rows 93 px high**, full width, with a 40 px margin above the list.
+
+```js
+var styles = wh.StyleSheet.create({
+  root: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
+  container: { width: 1500, height: 918, marginTop: 162 },
+  list: { flex: 1, width: '100%', marginVertical: 40 },
+  row: { flexDirection: 'row', alignItems: 'center', width: '100%', height: 93 }
+});
+```
+
+Settings fills that box with `wh.MenuListItemPS` rows. These are the stock values,
+read from the hub's code; Hello Hub's page centers its content instead.
+
+## Text input
+
+A page can hold a text field. `wh.TextInput` is the console's own: X on the
+focused field opens the system keyboard, and the keyboard writes back into it.
+
+```js
+function SearchPage(props) {
+  var s = wh.React.useState(''), text = s[0], setText = s[1];
+  return wh.React.createElement(wh.View, { style: { flex: 1, alignItems: 'center', justifyContent: 'center' } },
+    wh.React.createElement(wh.TextInput, {
+      value: text,
+      placeholder: 'Search',
+      keyboardWindowTitle: 'Search',           // the keyboard window's title
+      focusable: true,
+      style: { width: 900, height: 72, paddingHorizontal: 16 },
+      onChangeText: setText,                   // every change while typing
+      onSubmitEditing: function (e) {          // the keyboard's Done key
+        search(e.nativeEvent.text);
+      }
+    }));
+}
+```
+
+| prop | meaning |
+|---|---|
+| `value`, `onChangeText(text)` | the text, kept in your state; called on every change |
+| `placeholder` | shown while empty |
+| `keyboardWindowTitle` | title of the keyboard window |
+| `onSubmitEditing(e)`, `onEndEditing(e)` | Done pressed: `e.nativeEvent.text` is the final text |
+| `onFocus`, `onBlur` | the field gained or lost focus |
+
+Console-verified on 13.20 on a page. A field inside a tile is untested, and so are
+the ref methods `beginEdit()` and `endEdit()`, which should open and close the
+keyboard from code.
+
 ## Things to know
 
 * **Font sizes must be `wh.FontSizePS` values.** Any other `fontSize` throws
@@ -63,4 +120,7 @@ for tiles: on a page they do nothing.
   The same rule applies to tiles.
 * The page is separate from the tile: it does not see the tile's state. Pass what
   it needs in `params`, or share it through a variable in `widget.js`.
+* While the page is open it covers the tiles, so every tile's `props.hubVisible` is
+  false and tiles that follow it stop polling. A page that polls checks
+  `wh.useHubState().focused` instead (see [Hub state](api.md#hub-state)).
 * `wh.log`: `page opened` and `page closed` for each widget.

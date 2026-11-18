@@ -293,6 +293,13 @@ const MODULES = [
   // The hub's main stack navigator (StackNavigatorPS of Root, Settings, ...). The
   // loader wraps its router's methods in place to add the WhPage route.
   { name: 'mainNavigator', id_1320: 1068, need: ['accessibilitySpeakOnSceneChangeEnabled', 'Root', 'ScreenSaverSettings'] },
+  // The console's date and time format settings: getFormats() resolves
+  // {dateFormat, timeFormat 12|24} from the system registry, and
+  // registerDateTimeFormatChangeHandler(fn) reports changes. The loader's wh.locale.
+  // The Hub SDK index: HubAppContext carries Home's isHubFocused (false while the
+  // user is on the game row). The loader's props.hubFocused.
+  { name: 'hubSdk', id_1320: 32, need: ['HubAppContext', 'HubAppContextProvider', 'isFromHubSDK', 'useHubConfig'] },
+  { name: 'dateFormats', id_1320: 319, need: ['getFormats', 'registerDateTimeFormatChangeHandler', 'dateTimeFormatChanged', 'timeFormat'] },
 ];
 
 // Every string operand in fid and the closures it creates.

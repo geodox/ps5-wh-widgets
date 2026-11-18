@@ -32,7 +32,7 @@ Two widgets ship with the project, as working examples and as the starting point
 
 | Widget | What it does |
 | :--- | :--- |
-| **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks, a timer and a settings menu (clock format, seconds). The smallest complete widget. |
+| **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks, a timer and a settings menu (clock format, following the console's 12/24-hour setting by default; seconds). The smallest complete widget. |
 | **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. |
 | **Hello Mini** | A MINI widget: a pill with an icon and a live clock in the hub's MINI row, sized to its content like the stock ones. |
 | **Payload Launcher** | Lists the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...); press X on one to open it in the console's browser. |

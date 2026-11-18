@@ -85,8 +85,11 @@
   function PayloadLauncher(props) {
     var st = React.useState(null), pages = st[0], setPages = st[1];
     var mounted = React.useRef(true);
+    // Scan only while the tiles can be seen (props.hubVisible, see payload-monitor).
+    var hubVisible = props.hubVisible !== false;
 
     React.useEffect(function () {
+      if (!hubVisible) return;
       mounted.current = true;
       var names = {};          // port -> resolved name, kept while the port stays open
       function scan() {
@@ -105,7 +108,7 @@
       scan();
       var id = setInterval(scan, PROBE_MS);
       return function () { mounted.current = false; clearInterval(id); };
-    }, []);
+    }, [hubVisible]);
 
     var W = props.width || 504, H = props.height || 152;
     var compact = H < 300;

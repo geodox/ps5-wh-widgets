@@ -11,6 +11,10 @@
       "type": "choice",
       "options": [
         {
+          "value": "system",
+          "label": "Console setting"
+        },
+        {
           "value": "24h",
           "label": "24-hour"
         },
@@ -19,7 +23,7 @@
           "label": "12-hour"
         }
       ],
-      "default": "24h"
+      "default": "system"
     },
     {
       "id": "seconds",

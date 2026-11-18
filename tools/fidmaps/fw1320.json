@@ -207,6 +207,24 @@
       "fid": 12589,
       "confidence": 0.99,
       "evidence": "unique normalized match (93 insns); all numbers identical; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
+    },
+    {
+      "name": "hubSdk",
+      "id_1320": 32,
+      "fid_1320": 345,
+      "id": 32,
+      "fid": 345,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (74 insns); all numbers identical; anchors HubAppContext, HubAppContextProvider, isFromHubSDK, useHubConfig"
+    },
+    {
+      "name": "dateFormats",
+      "id_1320": 319,
+      "fid_1320": 3101,
+      "id": 319,
+      "fid": 3101,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (59 insns); all numbers identical; anchors getFormats, registerDateTimeFormatChangeHandler, dateTimeFormatChanged, timeFormat"
     }
   ]
 }
