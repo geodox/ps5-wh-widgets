@@ -1582,6 +1582,11 @@
         optionsMenuRef = React.useRef(null),
         tileRef = React.useRef(null),
         settingsLoadedRef = React.useRef(false),
+        // The widget renders once its saved settings are in (or after 1.5 s), so it
+        // never draws the defaults first and then the saved values.
+        readyState = React.useState(!(cfg.settings && cfg.settings.length)),
+        settingsReady = readyState[0],
+        setSettingsReady = readyState[1],
         rerender = React.useState(0)[1],
         controllerRef = React.useRef(null),
         frameRef = React.useRef(null),
@@ -1711,7 +1716,11 @@
             setSettings(merged);
           }
           settingsLoadedRef.current = true;
+          setSettingsReady(true);
         };
+        var readyTimer = root.setTimeout(function () {
+          setSettingsReady(true);
+        }, 1500);
         try {
           root
             .fetch('http://127.0.0.1:8098/__wget?w=' + id)
@@ -1724,6 +1733,9 @@
         } catch (e) {
           applySaved(null);
         }
+        return function () {
+          root.clearTimeout(readyTimer);
+        };
       }, []);
       React.useEffect(
         function () {
@@ -1766,7 +1778,7 @@
         createElement(
           ErrorBoundary,
           { wid: id },
-          createElement(Component, {
+          settingsReady && createElement(Component, {
             config: cfg,
             settings: settings,
             focused: focused,

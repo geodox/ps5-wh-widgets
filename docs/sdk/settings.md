@@ -29,6 +29,10 @@ Values **persist** across hub reloads and reboots: they are saved to
 `/data/wh-widgets/<id>/.settings.json` by the resident payload and reloaded on
 mount (merged over the config defaults).
 
+A widget with settings first renders once its saved values are in, so the first
+render already has the user's values, not the defaults. If they don't arrive
+within 1.5 s (no payload), it renders with the defaults.
+
 ```js
 function MyWidget(props) {
   var sort = props.settings.sort;        // "memory" | "name"
