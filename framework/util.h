@@ -7,7 +7,7 @@
 #include <ps5/klog.h>
 
 /* ---- payload version (YY.MM.DD.x; bumped only for a release) ---- */
-#define WH_VERSION "26.11.18 beta"
+#define WH_VERSION "26.11.19 beta"
 
 /* Drop folder: one sub-folder per widget (config.json + widget.js + assets). */
 #define WH_WIDGETS_DIR "/data/wh-widgets"
