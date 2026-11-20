@@ -166,6 +166,7 @@ repo.json       Payload Manager custom source (payload catalog)
 
 ## ❤️ Credits & Origins
 
+- **[VintendoPower](https://github.com/manchildtechnologies-ui)** — co-author.
 - **[@ghost1372](https://github.com/ghost1372)** — [WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator), which enables the Welcome Hub where it is not already active, and the projects it credits.
 - **[NiDUS](https://github.com/manchildtechnologies-ui/NiDUS)** — the community screenshots in the showcase above, and the in-place refresh approach (fingerprint + revision-stamped prelude) this loader's widget reload is based on.
 - **PS5 homebrew community** — [ps5-payload-sdk](https://github.com/ps5-payload-dev/ps5-payload-sdk) and the payload tooling this project builds with.
