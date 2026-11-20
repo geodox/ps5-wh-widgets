@@ -26,6 +26,8 @@ this page links to them where you need detail.
    - `payload-monitor`: polling a local HTTP endpoint, a list, an image glyph;
    - `console-stats`: polling the payload's `/__stats`, layouts per tile size;
    - `payload-launcher`: launching URIs, port probing;
+   - `home-assistant`: a `WebSocket` to a LAN server, a page with `wh.List`
+     rows (switch, dropdown, slider), search, storage, confirm dialogs;
    - `hello-mini`: a MINI widget (the small pill row).
 3. [API reference](api.md): every `wh.*` member and every prop.
 4. [Style guide](style-guide.md): the stock look you must match.
@@ -76,6 +78,8 @@ other platforms behaves differently.
   are blocked on consoles running homebrew. Do not depend on PSN or on Sony
   downloads. Use local data: the payload's endpoints on `http://127.0.0.1:8098`,
   other payloads' local ports, or LAN servers the user configures.
+- A request to a host that does not answer fails only after 60 s. Give every
+  network call your own short timeout and show that the server can't be reached.
 - Launch, notify and sound only on a user action (a button press), never on a
   timer or on mount.
 - Pick a unique id (`author.widget` style), not a [reserved stock
@@ -162,6 +166,8 @@ other platforms behaves differently.
 | 12/24-hour time, date order, language | `wh.useLocale` ([API](api.md#locale)) |
 | start a game or open its game hub | `wh.launch` ([API](api.md#launching-apps)) |
 | pause work when the hub is hidden or unfocused | `props.hubVisible`, `props.hubFocused` ([API](api.md#hub-state)) |
+| live data from a server on the LAN | `WebSocket` or `fetch` with a timeout ([API](api.md#hooks-data-polling)) |
+| a level on a page (brightness, volume) | `wh.MenuListItemPS.Slider` ([pages](pages.md#sliders)) |
 | temperatures, fan, storage | `GET http://127.0.0.1:8098/__stats` ([loader internals](loader-internals.md)) |
 | a small pill instead of a tile | a MINI size ([sizes](sizes-and-layout.md#mini-widgets)) |
 | its own icon | `glyph` PNG in the folder ([glyphs](glyphs.md)) |

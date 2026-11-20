@@ -37,7 +37,15 @@ a `widget.js` written against `wh.*` needs no version-specific glue.
 ## Hooks, data, polling
 
 Hooks come from the vendor React handle (`React.useState`, `React.useEffect`,
-`React.useRef`, ...). `fetch`, `setInterval` and `setTimeout` are host globals.
+`React.useRef`, ...). `fetch`, `WebSocket`, `XMLHttpRequest`, `setInterval` and
+`setTimeout` are host globals.
+
+* `fetch` and `WebSocket` reach servers on the local network, not only
+  `127.0.0.1` (console-verified on 13.20; the Home Assistant sample uses both).
+* A request to a host or port that does not answer fails only after **60 s**,
+  the hub's own timeout. Put your own shorter timeout on it, and show "can't
+  reach" instead of a blank tile. For a `WebSocket`, close it when it has not
+  opened (or authenticated) after a few seconds.
 
 Always clean up timers on unmount and guard against setting state after unmount:
 

@@ -50,3 +50,6 @@ Complete examples live in [`sample-widgets/`](../../sample-widgets/):
 `hello-wh` (minimal, reference for `wh.Focusable`, settings and a full-screen page) and `payload-monitor`
 (polling, settings, image glyph). `console-stats` polls the payload's `/__stats`
 endpoint only while `props.hubVisible` is true and adapts its layout to the tile size.
+`home-assistant` keeps a `WebSocket` to a server on the LAN, and its page uses
+`wh.List` with switch, dropdown and slider rows, search with `wh.TextInput`, and
+`props.storage`.

@@ -36,10 +36,10 @@ Two widgets ship with the project, as working examples and as the starting point
 | **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. |
 | **Hello Mini** | A MINI widget: a pill with an icon and a live clock in the hub's MINI row, sized to its content like the stock ones. |
 | **Console Stats** | CPU and SoC temperature, fan speed, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
+| **Home Assistant** | Shows and controls your Home Assistant entities: lights, switches, sensors, climate, covers, locks, media players and more. X toggles or runs one; the full-screen page adds brightness, volume and position sliders, target temperature and mode, and the entity chooser. Unlocking and opening a garage door ask first. Needs a token in its `config.json`: see its [README](sample-widgets/home-assistant/README.md). |
 | **Payload Launcher** | Lists the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...); press X on one to open it in the console's browser. |
 
 Drop any of these folders into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
-
 ## 📸 Community Showcase
 
 Screenshots from other setups, shared by the [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) project:

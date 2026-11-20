@@ -133,7 +133,7 @@ Rows (`wh.MenuListItemPS`), each with `label` and an optional `description`:
 | `Switch` | `value` (true / false), `onValueChange(value)` |
 | `Dropdown` | `items` (an array of `wh.Picker.Item` elements `{label, value}`), `value`, `onValueChange(value)` |
 | `Selectable` | `selected`, `onPress` |
-| `Slider` | `value`, `onValueChange(value)` (untested) |
+| `Slider` | `value`, `minimumValue`, `maximumValue`, `step`, `onValueChanging(value)`, `onValueChange(value)` |
 
 * Up and down (and the left stick) move between rows; the list scrolls with the
   focus. Focus stops at the first and last rows: it does not wrap. L1 / R1 do
@@ -142,7 +142,24 @@ Rows (`wh.MenuListItemPS`), each with `label` and an optional `description`:
   Keep rows as plain data and build elements in `renderItem`, as above, so a long
   list stays fast.
 * Console-verified on 13.20 with 50 rows: `Button`, `Switch`, `Dropdown`, focus
-  reporting, `setFocusIndex` and `scrollTo`.
+  reporting, `setFocusIndex` and `scrollTo`. `Slider` is verified in the Home
+  Assistant sample.
+
+### Sliders
+
+X on a `Slider` row starts adjusting it, left and right move it, and X sets the
+value.
+
+* The range props are `minimumValue` and `maximumValue`. `min` and `max` are
+  ignored; without the range props the slider uses its own default range.
+* Each press moves the slider one `step`. Keep a slider to about 100 steps: a
+  range of 1 to 1000 in steps of 1 hardly moves.
+* `onValueChanging(value)` fires while the slider moves, with in-between values
+  (`70.65`, `70.42`, ...): round them. `onValueChange(value)` fires once, when X
+  sets the value. Act on that one.
+* Changing a slider row's props while the user adjusts it ends the adjustment. To
+  show the value as it changes, put it outside the list (the Home Assistant page
+  shows it under the title), not in the row's `description`.
 
 ## Text input
 

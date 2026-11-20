@@ -1,0 +1,9 @@
+{
+  "id": "home-assistant",
+  "title": "Home Assistant",
+  "description": "Control and watch your Home Assistant entities.",
+  "iconId": "home",
+  "size": 2,
+  "haUrl": "http://192.168.1.10:8123",
+  "haToken": "PASTE_A_LONG_LIVED_ACCESS_TOKEN_HERE"
+}
