@@ -4,11 +4,11 @@
     {
       "name": "Welcome Hub Bridge",
       "filename": "wh_bridge.elf",
-      "url": "https://github.com/geodox/ps5-wh-widgets/releases/download/26.11.19beta/wh_bridge.elf",
+      "url": "https://github.com/geodox/ps5-wh-widgets/releases/download/26.11.20beta/wh_bridge.elf",
       "description": "Custom native-backed widgets in the PS5 Welcome Hub (drop unzipped widgets into /data/wh-widgets/).",
-      "version": "26.11.19 beta",
+      "version": "26.11.20 beta",
       "category": "Customization",
-      "checksum": "e4039d4ea2a8451a8050e440909c44903e669a892a646f883c29e91e511971fc",
+      "checksum": "79880bc9f8e28273e7168e0f44db4055fd8982457f72c26fc1a2c58905b4dc6a",
       "author": "geodox"
     }
   ]
