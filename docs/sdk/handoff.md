@@ -63,9 +63,9 @@ other platforms behaves differently.
   render what should not show.
 - Do not draw a background or mat on the tile. The stock frame draws it.
 - Fill the box you are given: `props.width` × `props.height`. Tiles are 504 wide,
-  and 152 (DEFAULT), 328 (LARGE) or 504 (FULL) high. While the tile is focused,
-  the frame draws a key guide bar about 48 px high along the bottom: keep
-  important content above it.
+  and 152 (DEFAULT), 328 (LARGE) or 504 (FULL) high. A widget that turns on the
+  [key guide](input-and-focus.md#key-guide) gets a bar about 48 px high along the
+  bottom while focused: keep important content above it.
 - Only use icon ids listed in [icons](icons.md). An unknown id draws nothing.
 - Dropdown items (`wh.MenuListItemPS.Dropdown`) are `wh.Picker.Item` **elements**,
   not plain `{label, value}` objects. Plain objects throw.
@@ -175,6 +175,8 @@ other platforms behaves differently.
 | live data from a server on the LAN | `WebSocket` or `fetch` with a timeout ([API](api.md#hooks-data-polling)) |
 | a level on a page (brightness, volume) | `wh.MenuListItemPS.Slider` ([pages](pages.md#sliders)) |
 | temperatures, fan, storage | `GET http://127.0.0.1:8098/__stats` ([loader internals](loader-internals.md)) |
+| more items than fit, on a tile with `wh.Focusable` items | a scrolling window with item `buttons` + `autoSelect` ([input](input-and-focus.md#selectable-items-inside-a-tile-whfocusable)) |
+| more rows than fit, on a tile you can't enter | `wh.usePages` ([API](api.md#long-lists-on-a-tile-you-cant-enter-whusepages)) |
 | a small pill instead of a tile | a MINI size ([sizes](sizes-and-layout.md#mini-widgets)) |
 | its own icon | `glyph` PNG in the folder ([glyphs](glyphs.md)) |
 

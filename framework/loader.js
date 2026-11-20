@@ -343,6 +343,63 @@
       [controller, button]
     );
   };
+  // Hook: page through a list that does not fit a tile you cannot enter. `total`
+  // items, `perPage` per page. The page turns every options.interval ms (default
+  // 6000; 0 = never) while the hub's tiles are on screen, and L1 / R1 turn it by
+  // hand while the tile is focused (wrapping around); a hand turn pauses the
+  // automatic one for options.pause ms (default 15000).
+  // Returns { page, pages, first, end, label }: show items first..end-1; label is
+  // "1-4 of 9" when there is more than one page, else null (for the title badge).
+  wh.usePages = function (total, perPage, options) {
+    var ReactLib = wh.React,
+      opts = options || {},
+      interval = opts.interval != null ? opts.interval : 6000,
+      pause = opts.pause != null ? opts.pause : 15000,
+      size = Math.max(1, perPage | 0),
+      pages = Math.max(1, Math.ceil((total | 0) / size)),
+      state = ReactLib.useState(0),
+      setPage = state[1],
+      page = Math.min(state[0], pages - 1),
+      pausedUntil = ReactLib.useRef(0),
+      hub = wh.useHubState();
+    function turn(step) {
+      setPage(function (p) {
+        return (((Math.min(p, pages - 1) + step) % pages) + pages) % pages;
+      });
+    }
+    wh.onPressed(wh.Button.L1, function () {
+      if (pages < 2) return false;
+      pausedUntil.current = root.Date.now() + pause;
+      turn(-1);
+      wh.playSound('move');
+    });
+    wh.onPressed(wh.Button.R1, function () {
+      if (pages < 2) return false;
+      pausedUntil.current = root.Date.now() + pause;
+      turn(1);
+      wh.playSound('move');
+    });
+    ReactLib.useEffect(
+      function () {
+        if (!interval || pages < 2 || !hub.visible) return;
+        var id = root.setInterval(function () {
+          if (root.Date.now() >= pausedUntil.current) turn(1);
+        }, interval);
+        return function () {
+          root.clearInterval(id);
+        };
+      },
+      [interval, pages, hub.visible]
+    );
+    var first = page * size;
+    return {
+      page: page,
+      pages: pages,
+      first: first,
+      end: Math.min(total | 0, first + size),
+      label: pages > 1 ? first + 1 + '-' + Math.min(total | 0, first + size) + ' of ' + total : null,
+    };
+  };
   // A selectable item inside a tile. After X enters the tile, the arrows move the
   // selection between Focusables by their on-screen position.
   wh.Focusable = function (props) {
@@ -1203,8 +1260,16 @@
   // --- Widget registration -------------------------------------------------------
   // Each widget section in the prelude runs: __begin(cfg, rawConfigJson), then the
   // widget.js body (which calls wh.register), then __end(). __fail records a throw.
-  wh.register = function (Component) {
+  // options.keyGuide: the key guide bar inside the focused tile. Off by default (the
+  // hub's own Options hint below the tile is always there).
+  //   true      the loader's hints: Settings, Select / Edit, Done, Prev / Next
+  //   {key: label, ...}   those hints, with these labels changed or added (enter,
+  //             back, l1, r1, square, options, ...); a null or '' label removes one
+  //   function (state) -> {key: label}   any hints; state = {active, focused,
+  //             items, settings} (settings: the widget has a settings menu)
+  wh.register = function (Component, options) {
     wh._c = Component;
+    wh._o = options || null;
   };
   // The widget's full-screen page; the widget opens it with props.openPage(params).
   wh.registerPage = function (Page) {
@@ -1537,17 +1602,20 @@
     wh.config = cfg;
     wh._c = null;
     wh._p = null;
+    wh._o = null;
     wh.__ferr = null;
   };
   wh.__fail = function (e) {
     wh._c = null;
     wh._p = null;
+    wh._o = null;
     wh.__ferr = e;
   };
   // Wrap the registered component in a hub tile and record it under its id.
   wh.__end = function () {
     var cfg = wh.config,
-      Component = wh._c;
+      Component = wh._c,
+      keyGuide = wh._o ? wh._o.keyGuide : null;
     if (!Component) {
       logLine(
         wh.__ferr
@@ -2151,19 +2219,33 @@
       }
       // Key-guide hints shown at the bottom of the screen while the tile has focus.
       function renderKeyGuide() {
-        if (!wh.KeyGuidePS || props.editing || !focused) return null;
+        if (!keyGuide || !wh.KeyGuidePS || props.editing || !focused) return null;
         var hints = {};
-        if (itemCount) {
-          hints.enter = active ? 'Select' : 'Edit';
-        }
-        if (active) {
-          hints.back = 'Done';
-          if (itemCount > 1) {
-            hints.l1 = 'Prev';
-            hints.r1 = 'Next';
+        if (typeof keyGuide === 'function') {
+          try {
+            hints = keyGuide({ active: active, focused: focused, items: itemCount, settings: hasSettings }) || {};
+          } catch (e) {
+            logLine('keyGuide function threw: ' + errorText(e), id);
+            hints = {};
           }
+        } else {
+          if (itemCount) {
+            hints.enter = active ? 'Select' : 'Edit';
+          }
+          if (active) {
+            hints.back = 'Done';
+            if (itemCount > 1) {
+              hints.l1 = 'Prev';
+              hints.r1 = 'Next';
+            }
+          }
+          if (hasSettings && !active) hints.options = 'Settings';
+          if (typeof keyGuide === 'object')
+            for (var hintKey in keyGuide)
+              if (root.Object.prototype.hasOwnProperty.call(keyGuide, hintKey))
+                hints[hintKey] = keyGuide[hintKey];
         }
-        if (hasSettings && !active) hints.options = 'Settings';
+        for (var k in hints) if (hints[k] == null || hints[k] === '') delete hints[k];
         if (!root.Object.keys(hints).length) return null;
         try {
           return createElement(

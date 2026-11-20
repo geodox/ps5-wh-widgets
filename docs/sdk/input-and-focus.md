@@ -92,9 +92,38 @@ ce(wh.Focusable, {
   `wh.onPressed(wh.Button.Cross, ...)`.
 * `hello-wh` is the reference: X enters, arrows pick a chip, X toggles it, Square
   (`wh.onPressed`) resets both, Circle leaves.
+* The loader plays the stock sounds while entered: the move sound when the
+  selection moves, the "cannot move" sound when nothing lies in that direction.
+* **Scrolling.** A tile shows only the items that fit; to reach more, render a
+  window of rows and move it yourself. Give the items in the last visible row a
+  `buttons: { Down: ... }` handler (and the first visible row `Up`): it runs before
+  the loader moves the selection. Move the window there, and set
+  **`autoSelect: true`** on the item that should be selected next: an item with
+  `autoSelect` becomes the selection when it mounts. Return `false` from the
+  handler when there is nothing further, so the loader plays the "cannot move"
+  sound. `home-assistant` and `payload-launcher` are the reference.
+* A tile with no items to select can page a long list with
+  [`wh.usePages`](api.md#long-lists-on-a-tile-you-cant-enter-whusepages).
+* When the tile opens its [page](pages.md) and the user comes back, focus returns
+  to the tile. If the page was opened from inside, the tile is entered again on the
+  same item.
 
 ## Key guide
 
-A focused widget shows a stock key-guide hint bar at the bottom of the screen
-(Settings on Options, Select/Edit on X, and Prev/Next/Done while inside a
-`wh.Focusable` tile).
+The hub always shows its own Options hint below a focused tile. A stock key-guide
+bar *inside* the tile is off by default; turn it on when registering:
+
+```js
+wh.register(MyWidget, { keyGuide: true });           // the loader's hints
+wh.register(MyWidget, { keyGuide: { enter: 'Toggle', square: 'Refresh', options: null } });
+wh.register(MyWidget, { keyGuide: function (s) {     // full control
+  return s.active ? { enter: 'Open', back: 'Done' } : { square: 'Refresh' };
+} });
+```
+
+* `true`: Settings on Options (with a settings menu), Edit on X (with
+  `wh.Focusable` items), and Select / Done / Prev / Next while entered.
+* An object: those hints with these labels changed or added. A `null` or `''`
+  label removes that hint.
+* A function gets `{ active, focused, items, settings }` and returns the hints.
+* Keys the hub uses: `enter`, `back`, `square`, `l1`, `r1`, `options`.

@@ -14,7 +14,7 @@
 | `onPressed(button, fn)` | handle a controller button while the tile is focused |
 | `dims(size)` | `{width, height}` for a `WidgetSize` |
 | `registerGlyph(name, spec)` | register a `wh:<name>` icon from code |
-| `register(Component)` | register your widget component |
+| `register(Component, options)` | register your widget component. `options.keyGuide`: the key guide bar inside the focused tile, see [Key guide](input-and-focus.md#key-guide) (off by default) |
 | `registerPage(Page)` | register the widget's full-screen page, see [pages](pages.md) |
 | `logger(id)` | write to `wh.log` with a `[widget:<id>]` tag |
 | `launch(uri)` | ask the console to launch a URI, see [Launching apps](#launching-apps) |
@@ -86,6 +86,28 @@ function Inner() {
   // render from `data`...
 }
 ```
+
+### Long lists on a tile you can't enter: `wh.usePages`
+
+A tile without `wh.Focusable` items gets no arrows (they move focus between
+tiles). When its list does not fit, show it a page at a time:
+
+```js
+var pager = wh.usePages ? wh.usePages(items.length, rowsThatFit) : null;
+var visible = pager ? items.slice(pager.first, pager.end) : items.slice(0, rowsThatFit);
+// title badge: (pager && pager.label) || items.length + ' items'   -> "1-4 of 9"
+```
+
+* The page turns by itself every `interval` ms (default 6000; `0` = never), only
+  while the hub's tiles are on screen.
+* **L1** / **R1** turn it while the tile is focused, wrapping around. A turn by hand
+  pauses the automatic one for `pause` ms (default 15000).
+* Options: `wh.usePages(total, perPage, { interval, pause })`.
+* Returns `{ page, pages, first, end, label }`; `label` is `null` when everything
+  fits.
+* It claims L1 / R1 for the tile, so don't also use them with `wh.onPressed`.
+  Guard for older payloads: `wh.usePages` may be `undefined`.
+* `payload-monitor` is the reference.
 
 ## Props
 
