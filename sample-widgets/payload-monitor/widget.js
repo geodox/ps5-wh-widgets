@@ -88,12 +88,17 @@
         : function (a, b) { return (b.memory || 0) - (a.memory || 0); });
     }
 
+    // A list longer than the tile is shown a page at a time (wh.usePages): the page
+    // turns by itself every 6 s, and L1 / R1 turn it while the tile is focused.
+    // Older loaders without usePages get a "+N more" last row instead.
+    var count = procs ? procs.length : 0;
+    var pager = wh.usePages ? wh.usePages(count, maxRows) : null;
+
     var rows = [];
     if (procs) {
-      // If the list doesn't fit, the last visible row becomes "+N more" instead
-      // of silently dropping payloads (the list is sorted by memory, biggest first).
-      var shown = procs.length > maxRows ? maxRows - 1 : procs.length;
-      for (var i = 0; i < shown; i++) {
+      var from = pager ? pager.first : 0;
+      var shown = pager ? pager.end : (procs.length > maxRows ? maxRows - 1 : procs.length);
+      for (var i = from; i < shown; i++) {
         var p = procs[i];
         rows.push(
           ce(View, {
@@ -107,7 +112,7 @@
           )
         );
       }
-      var hidden = procs.length - shown;
+      var hidden = pager ? 0 : procs.length - shown;
       if (hidden > 0) {
         rows.push(
           ce(View, { key: '__more', style: { flexDirection: 'row', alignItems: 'center', height: ROW_H } },
@@ -129,14 +134,13 @@
       body = ce(View, null, rows);
     }
 
-    var count = procs ? procs.length : 0;
     // Stock title row: 40px white glyph + bold 21 title + right-aligned badge.
     // iconId = 'wh:payload-monitor': the payload manager icon as a white glyph
     // (config.json "glyph": "glyph.png", served by the framework's asset server).
     var cfg = (props && props.config) || {};
     var header = ce(wh.Title, {
       iconId: cfg.iconId,
-      badge: procs ? (count + ' running') : null,
+      badge: procs ? ((pager && pager.label) || (count + ' running')) : null,
       style: { marginBottom: 8 }
     }, 'Payload Monitor');
 

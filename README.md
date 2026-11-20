@@ -33,12 +33,12 @@ Two widgets ship with the project, as working examples and as the starting point
 | Widget | What it does |
 | :--- | :--- |
 | **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks, a timer and a settings menu (clock format, following the console's 12/24-hour setting by default; seconds). The smallest complete widget. |
-| **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. |
+| **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. A long list turns pages by itself; L1 / R1 page it while the tile is focused. |
 | **Hello Mini** | A MINI widget: a pill with an icon and a live clock in the hub's MINI row, sized to its content like the stock ones. |
 | **Console Stats** | CPU and SoC temperature, fan speed, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
-| **Home Assistant** | Shows and controls your Home Assistant entities: lights, switches, sensors, climate, covers, locks, media players and more. X toggles or runs one; the full-screen page adds brightness, volume and position sliders, target temperature and mode, and the entity chooser. Unlocking and opening a garage door ask first. Needs a token in its `config.json`: see its [README](sample-widgets/home-assistant/README.md). |
+| **Home Assistant** | Shows and controls your Home Assistant entities, as cards: lights, switches, sensors, climate, covers, locks, media players and more. X toggles or runs one; the full-screen page adds brightness, volume and position sliders, target temperature and mode, and the entity chooser. Unlocking and opening a garage door ask first. Needs a token in its `config.json`: see its [README](sample-widgets/home-assistant/README.md). |
 | **Weather** | Current weather and forecast for your saved places, anywhere in the world: search by city or postal code, switch places with L1 / R1. Background photos for the current weather, a 5-day forecast and hourly details at the larger sizes, units from the console's region or your choice. Based on VintendoPower's Weather widget; see its [README](sample-widgets/weather/README.md). |
-| **Payload Launcher** | Lists the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...); press X on one to open it in the console's browser. |
+| **Payload Launcher** | Shows the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...) as cards; press X on one to open it in the console's browser. |
 
 Drop any of these folders into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
 ## 📸 Community Showcase
