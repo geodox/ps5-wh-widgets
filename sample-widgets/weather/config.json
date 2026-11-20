@@ -1,0 +1,27 @@
+{
+  "id": "weather",
+  "title": "Weather",
+  "description": "Current weather and forecast for your places, anywhere in the world.",
+  "glyph": "glyph.png",
+  "iconFallback": "cloud",
+  "size": 2,
+  "settings": [
+    { "id": "units", "title": "Temperature", "type": "choice",
+      "options": [
+        { "value": "system", "label": "Console region" },
+        { "value": "c", "label": "Celsius" },
+        { "value": "f", "label": "Fahrenheit" }
+      ],
+      "default": "system" },
+    { "id": "wind", "title": "Wind speed", "type": "choice",
+      "options": [
+        { "value": "system", "label": "Console region" },
+        { "value": "kmh", "label": "km/h" },
+        { "value": "mph", "label": "mph" },
+        { "value": "ms", "label": "m/s" },
+        { "value": "kn", "label": "Knots" }
+      ],
+      "default": "system" },
+    { "id": "photos", "title": "Background photos", "type": "toggle", "default": true }
+  ]
+}

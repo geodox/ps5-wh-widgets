@@ -28,6 +28,8 @@ this page links to them where you need detail.
    - `payload-launcher`: launching URIs, port probing;
    - `home-assistant`: a `WebSocket` to a LAN server, a page with `wh.List`
      rows (switch, dropdown, slider), search, storage, confirm dialogs;
+   - `weather`: internet data with a timeout, place search on a page, images
+     done safely (see the image rules in [glyphs](glyphs.md#3-any-image-in-your-widget));
    - `hello-mini`: a MINI widget (the small pill row).
 3. [API reference](api.md): every `wh.*` member and every prop.
 4. [Style guide](style-guide.md): the stock look you must match.
@@ -80,6 +82,10 @@ other platforms behaves differently.
   other payloads' local ports, or LAN servers the user configures.
 - A request to a host that does not answer fails only after 60 s. Give every
   network call your own short timeout and show that the server can't be reached.
+- Opening a `WebSocket` to a host that does not answer freezes the hub for about
+  75 s. Check the server with `fetch` first ([API](api.md#hooks-data-polling)).
+- No images in edit mode, and never remove an image right after adding it: that
+  can crash ShellUI ([glyphs](glyphs.md#3-any-image-in-your-widget)).
 - Launch, notify and sound only on a user action (a button press), never on a
   timer or on mount.
 - Pick a unique id (`author.widget` style), not a [reserved stock

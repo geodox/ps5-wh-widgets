@@ -63,6 +63,19 @@ ce(wh.Image, {
 Add `tintColor: '#ffffff'` to the style to recolour a transparent-background
 image.
 
+**Don't render images in edit mode, and don't remove one right after adding it.**
+An `Image` removed while it is still loading can crash ShellUI about 15 seconds
+later, with no error in `wh.log` (console-verified on 13.20). Edit mode is where
+this happens: the hub unmounts and remounts tiles when they are added, removed or
+resized. Weather follows this rule:
+
+* render images only while `props.editing` is false;
+* wait until the tile has been mounted for about a second;
+* don't empty and refill the tile (which removes its images) when only some data
+  changes. Keep the old content until the new content is in.
+
+Glyphs (`config.json` `glyph`, the title icon) are safe: they load once and stay.
+
 ## How images are served
 
 The hub's `Image` only loads `http://` URLs (inline `data:` and `file://` don't
