@@ -206,4 +206,7 @@ keyboard from code.
 * While the page is open it covers the tiles, so every tile's `props.hubVisible` is
   false and tiles that follow it stop polling. A page that polls checks
   `wh.useHubState().focused` instead (see [Hub state](api.md#hub-state)).
+* Closing the page puts focus back on the tile that opened it, entered on the same
+  item if it was opened from inside. `wh.log`: `focus back on the tile after its
+  page`.
 * `wh.log`: `page opened` and `page closed` for each widget.

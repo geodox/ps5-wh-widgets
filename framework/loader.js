@@ -1773,9 +1773,49 @@
           return false;
         }
         if (!wh.__pageRoute()) return false;
+        returnRef.current = { entered: active, index: currentIndex };
         navigation.navigate(WH_PAGE_ROUTE, root.Object.assign({}, params, { __wh: id }));
         return true;
       }
+      // Back from this tile's page: the hub does not give the focus back to the tile,
+      // so focus it again (the native view's focus(), as the hub's own overlays do), and
+      // re-enter it on the same item if the page was opened from inside.
+      var returnRef = React.useRef(null),
+        restoreRef = React.useRef(null);
+      React.useEffect(
+        function () {
+          var back = returnRef.current;
+          if (!hub.visible || !back) return;
+          returnRef.current = null;
+          restoreRef.current = back;
+          var refocus = function () {
+            if (root.__wh_focusId === id) return;
+            var node = tileRef.current;
+            try {
+              if (node && typeof node.focus === 'function') node.focus();
+              else if (!wh.__rfLog) {
+                wh.__rfLog = 1;
+                logLine('refocus after page: focus() unavailable', id);
+              }
+            } catch (e) {
+              logLine('refocus after page failed: ' + errorText(e), id);
+            }
+          };
+          // The stack transition settles the hub's own focus first; try again after it.
+          var timers = [0, 200, 500].map(function (ms) {
+            return root.setTimeout(refocus, ms);
+          });
+          timers.push(
+            root.setTimeout(function () {
+              restoreRef.current = null;
+            }, 1500)
+          );
+          return function () {
+            timers.forEach(root.clearTimeout);
+          };
+        },
+        [hub.visible]
+      );
       var size = props.size != null ? props.size : cfg.size != null ? cfg.size : 1,
         dims = wh.dims(size),
         width = dims.width;
@@ -1979,6 +2019,15 @@
             onFocus: function (e) {
               root.__wh_focusId = id;
               setFocused(true);
+              var back = restoreRef.current;
+              if (back) {
+                restoreRef.current = null;
+                logLine('focus back on the tile after its page', id);
+                if (back.entered) {
+                  setSelectedIndex(back.index);
+                  setEntered(true);
+                }
+              }
               try {
                 if (props.onFocus)
                   props.onFocus({ component: { props: focusProps }, originalEvent: e });

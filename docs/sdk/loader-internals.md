@@ -186,6 +186,40 @@ loader replaces both exports with wrappers that blank our widget ids in a copy o
 the layout first. Custom ids never appear in the hub's telemetry, and the stock
 widgets are reported as before. `wh.log`: `telemetry: custom widget ids filtered`.
 
+**Telemetry switch.** Welcome Hub Settings > Telemetry: *Hide custom widgets* (the
+default, the filter above) or *Off*. Every telemetry event ShellUI's JavaScript
+sends goes through `NativeModules.VshNMTelemetryNq.SetEvent` (hub module 863,
+`TelemetryNq`, the telemetry client's native-queue transport), and its caller looks
+the method up at call time. So the loader replaces it with a gate, in every runtime
+it runs in, before that runtime's app code. The setting is console-wide, kept by the
+payload in `/data/wh-widgets/.hub.json` (`/__wget?w=.hub`). Until it arrives, events
+wait in memory (at most 500); then they are sent, or dropped when it is *Off*. If
+the payload does not answer for 30 s, events are sent as usual. A change applies at
+once in the hub runtime; other runtimes read it when they next start. Native
+telemetry outside ShellUI's JavaScript is not affected. `wh.log`: `telemetry: off
+(N event(s) not sent so far)`.
+
+**Welcome Hub Settings rows.** The Settings screen builds its rows in a `useMemo`
+and reads each row module's `default` every time. The loader wraps the "Followed
+games" row (`hubSettingsFollowedGames`, the last row always shown) so it renders
+the stock row followed by *Telemetry* (a `MenuListItemPS.Dropdown`) and *Widget
+Data* (a `Button` that opens the loader's own page, `WhPage` with `__wh: '.data'`;
+a leading dot is never a widget id). The page lists the `wh:data:*` AsyncStorage
+keys of the signed-in user and deletes them on request. `wh.log`: `settings rows
+added (Telemetry, Widget data)`.
+
+**Focus while entered.** An entered tile keeps native focus the way the stock
+frame's `locked` mode does. Its arrow handlers return **false**: the RN-PS key
+dispatcher resumes with `resumeEventDispatch(!result)`, so a falsy result marks the
+native key event handled and the four-way focus move is skipped (a truthy result
+lets the move run). The tile view also gets `cursorEndSFXEnabledDirection:
+['none']`, which turns off the native "cannot move" (cursor-end) sound, and the
+loader plays the move or blocked sound for its own selection. `focusCustomSettings`
+`canMove*: false` stays as a fallback. `soundEffectsEnabled` does not affect focus
+sounds (only Enter / Back and press sounds). When a tile's page closes, the hub does not refocus the tile; the loader
+calls the tile view's `focus()` (as the hub's own overlays do) and re-enters it on
+the remembered item.
+
 **MINI widgets.** The hub's MINI ("transient") registry (`miniWidgets`) exports
 `WIDGET_MAP` and `WIDGET_CONFIGS` keyed by widget id, and `WIDGET_PRIORITY`, the
 order of the MINI row (stock: Transfers, Campaigns, PS Plus, Store, Highlights, New
