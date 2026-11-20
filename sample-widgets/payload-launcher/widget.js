@@ -57,34 +57,64 @@
       }, function () { return page.name; });
   }
 
+  var F = wh.FontSizePS;
   var styles = wh.StyleSheet.create({
-    card: { borderRadius: 16, overflow: 'hidden' },
     body: { flex: 1, padding: 16 },
-    row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, borderRadius: 8 },
-    rowOn: { backgroundColor: '#ffffff' },
-    textOn: { color: '#17191e' },
-    small: { fontSize: 18 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap' },
+    card: { borderRadius: 12, borderWidth: 2, borderColor: 'transparent', padding: 6,
+      backgroundColor: 'rgba(255,255,255,0.08)' },
+    cardFocus: { borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.22)' },
+    cardTop: { flexDirection: 'row', alignItems: 'center', height: 24 },
+    cardIcon: { width: 24, height: 24 },
+    cardPort: { flex: 1, marginLeft: 6, textAlign: 'right', fontSize: F.Size4XSmall, opacity: 0.7 },
+    cardName: { fontSize: F.Size3XSmall, marginTop: 4 },
     dim: { opacity: 0.6 }
   });
 
-  function PageRow(props) {
+  // Cards: `columns` per row (the Cards per row setting; twice that on an XL tile,
+  // which is two tiles wide), as many rows as the tile height allows.
+  var GAP = 8, MIN_H = 64;
+  function cardGrid(W, H, columns) {
+    var cols = (+columns || 2) * (W > 600 ? 2 : 1);
+    var avail = H - 64 - (H > 200 ? 48 : 16);   // title row above, focus key guide below
+    var rows = Math.max(1, Math.floor((avail + GAP) / (MIN_H + GAP)));
+    return { cols: cols, rows: rows, w: Math.floor((W - 32 - GAP * (cols - 1)) / cols),
+      h: Math.floor((avail - GAP * (rows - 1)) / rows) };
+  }
+  function cardBox(g, i) {
+    return { width: g.w, height: g.h, marginRight: i % g.cols === g.cols - 1 ? 0 : GAP, marginBottom: GAP };
+  }
+  // Scrolling: the grid shows g.rows rows from row `top`. Down on a card in the last
+  // row shown (Up in the first) scrolls one row and selects the card nearest the same
+  // column. The card's `buttons` get the arrow before the loader moves the selection;
+  // `autoSelect` selects the card that scrolls in. Returns the index, or -1.
+  function scrollTarget(n, cols, from, dir) {
+    var row = Math.floor(from / cols) + dir;
+    if (row < 0 || row * cols >= n) return -1;
+    return Math.min(n - 1, row * cols + from % cols);
+  }
+
+  function PageCard(props) {
     var p = props.page;
     return ce(wh.Focusable, {
       onPress: function () { wh.launch(url(p.port)); },
-      style: [styles.row, { height: props.rowH }],
-      focusedStyle: styles.rowOn
-    }, function (selected) {
-      var on = selected ? styles.textOn : null;
-      return [
-        ce(Label, { key: 'n', numberOfLines: 1, style: [props.compact ? styles.small : null, { flex: 1 }, on] }, p.name),
-        ce(Label, { key: 'p', style: [styles.small, selected ? on : styles.dim] }, ':' + p.port)
-      ];
-    });
+      buttons: props.buttons,
+      autoSelect: props.autoSelect,
+      style: [styles.card, props.box],
+      focusedStyle: styles.cardFocus
+    }, [
+      ce(View, { key: 't', style: styles.cardTop },
+        ce(wh.IconPS, { iconId: 'internet_browser', style: styles.cardIcon }),
+        ce(Label, { style: styles.cardPort, numberOfLines: 1 }, ':' + p.port)),
+      ce(Label, { key: 'n', style: styles.cardName, numberOfLines: props.box.height >= 96 ? 2 : 1 }, p.name)
+    ]);
   }
 
   function PayloadLauncher(props) {
     var st = React.useState(null), pages = st[0], setPages = st[1];
     var mounted = React.useRef(true);
+    var tp = React.useState(0), top = tp[0], setTop = tp[1];             // first row shown
+    var sp = React.useState(null), scrollPick = sp[0], setScrollPick = sp[1]; // port to select after a scroll
     // Scan only while the tiles can be seen (props.hubVisible, see payload-monitor).
     var hubVisible = props.hubVisible !== false;
 
@@ -111,28 +141,38 @@
     }, [hubVisible]);
 
     var W = props.width || 504, H = props.height || 152;
-    var compact = H < 300;
-    var rowH = compact ? 28 : 36;
-    var maxRows = Math.max(1, Math.floor((H - 32 - 48) / rowH));
+    var grid = cardGrid(W, H, (props.settings || {}).columns), cols = grid.cols;
 
-    var body;
+    var body, range = null;
     if (!pages) body = ce(Label, { style: styles.dim }, 'Looking for payload pages...');
     else if (!pages.length) body = ce(Label, { style: styles.dim }, 'No payload pages found');
     else {
-      var shown = pages.length > maxRows ? maxRows - 1 : pages.length;
-      var rows = pages.slice(0, shown).map(function (p) {
-        return ce(PageRow, { key: String(p.port), page: p, rowH: rowH, compact: compact });
+      var n = pages.length;
+      var t = Math.min(top, Math.max(0, Math.ceil(n / cols) - grid.rows));
+      var first = t * cols, end = Math.min(n, first + grid.rows * cols);
+      var scroll = function (from, dir) {
+        var to = scrollTarget(n, cols, from, dir);
+        if (to < 0) return false;                    // the loader plays the blocked sound
+        var row = Math.floor(to / cols);
+        setTop(dir > 0 ? row - grid.rows + 1 : row);
+        setScrollPick(pages[to].port);
+        wh.playSound('move');
+      };
+      var cards = pages.slice(first, end).map(function (p, j) {
+        var i = first + j, row = Math.floor(i / cols);
+        var buttons = {};
+        if (row === t + grid.rows - 1) buttons[wh.Button.Down] = function () { return scroll(i, 1); };
+        if (row === t && t > 0) buttons[wh.Button.Up] = function () { return scroll(i, -1); };
+        return ce(PageCard, { key: String(p.port), page: p, box: cardBox(grid, j), buttons: buttons,
+          autoSelect: p.port === scrollPick });
       });
-      if (pages.length > shown) {
-        rows.push(ce(Label, { key: '__more', style: [styles.small, styles.dim, { paddingHorizontal: 10 }] },
-          '+' + (pages.length - shown) + ' more (make the tile bigger)'));
-      }
-      body = ce(View, null, rows);
+      if (n > end - first) range = (first + 1) + '-' + end + ' of ' + n;
+      body = ce(View, { style: styles.grid }, cards);
     }
 
     var cfg = props.config || {};
-    var badge = props.active ? 'X: open' : (pages && pages.length ? pages.length + ' found' : null);
-    return ce(View, { style: [styles.card, { width: W, height: H }] },
+    var badge = range || (props.active ? 'X: open' : (pages && pages.length ? pages.length + ' found' : null));
+    return ce(View, { style: { width: W, height: H } },
       ce(View, { style: styles.body },
         ce(wh.Title, { iconId: cfg.iconId, badge: badge, style: { marginBottom: 8 } }, cfg.title || 'Payload Launcher'),
         body

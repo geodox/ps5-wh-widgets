@@ -3,5 +3,13 @@
   "title": "Payload Launcher",
   "description": "Open the web pages of running payloads in the console's browser.",
   "iconId": "discover",
-  "size": 1
+  "size": 1,
+  "settings": [
+    { "id": "columns", "title": "Cards per row", "type": "choice",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "2" }
+  ]
 }

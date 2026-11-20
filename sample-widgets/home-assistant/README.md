@@ -2,7 +2,7 @@
 
 Shows and controls your [Home Assistant](https://www.home-assistant.io/) entities
 from the PS5 Welcome Hub: lights, switches, sensors, climate, covers, locks, media
-players and more. The tile lists the entities you choose, with live state; the
+players and more. The tile shows the entities you choose as cards, with live state; the
 full-screen page adds sliders, temperature and mode controls, and the entity
 chooser.
 
@@ -25,10 +25,16 @@ chooser.
 
 **On the tile**
 
-- X enters the tile. Arrows pick an entity, X runs its action, Circle leaves.
+- Each entity is a card: an icon, its state and its name. Cards of entities that
+  are on (or open, unlocked, playing, home, heating) are brighter.
+- X enters the tile. Arrows pick a card, X runs its action, Circle leaves.
+  Read-only entities (sensors) can't be picked.
 - Square opens the full page.
-- The tile shows as many entities as fit its size, in the order you chose them.
-  When there are more, the last line says how many; the page shows them all.
+- The tile shows as many cards as fit its size, in the order you chose them. When
+  there are more, the title shows the range (`1-9 of 18`): inside the tile, Down on
+  the last row and Up on the first scroll to the rest.
+- **Cards per row** in Options: 1, 2 or 3 (3 by default). An XL tile shows twice
+  as many.
 
 **On the page**
 

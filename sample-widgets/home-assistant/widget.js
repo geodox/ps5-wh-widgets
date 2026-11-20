@@ -421,13 +421,16 @@
 
   var styles = wh.StyleSheet.create({
     body: { flex: 1, padding: 16 },
-    rows: { marginTop: 8 },
-    rowBox: { height: 36, borderRadius: 18, paddingHorizontal: 12, justifyContent: 'center' },
-    rowOn: { backgroundColor: '#ffffff' },
-    row: { flexDirection: 'row', alignItems: 'center' },
-    name: { flex: 1 },
-    value: { marginLeft: 12, opacity: 0.6 },
-    dark: { color: '#17191e', opacity: 1 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8 },
+    card: { borderRadius: 12, borderWidth: 2, borderColor: 'transparent', padding: 6,
+      backgroundColor: 'rgba(255,255,255,0.08)' },
+    cardOn: { backgroundColor: 'rgba(255,255,255,0.22)' },
+    cardFocus: { borderColor: '#ffffff' },
+    cardTop: { flexDirection: 'row', alignItems: 'center', height: 24 },
+    cardIcon: { width: 24, height: 24 },
+    cardState: { flex: 1, marginLeft: 6, textAlign: 'right', fontSize: F.Size4XSmall, opacity: 0.7 },
+    cardName: { fontSize: F.Size3XSmall, marginTop: 4 },
+    dim: { opacity: 0.5 },
     note: { fontSize: F.Size3XSmall, opacity: 0.6, marginTop: 8, paddingHorizontal: 12 },
     pageRoot: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' },
     pageBox: { width: 1500, height: 918, marginTop: 162 },
@@ -437,16 +440,79 @@
     list: { flex: 1, width: '100%', marginVertical: 40 }
   });
 
-  // One entity row on the tile. Read-only entities are not selectable.
-  function TileRow(props) {
-    var maxName = Math.max(8, 40 - props.value.length);
-    function inner(selected) {
-      return ce(View, { style: styles.row },
-        ce(Label, { style: [styles.name, selected ? styles.dark : null], numberOfLines: 1 }, trunc(props.name, maxName)),
-        ce(Label, { style: [styles.value, selected ? styles.dark : null], numberOfLines: 1 }, props.value));
+  // ---- cards: a grid of `columns` (the Cards per row setting; twice that on an XL
+  // tile, which is two tiles wide), as many rows as the tile height allows
+  var CARD_GAP = 8, CARD_MIN_H = 64;
+  function cardGrid(W, H, columns) {
+    var cols = (+columns || 3) * (W > 600 ? 2 : 1);
+    var avail = H - 64 - (H > 200 ? 48 : 16);   // title row above, focus key guide below
+    var rows = Math.max(1, Math.floor((avail + CARD_GAP) / (CARD_MIN_H + CARD_GAP)));
+    return {
+      cols: cols,
+      rows: rows,
+      w: Math.floor((W - 32 - CARD_GAP * (cols - 1)) / cols),
+      h: Math.floor((avail - CARD_GAP * (rows - 1)) / rows)
+    };
+  }
+  function cardBox(g, i) {
+    return { width: g.w, height: g.h, marginRight: i % g.cols === g.cols - 1 ? 0 : CARD_GAP,
+      marginBottom: CARD_GAP };
+  }
+  // Scrolling: the grid shows grid.rows rows from row `top`. Down on a card in the
+  // last row shown (Up in the first) scrolls to the next row with a selectable card
+  // and selects the one nearest the same column. The card's `buttons` get the arrow
+  // before the loader moves the selection; `autoSelect` selects the card that
+  // scrolls in. Returns {row, index}, or null when there is nothing further.
+  function scrollTarget(n, cols, from, dir, canSelect) {
+    var col = from % cols, rows = Math.ceil(n / cols);
+    for (var r = Math.floor(from / cols) + dir; r >= 0 && r < rows; r += dir) {
+      var best = -1;
+      for (var i = r * cols; i < Math.min(n, (r + 1) * cols); i++) {
+        if (canSelect(i) && (best < 0 || Math.abs(i % cols - col) < Math.abs(best % cols - col))) best = i;
+      }
+      if (best >= 0) return { row: r, index: best };
     }
-    if (!props.onPress) return ce(View, { style: styles.rowBox }, inner(false));
-    return ce(wh.Focusable, { onPress: props.onPress, style: styles.rowBox, focusedStyle: styles.rowOn }, inner);
+    return null;
+  }
+
+  // Domain icons (stock IconPS ids; there is no bulb, fan or thermometer glyph).
+  var ICONS = {
+    light: 'psvr_screen_brightness', switch: 'power', input_boolean: 'power', fan: 'power',
+    siren: 'alarm', humidifier: 'power', valve: 'power', lock: 'lock', cover: 'home',
+    media_player: 'tv', climate: 'settings_preference', water_heater: 'settings_preference',
+    scene: 'appearance', script: 'control_play', automation: 'control_play',
+    button: 'control_play', input_button: 'control_play', sensor: 'linegraph_curve_default',
+    binary_sensor: 'information', person: 'person', device_tracker: 'person',
+    camera: 'camera_generic', alarm_control_panel: 'alarm', number: 'list', input_number: 'list',
+    select: 'list', input_select: 'list', weather: 'cloud', update: 'update', vacuum: 'home',
+    lawn_mower: 'home'
+  };
+  function iconFor(id, st) {
+    var d = domainOf(id), a = (st && st.a) || {};
+    if (d === 'lock' && st && st.s !== 'locked') return 'unlock';
+    if (d === 'media_player' && a.device_class === 'speaker') return 'speaker';
+    if (d === 'binary_sensor' && (a.device_class === 'motion' || a.device_class === 'occupancy' ||
+      a.device_class === 'presence')) return 'person';
+    return ICONS[d] || 'home';
+  }
+  // Lit cards: the entity is on, open, unlocked, playing, home or heating.
+  var ACTIVE = { on: 1, open: 1, opening: 1, unlocked: 1, playing: 1, home: 1, cleaning: 1, mowing: 1,
+    heat: 1, cool: 1, heat_cool: 1, auto: 1, dry: 1, fan_only: 1, triggered: 1 };
+  function isActive(st) { return !!st && !!ACTIVE[st.s]; }
+
+  // One entity card. Read-only entities are not selectable.
+  function EntityCard(props) {
+    var box = [styles.card, props.box, props.on ? styles.cardOn : null];
+    var two = props.box.height >= 96;
+    var inner = [
+      ce(View, { key: 't', style: styles.cardTop },
+        ce(wh.IconPS, { iconId: props.icon, style: [styles.cardIcon, props.on ? null : styles.dim] }),
+        ce(Label, { style: styles.cardState, numberOfLines: 1 }, props.value)),
+      ce(Label, { key: 'n', style: styles.cardName, numberOfLines: two ? 2 : 1 }, props.name)
+    ];
+    if (!props.onPress) return ce(View, { style: box }, inner);
+    return ce(wh.Focusable, { onPress: props.onPress, buttons: props.buttons, autoSelect: props.autoSelect,
+      style: box, focusedStyle: styles.cardFocus }, inner);
   }
 
   function confirmDialog(ask, setAsk) {
@@ -470,6 +536,8 @@
     useConnection(cfg, hubVisible);
     var states = useEntities(picks || [], hubVisible && status === 'ok');
     var a = React.useState(null), ask = a[0], setAsk = a[1];
+    var tp = React.useState(0), top = tp[0], setTop = tp[1];             // first row shown
+    var sp = React.useState(null), scrollPick = sp[0], setScrollPick = sp[1]; // card to select after a scroll
     var unitT = client.info.tempUnit;
 
     function openPage(view) {
@@ -484,35 +552,51 @@
     });
 
     var W = props.width || 504, H = props.height || 152;
-    var fit = Math.max(1, Math.floor((H - 64 - 16 - (H > 200 ? 48 : 0)) / 36));
+    var grid = cardGrid(W, H, (props.settings || {}).columns), cols = grid.cols;
     var msg = statusMessage(status, cfg);
-    var body = [];
+    var body = [], range = null;
 
     if (msg && !(status === 'ok')) {
       body.push(ce(Label, { key: 'm', style: styles.note }, msg));
     } else if (picks && !picks.length) {
       body.push(ce(Label, { key: 'm', style: styles.note }, 'Press X to choose entities'));
     } else if (picks) {
-      var shown = picks.length > fit ? picks.slice(0, fit - 1) : picks;
-      var rows = shown.map(function (id) {
+      var n = picks.length;
+      var presses = picks.map(function (id) {
         var st = states[id], act = actionFor(id, st), name = nameOf(id, st);
-        var onPress = null;
-        if (act && act.page) onPress = function () { openPage('home'); };
-        else if (act) onPress = function () {
+        if (act && act.page) return function () { openPage('home'); };
+        if (!act) return null;
+        return function () {
           var run = function () { runAction(id, act); };
           if (act.confirm) setAsk({ verb: act.confirm, name: name, run: run });
           else run();
         };
-        return ce(TileRow, { key: id, name: name, value: stateText(id, st, unitT), onPress: onPress });
       });
-      if (picks.length > shown.length) {
-        rows.push(ce(Label, { key: 'more', style: styles.note }, '+' + (picks.length - shown.length) + ' more. Square: all'));
-      }
-      body.push(ce(View, { key: 'r', style: styles.rows }, rows));
+      var canSelect = function (i) { return !!presses[i]; };
+      var t = Math.min(top, Math.max(0, Math.ceil(n / cols) - grid.rows));
+      var first = t * cols, end = Math.min(n, first + grid.rows * cols);
+      var scroll = function (from, dir) {
+        var to = scrollTarget(n, cols, from, dir, canSelect);
+        if (!to) return false;                       // the loader plays the blocked sound
+        setTop(dir > 0 ? to.row - grid.rows + 1 : to.row);
+        setScrollPick(picks[to.index]);
+        wh.playSound('move');
+      };
+      var cards = picks.slice(first, end).map(function (id, j) {
+        var i = first + j, row = Math.floor(i / cols), st = states[id];
+        var buttons = {};
+        if (row === t + grid.rows - 1) buttons[B.Down] = function () { return scroll(i, 1); };
+        if (row === t && t > 0) buttons[B.Up] = function () { return scroll(i, -1); };
+        return ce(EntityCard, { key: id, name: nameOf(id, st), value: stateText(id, st, unitT), icon: iconFor(id, st),
+          on: isActive(st), box: cardBox(grid, j), onPress: presses[i], buttons: buttons,
+          autoSelect: id === scrollPick });
+      });
+      if (n > end - first) range = (first + 1) + '-' + end + ' of ' + n;
+      body.push(ce(View, { key: 'g', style: styles.grid }, cards));
     }
 
     return ce(View, { style: [styles.body, { width: W, height: H }] },
-      ce(wh.Title, { iconId: cfg.iconId || 'home', badge: props.active ? 'Square: all' : null },
+      ce(wh.Title, { iconId: cfg.iconId || 'home', badge: range || (props.active ? 'Square: all' : null) },
         cfg.title || 'Home Assistant'),
       body,
       confirmDialog(ask, setAsk));
