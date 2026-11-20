@@ -44,8 +44,12 @@ Hooks come from the vendor React handle (`React.useState`, `React.useEffect`,
   `127.0.0.1` (console-verified on 13.20; the Home Assistant sample uses both).
 * A request to a host or port that does not answer fails only after **60 s**,
   the hub's own timeout. Put your own shorter timeout on it, and show "can't
-  reach" instead of a blank tile. For a `WebSocket`, close it when it has not
-  opened (or authenticated) after a few seconds.
+  reach" instead of a blank tile.
+* **Never open a `WebSocket` to a host that may not answer.** Opening one blocks
+  the hub's JavaScript until the connection attempt gives up, about 75 s. Input
+  freezes, and ShellUI may be killed. `fetch` doesn't block, so check the server
+  with `fetch` first, with your own timeout, and open the socket only once it
+  has answered. The Home Assistant sample does this.
 
 Always clean up timers on unmount and guard against setting state after unmount:
 

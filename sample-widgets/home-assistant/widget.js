@@ -176,6 +176,7 @@
     var users = 0, nextId = 1, nextKey = 1, backoff = 0;
     var pending = {}, subs = {}, statusFns = [];
     var retryTimer = null, connectTimer = null, closeTimer = null;
+    var probing = false;                     // the fetch check before the socket is running
     var info = { tempUnit: DEG + 'C' };
 
     function setStatus(s) {
@@ -206,9 +207,39 @@
       s.id = nextId++;
       send({ id: s.id, type: 'subscribe_entities', entity_ids: s.ids });
     }
+    // Opening a WebSocket to a host that does not answer blocks the hub's JS thread
+    // until the TCP connect gives up (about 75 s; console-verified on 13.20): input
+    // freezes and ShellUI may be killed. fetch does not block, so ask the server
+    // with fetch first and open the socket only once it has answered.
     function open() {
       clearTimeout(retryTimer); retryTimer = null;
       setStatus('connecting');
+      var done = false, at = url;
+      probing = true;
+      var ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        probing = false;
+        if (ctl) { try { ctl.abort(); } catch (e) {} }
+        log('server did not answer within ' + CONNECT_TIMEOUT / 1000 + ' s');
+        if (at === url && users > 0) drop(null, 'unreachable');
+      }, CONNECT_TIMEOUT);
+      function answered(ok) {
+        if (done) return;
+        done = true;
+        probing = false;
+        clearTimeout(timer);
+        if (at !== url || users === 0) return;           // released or reconfigured meanwhile
+        if (ok) openSocket(); else drop(null, 'unreachable');
+      }
+      try {
+        // Any HTTP answer (401 included) means the server is up.
+        fetch(url + '/api/', { signal: ctl ? ctl.signal : undefined })
+          .then(function () { answered(true); }, function () { answered(false); });
+      } catch (e) { answered(false); }
+    }
+    function openSocket() {
       var sock;
       try { sock = new WebSocket(url.replace(/^http/, 'ws') + '/api/websocket'); }
       catch (e) { log('connect failed: ' + (e && e.message)); drop(null, 'unreachable'); return; }
@@ -281,7 +312,7 @@
           if (ws) drop(ws, 'idle');
         }
         users++;
-        if (!ws && !retryTimer) { backoff = 0; open(); }
+        if (!ws && !retryTimer && !probing) { backoff = 0; open(); }
       },
       release: function () {
         users = Math.max(0, users - 1);
