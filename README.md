@@ -20,80 +20,6 @@ Add your own widgets to the PS5 Welcome Hub — injected into the running hub at
 
 ---
 
-## 🧩 Included Widgets
-
-Two widgets ship with the project, as working examples and as the starting point for your own:
-
-<div align="center">
-
-![Payload Monitor and Hello Hub running in the Welcome Hub](img/welcome-hub-widgets.jpg)
-
-</div>
-
-| Widget | What it does |
-| :--- | :--- |
-| **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks, a timer and a settings menu (clock format, following the console's 12/24-hour setting by default; seconds). The smallest complete widget. |
-| **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. A long list turns pages by itself; L1 / R1 page it while the tile is focused. |
-| **Hello Mini** | A MINI widget: a pill with an icon and a live clock in the hub's MINI row, sized to its content like the stock ones. |
-| **Console Stats** | CPU and SoC temperature, fan speed, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
-| **Home Assistant** | Shows and controls your Home Assistant entities, as cards: lights, switches, sensors, climate, covers, locks, media players and more. X toggles or runs one; the full-screen page adds brightness, volume and position sliders, target temperature and mode, and the entity chooser. Unlocking and opening a garage door ask first. Needs a token in its `config.json`: see its [README](sample-widgets/home-assistant/README.md). |
-| **Weather** | Current weather and forecast for your saved places, anywhere in the world: search by city or postal code, switch places with L1 / R1. Background photos for the current weather, a 5-day forecast and hourly details at the larger sizes, units from the console's region or your choice. Based on VintendoPower's Weather widget; see its [README](sample-widgets/weather/README.md). |
-| **Payload Launcher** | Shows the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...) as cards; press X on one to open it in the console's browser. |
-
-Drop any of these folders into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
-## 📸 Community Showcase
-
-Screenshots from other setups, shared by the [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) project:
-
-<div align="center">
-<table><tr><td width="50%"><img src="https://raw.githubusercontent.com/manchildtechnologies-ui/NiDUS/main/img/20261113_110144_00592274.webp" alt="Community widgets in the Welcome Hub" width="100%"></td><td width="50%"><img src="https://raw.githubusercontent.com/manchildtechnologies-ui/NiDUS/main/img/20261113_110150_00429265.webp" alt="Widget Store and game tiles in the Welcome Hub" width="100%"></td></tr></table>
-</div>
-
-*Images courtesy of [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) — not produced by this project.*
-
-## 🚀 What Powers ps5-wh-widgets
-
-### Native Welcome Hub Integration
-
-- Renders your widgets inside the Welcome Hub's native frame and header.
-- Passes widget configuration through `props.config` and per-widget settings through `props.settings`.
-- Provides a native settings menu and persists widget settings in `.settings.json`.
-- Supports controller navigation, focusable buttons, and native Hub interaction.
-- Records detailed installation failures to support troubleshooting.
-
-## Testing And Current Status
-
-The payload and loader have been run on-console: the hook installs into SceShellUI, both sample widgets render inside the native hub frame, settings persist, and a widget source change is rebuilt and swapped in place without restarting the shell.
-
-**Firmware:** each firmware ships its own Welcome Hub, so the payload carries one hub patch per supported firmware and picks the one for your console at install time.
-
-| Firmware | Status |
-| :--- | :--- |
-| **13.20** | Verified on-console. |
-| **13.40** | Verified on-console. |
-| **13.60** | Verified on-console. |
-
-On any other firmware the payload does not install. It shows `WHBridge failed: FW x.yy not supported yet` with the supported list, rather than loading and silently showing no widgets. Even on a supported firmware, the hub is only patched if it is byte-for-byte the build the patch was made from; anything else is left stock.
-
-### Help Support Your Firmware
-
-Adding a firmware needs a dump of that firmware's stock hub. With ps5debug-NG running on the console (port 744), reboot the console, **do not** load `wh_bridge.elf`, open the Welcome Hub once, then run:
-
-```text
-python scripts/dump_hub.py --host <console-ip> --out .
-```
-
-It only reads from the console and writes `hub_fw<NNNN>_<hash>.hbc` on your PC. Open an issue to arrange sending it. The file is Sony's bytecode, so please **do not attach it publicly**.
-
-## 🔄 Applying Widget Changes
-
-Widget folders are watched while the payload is resident: a `config.json` or `widget.js` change is noticed within a second and, once it has been stable for five seconds, rebuilt into a fresh prelude and swapped into the running shell — no payload reload, no shell restart.
-
-The hub only evaluates that prelude when its JS runtime starts, so **sign out and back in** to see the change. Leaving the hub and coming back does not work; that runtime is kept.
-
-> [!TIP]
-> `[widget:<id>] not loaded` means that widget threw while evaluating, or never called `wh.register` — the other widgets still load. A **syntax** error is different: it stops the whole prelude from compiling, so nothing loads. Run `whctl deploy` first; it checks every `widget.js` with `node --check` and skips the broken ones with the exact error.
-
 ## Before Installing
 
 > [!IMPORTANT]
@@ -103,7 +29,7 @@ The hub only evaluates that prelude when its JS runtime starts, so **sign out an
 - A PS5 with a homebrew environment and a way to load an ELF payload is required.
 - Use the payload from this repository's releases — a stock bridge build does not include the widget loader and will not load widgets.
 
-## Installation
+## Installing
 
 There is nothing else to install: the widget loader lives inside the payload. It stays resident as the widget asset server, and everything it does is in memory — a reboot removes it, so run the payload again to bring the widgets back.
 
@@ -138,7 +64,81 @@ Once the payload is installed and running, place each unpacked widget in its own
 
 The folder name should match its widget id. Changes are picked up while the payload is running; see [Applying widget changes](#applying-widget-changes). See the [SDK getting-started guide](docs/sdk/getting-started.md) for deployment and troubleshooting.
 
-## Build Your Own
+## Testing And Current Status
+
+The payload and loader have been run on-console: the hook installs into SceShellUI, both sample widgets render inside the native hub frame, settings persist, and a widget source change is rebuilt and swapped in place without restarting the shell.
+
+**Firmware:** each firmware ships its own Welcome Hub, so the payload carries one hub patch per supported firmware and picks the one for your console at install time.
+
+| Firmware | Status |
+| :--- | :--- |
+| **13.20** | Verified on-console. |
+| **13.40** | Verified on-console. |
+| **13.60** | Verified on-console. |
+
+On any other firmware the payload does not install. It shows `WHBridge failed: FW x.yy not supported yet` with the supported list, rather than loading and silently showing no widgets. Even on a supported firmware, the hub is only patched if it is byte-for-byte the build the patch was made from; anything else is left stock.
+
+### Help Support Your Firmware
+
+Adding a firmware needs a dump of that firmware's stock hub. With ps5debug-NG running on the console (port 744), reboot the console, **do not** load `wh_bridge.elf`, open the Welcome Hub once, then run:
+
+```text
+python scripts/dump_hub.py --host <console-ip> --out .
+```
+
+It only reads from the console and writes `hub_fw<NNNN>_<hash>.hbc` on your PC. Open an issue to arrange sending it. The file is Sony's bytecode, so please **do not attach it publicly**.
+
+## 🚀 What Powers ps5-wh-widgets
+
+### Native Welcome Hub Integration
+
+- Renders your widgets inside the Welcome Hub's native frame and header.
+- Passes widget configuration through `props.config` and per-widget settings through `props.settings`.
+- Provides a native settings menu and persists widget settings in `.settings.json`.
+- Supports controller navigation, focusable buttons, and native Hub interaction.
+- Records detailed installation failures to support troubleshooting.
+
+## 🔄 Applying Widget Changes
+
+Widget folders are watched while the payload is resident: a `config.json` or `widget.js` change is noticed within a second and, once it has been stable for five seconds, rebuilt into a fresh prelude and swapped into the running shell — no payload reload, no shell restart.
+
+The hub only evaluates that prelude when its JS runtime starts, so **sign out and back in** to see the change. Leaving the hub and coming back does not work; that runtime is kept.
+
+> [!TIP]
+> `[widget:<id>] not loaded` means that widget threw while evaluating, or never called `wh.register` — the other widgets still load. A **syntax** error is different: it stops the whole prelude from compiling, so nothing loads. Run `whctl deploy` first; it checks every `widget.js` with `node --check` and skips the broken ones with the exact error.
+
+## 🧩 Sample Widgets
+
+These widgets ship with the project, ready to use and as starting points for your own:
+
+<div align="center">
+
+![Payload Launcher and Home Assistant cards in the Welcome Hub](img/widgets-cards.jpg)
+
+![Console Stats and Payload Monitor in the Welcome Hub](img/widgets-stats.jpg)
+
+</div>
+
+| Widget | What it does |
+| :--- | :--- |
+| **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. A long list turns pages by itself; L1 / R1 page it while the tile is focused. |
+| **Console Stats** | CPU and SoC temperature, fan speed, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
+| **Home Assistant** | Shows and controls your Home Assistant entities, as cards: lights, switches, sensors, climate, covers, locks, media players and more. X toggles or runs one; the full-screen page adds brightness, volume and position sliders, target temperature and mode, and the entity chooser. Unlocking and opening a garage door ask first. Needs a token in its `config.json`: see its [README](sample-widgets/home-assistant/README.md). |
+| **Weather** | Current weather and forecast for your saved places, anywhere in the world: search by city or postal code, switch places with L1 / R1. Background photos for the current weather, a 5-day forecast and hourly details at the larger sizes, units from the console's region or your choice. Based on VintendoPower's Weather widget; see its [README](sample-widgets/weather/README.md). |
+| **Payload Launcher** | Shows the payload web pages answering on the console (Payload Manager, PKG Manager, ShadowMount+, ...) as cards; press X on one to open it in the console's browser. |
+
+### Reference Widgets
+
+The smallest complete widgets, written to show how the SDK works:
+
+| Widget | What it does |
+| :--- | :--- |
+| **Hello Hub** | A live clock built with the SDK: stock title row, stock text, an icon, hooks, a timer and a settings menu (clock format, following the console's 12/24-hour setting by default; seconds). The smallest complete widget. |
+| **Hello Mini** | A MINI widget: a pill with an icon and a live clock in the hub's MINI row, sized to its content like the stock ones. |
+
+Drop any of these folders into `/data/wh-widgets/` to use it; the sources are in [`sample-widgets/`](sample-widgets/).
+
+## Building Your Own
 
 Widgets are React Native components: plain JavaScript built with `React.createElement` and the SDK handle `globalThis.__wh` — not web HTML, CSS or DOM APIs. A widget's entry file registers its component with `wh.register(Component)`.
 
@@ -154,7 +154,7 @@ Widgets are React Native components: plain JavaScript built with `React.createEl
 - [Troubleshooting](docs/sdk/troubleshooting.md)
 - [Sample widgets](sample-widgets/)
 
-## Source Layout
+### Source Layout
 
 ```text
 framework/      payload sources: hook/installer, prelude, loader, asset server
@@ -166,7 +166,17 @@ img/            screenshots and documentation images
 repo.json       Payload Manager custom source (payload catalog)
 ```
 
-## ❤️ Credits & Origins
+## 📸 Community Showcase
+
+Screenshots from other setups, shared by the [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) project:
+
+<div align="center">
+<table><tr><td width="50%"><img src="https://raw.githubusercontent.com/manchildtechnologies-ui/NiDUS/main/img/20261113_110144_00592274.webp" alt="Community widgets in the Welcome Hub" width="100%"></td><td width="50%"><img src="https://raw.githubusercontent.com/manchildtechnologies-ui/NiDUS/main/img/20261113_110150_00429265.webp" alt="Widget Store and game tiles in the Welcome Hub" width="100%"></td></tr></table>
+</div>
+
+*Images courtesy of [NiDUS](https://github.com/manchildtechnologies-ui/NiDUS) — not produced by this project.*
+
+## ❤️ Credits
 
 - **[VintendoPower](https://github.com/manchildtechnologies-ui)** — co-author.
 - **[@pm5krj](https://github.com/pm5krj)** — the FW 13.40 hub dump and on-console testing that added 13.40 support.
