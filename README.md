@@ -11,7 +11,7 @@
 Add your own widgets to the PS5 Welcome Hub — injected into the running hub at runtime. Nothing on disk is patched, and a reboot returns the console to stock.
 
 [![PS5](https://img.shields.io/badge/Platform-PlayStation%205-174B91?style=for-the-badge)](#before-installing)
-[![Firmware](https://img.shields.io/badge/Firmware-13.20%20%7C%2013.60-168E78?style=for-the-badge)](#before-installing)
+[![Firmware](https://img.shields.io/badge/Firmware-13.20%20%7C%2013.40%20%7C%2013.60-168E78?style=for-the-badge)](#before-installing)
 [![MIT License](https://img.shields.io/badge/License-MIT-556477?style=for-the-badge)](LICENSE)
 
 [**Installation Prerequisites**](#before-installing) · [**Developer SDK**](docs/sdk/README.md)
@@ -70,6 +70,7 @@ The payload and loader have been run on-console: the hook installs into SceShell
 | Firmware | Status |
 | :--- | :--- |
 | **13.20** | Verified on-console. |
+| **13.40** | Verified on-console. |
 | **13.60** | Verified on-console. |
 
 On any other firmware the payload does not install. It shows `WHBridge failed: FW x.yy not supported yet` with the supported list, rather than loading and silently showing no widgets. Even on a supported firmware, the hub is only patched if it is byte-for-byte the build the patch was made from; anything else is left stock.
@@ -98,7 +99,7 @@ The hub only evaluates that prelude when its JS runtime starts, so **sign out an
 > [!IMPORTANT]
 > **Install and run [WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator) by [@ghost1372](https://github.com/ghost1372) first.** The PS5 Welcome Hub must be activated before custom widgets can run.
 
-- **Supported firmware: PS5 13.20 and 13.60.** See [Testing and current status](#testing-and-current-status) for what each has been verified on, and how to help add another firmware.
+- **Supported firmware: PS5 13.20, 13.40 and 13.60.** See [Testing and current status](#testing-and-current-status) for what each has been verified on, and how to help add another firmware.
 - A PS5 with a homebrew environment and a way to load an ELF payload is required.
 - Use the payload from this repository's releases — a stock bridge build does not include the widget loader and will not load widgets.
 

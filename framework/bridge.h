@@ -21,7 +21,7 @@ struct wh_bridge {
  * when this payload has no delta for it. */
 const struct wh_bridge *wh_bridge_for_fw(uint32_t fw);
 
-/* Supported firmwares, for messages: "13.20, 13.60". */
+/* Supported firmwares, for messages: "13.20, 13.40, 13.60". */
 extern const char wh_bridge_fws[];
 
 #endif

@@ -1,0 +1,230 @@
+{
+  "fw": 1340,
+  "source_sha1": "ea73bdb53878263d722d9c2d12791caa4f4e05b3",
+  "ref_sha1": "12c6c475d9c4dc8a7166b8f379e236671dce85cb",
+  "targets": [
+    {
+      "name": "(lock A)",
+      "fid_1320": 5916,
+      "hook": "lock",
+      "fid": 6186,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (22 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "(lock B)",
+      "fid_1320": 19960,
+      "hook": "lock",
+      "fid": 20536,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "__whWidgetMap",
+      "fid_1320": 7374,
+      "hook": "global",
+      "fid": 8282,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (56 insns); numbers moved: LoadConstUInt8@203 arg1 175->185; WIDGET_MAP export true; require=param3 true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whWidgetMap",
+            "valReg": 1,
+            "at": null
+          },
+          {
+            "name": "__whRequire",
+            "valReg": 7,
+            "at": 12
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whSizeDown",
+      "fid_1320": 19931,
+      "hook": "sizeStep",
+      "fid": 20507,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; Math.max true",
+      "params": {
+        "at": 46,
+        "env": 0,
+        "res": 2,
+        "s": [
+          1,
+          3,
+          4,
+          3
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whSizeUp",
+      "fid_1320": 19932,
+      "hook": "sizeStep",
+      "fid": 20508,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (73 insns); all numbers identical; Math.min true FULL true",
+      "params": {
+        "at": 71,
+        "env": 2,
+        "res": 8,
+        "s": [
+          0,
+          1,
+          7,
+          1
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whScrollTo",
+      "fid_1320": 19985,
+      "hook": "prefix",
+      "fid": 20561,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (27 insns); all numbers identical; scroll ref .current/.start/.end true",
+      "params": {
+        "frame": 0,
+        "prologue_ok": true,
+        "envDepth": 1,
+        "envSlot": 4
+      }
+    },
+    {
+      "name": "__whLayoutResize",
+      "fid_1320": 1674,
+      "hook": "prefix",
+      "fid": 1470,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (81 insns); all numbers identical; Array.fill true",
+      "params": {
+        "frame": 6,
+        "prologue_ok": true
+      }
+    },
+    {
+      "name": "__whFind",
+      "fid_1320": 1665,
+      "hook": "prefix",
+      "fid": 1461,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (19 insns); all numbers identical; returns {id,position,size} true",
+      "params": {
+        "frame": 5,
+        "prologue_ok": true
+      }
+    }
+  ],
+  "modules": [
+    {
+      "name": "stockFrame",
+      "id_1320": 106,
+      "fid_1320": 1186,
+      "id": 108,
+      "fid": 1191,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.994 (runner-up F5770 0.550); +1/-1 insns [+ LoadConstUInt8 r1 # | - LoadConstInt r1 #]"
+    },
+    {
+      "name": "stockHeader",
+      "id_1320": 77,
+      "fid_1320": 922,
+      "id": 69,
+      "fid": 864,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (123 insns); numbers moved: LoadConstUInt8@396 arg1 94->99, LoadConstUInt8@413 arg1 21->20"
+    },
+    {
+      "name": "miniWidgets",
+      "id_1320": 199,
+      "fid_1320": 2018,
+      "id": 205,
+      "fid": 2065,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (104 insns); all numbers identical; anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
+    },
+    {
+      "name": "widgetTelemetry",
+      "id_1320": 145,
+      "fid_1320": 1539,
+      "id": 157,
+      "fid": 1643,
+      "confidence": 0.961,
+      "evidence": "aligned match sim=0.961 (runner-up F8273 0.111); +9/-5 insns [+ GetById r6 r6 _ \"STORE\" | + GetById r8 r6 _ \"WISHLIST\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r8 # | + GetById r6 r5 _ \"default\" | + GetById r6 r5 _ \"default\" | + GetById r7 r6 _ \"BETA\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r7 # | - GetById r9 r6 _ \"STORE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\"]; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
+    },
+    {
+      "name": "widgetIds",
+      "id_1320": 17,
+      "fid_1320": 128,
+      "id": 17,
+      "fid": 128,
+      "confidence": 0.963,
+      "evidence": "aligned match sim=0.963 (runner-up F1823 0.315); +5/-0 insns [+ LoadConstString r1 \"flare\" | + PutById r3 r1 _ \"FLARE\" | + LoadConstString r4 \"beta\" | + LoadConstString r3 \"BETA\" | + PutOwnByVal r1 r4 r3 #]; anchors ACTIVITY_FEED, campaigns, EDITABLE"
+    },
+    {
+      "name": "editTitles",
+      "id_1320": 383,
+      "fid_1320": 5162,
+      "id": 403,
+      "fid": 5382,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.978 (runner-up F20644 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:8c86886b627fb8d0 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; anchors msgid_discover_tips, msgid_playstation_store"
+    },
+    {
+      "name": "editIcons",
+      "id_1320": 1938,
+      "fid_1320": 20067,
+      "id": 2004,
+      "fid": 20643,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.976 (runner-up F20676 0.423); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + LoadConstString r5 \"signal_flare\" | + PutOwnByVal r1 r5 r6 # | + GetById r5 r3 _ \"default\"]; anchors from_ps, trending"
+    },
+    {
+      "name": "editDescs",
+      "id_1320": 1939,
+      "fid_1320": 20068,
+      "id": 2005,
+      "fid": 20644,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.978 (runner-up F5382 0.800); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + CreateClosure r5 r3 F:eaa07f0556612c86 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\"]; anchors msgid_learn_new_features, msgid_show_ps_store"
+    },
+    {
+      "name": "mainNavigator",
+      "id_1320": 1068,
+      "fid_1320": 12589,
+      "id": 1291,
+      "fid": 14897,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (93 insns); numbers moved: LoadConstUInt8@65 arg1 58->51, LoadConstUInt8@85 arg1 86->78, LoadConstInt@146 arg1 764->793, LoadConstInt@194 arg1 421->445, LoadConstInt@210 arg1 2100->2166, LoadConstInt@226 arg1 785->814, LoadConstInt@264 arg1 2110->2176, LoadConstInt@280 arg1 2115->2181, LoadConstInt@296 arg1 276->286; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
+    },
+    {
+      "name": "hubSdk",
+      "id_1320": 32,
+      "fid_1320": 345,
+      "id": 32,
+      "fid": 346,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (74 insns); all numbers identical; anchors HubAppContext, HubAppContextProvider, isFromHubSDK, useHubConfig"
+    },
+    {
+      "name": "dateFormats",
+      "id_1320": 319,
+      "fid_1320": 3101,
+      "id": 307,
+      "fid": 2988,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (59 insns); numbers moved: LoadConstUInt8@151 arg1 61->62, LoadConstUInt8@175 arg1 44->45; anchors getFormats, registerDateTimeFormatChangeHandler, dateTimeFormatChanged, timeFormat"
+    }
+  ]
+}
