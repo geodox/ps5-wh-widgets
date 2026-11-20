@@ -1639,6 +1639,11 @@
         var newController = { id: id, hs: [], items: [], bump: rerender };
         newController.reg = function (item) {
           newController.items.push(item);
+          // autoSelect: a list that scrolls swaps rows of items; it marks the item to
+          // select next. Mount effects run after the old rows' cleanups, so the index
+          // is final here.
+          if (item.current.p && item.current.p.autoSelect)
+            setSelectedIndex(newController.items.length - 1);
           rerender(function (n) {
             return n + 1;
           });
@@ -1873,7 +1878,10 @@
             }
           }
         } else best = currentIndex + (dx > 0 || dy > 0 ? 1 : -1);
-        if (best >= 0 && best < itemCount) setSelectedIndex(best);
+        if (best >= 0 && best < itemCount) {
+          setSelectedIndex(best);
+          wh.playSound('move');
+        } else wh.playSound('blocked');
       }
       // Route a key press: selected item first, then tile behavior (enter, leave,
       // settings), then wh.onPressed handlers (newest first). True = consumed.
@@ -1955,7 +1963,14 @@
             ref: tileRef,
             focusable: focusable,
             name: id,
+            // While entered, native focus stays on the tile, as in the stock frame's
+            // `locked` mode: the arrow handlers below return false, which tells the
+            // native dispatcher the key was handled (no focus move); the cursor-end
+            // ("cannot move") sound is off; moveSelection plays the move or blocked
+            // sound for the selection instead. canMove*: false is a fallback for any
+            // arrow event no handler sees.
             focusCustomSettings: active ? wh.__LOCKED : undefined,
+            cursorEndSFXEnabledDirection: active ? ['none'] : undefined,
             style: root.Object.assign(
               wh.__box(dims),
               { borderRadius: dims.borderRadius, overflow: 'hidden' },
@@ -2029,22 +2044,26 @@
               : undefined,
             onUpKeyDown: active
               ? function (e) {
-                  return onButton('Up', e);
+                  onButton('Up', e);
+                  return false; // handled: the native focus does not move
                 }
               : undefined,
             onDownKeyDown: active
               ? function (e) {
-                  return onButton('Down', e);
+                  onButton('Down', e);
+                  return false; // handled: the native focus does not move
                 }
               : undefined,
             onLeftKeyDown: active
               ? function (e) {
-                  return onButton('Left', e);
+                  onButton('Left', e);
+                  return false; // handled: the native focus does not move
                 }
               : undefined,
             onRightKeyDown: active
               ? function (e) {
-                  return onButton('Right', e);
+                  onButton('Right', e);
+                  return false; // handled: the native focus does not move
                 }
               : undefined,
             onBackKeyDown: active
