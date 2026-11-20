@@ -212,7 +212,8 @@ validated once and passed on `props.settings`.
 * `GET /` and `GET /<widget>/<file>` - widget images, `.png`/`.jpg`, max 1 MB,
   names validated by `wh_name_ok`.
 * settings get/set endpoints used by the prelude, persisted under
-  `/data/wh-widgets/<id>/.settings.json`.
+  `/data/wh-widgets/<id>/.settings.json`; `w=.hub` is the loader's own
+  (Welcome Hub Settings rows), `/data/wh-widgets/.hub.json`.
 * `GET /__launch?uri=<url-encoded URI>` - `wh.launch`: asks ShellUI to launch the
   URI via `libSceShellUIUtil.sprx` (`sceShellUIUtilLaunchByUri`). Any URI with a
   scheme; refused if it is not fully decodable, has spaces or control characters,

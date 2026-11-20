@@ -169,6 +169,12 @@ Writes are applied in call order, and each one stores the widget's whole object,
 keep it small (settings-sized, not caches of images or long logs). For
 user-facing options, use [settings](settings.md) instead: they get a menu for free.
 
+The data stays when the widget's folder is removed. Users see and delete it in
+**Welcome Hub Settings > Widget Data**, which lists each widget's stored data for
+the signed-in user, with its size and whether the widget is still installed.
+After a delete, `get` reads the store again; a tile on screen keeps what it
+already shows until the user signs out and back in.
+
 ## Logging
 
 ```js

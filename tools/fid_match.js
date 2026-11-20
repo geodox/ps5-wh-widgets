@@ -300,6 +300,10 @@ const MODULES = [
   // user is on the game row). The loader's props.hubFocused.
   { name: 'hubSdk', id_1320: 32, need: ['HubAppContext', 'HubAppContextProvider', 'isFromHubSDK', 'useHubConfig'] },
   { name: 'dateFormats', id_1320: 319, need: ['getFormats', 'registerDateTimeFormatChangeHandler', 'dateTimeFormatChanged', 'timeFormat'] },
+  // Welcome Hub Settings, "Followed games" row: the last row the screen always shows.
+  // The screen reads this module's `default` each time it builds its rows, so the
+  // loader wraps it to add its own rows after it (Telemetry, Widget data).
+  { name: 'hubSettingsFollowedGames', id_1320: 2126, need: ['msgid_followed_games', 'msgid_follow_new_games', 'Follow'] },
 ];
 
 // Every string operand in fid and the closures it creates.

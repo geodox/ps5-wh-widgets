@@ -297,6 +297,15 @@ static void wh_log_endpoint(int c, char* q){
 }
 #define WH_SET_MAX 2048
 #define WH_SET_FILE ".settings.json"
+/* The settings file for w: <dir>/<id>/.settings.json for a widget, or <dir>/.hub.json
+ * for ".hub", the loader's own (Welcome Hub Settings rows). No widget id starts with
+ * a dot, so the two never meet. */
+static int wh_settings_path(const char* w, char* fp, size_t n){
+  if (!strcmp(w, ".hub")) { snprintf(fp, n, "%s/.hub.json", WH_WIDGETS_DIR); return 1; }
+  if (!w[0] || !wh_name_ok(w, strlen(w))) return 0;
+  snprintf(fp, n, "%s/%s/%s", WH_WIDGETS_DIR, w, WH_SET_FILE);
+  return 1;
+}
 /* GET /__wget?w=<id> -> that widget's saved settings JSON (loopback only). */
 static void wh_settings_get(int c, char* q){
   char w[72] = "";
@@ -305,8 +314,8 @@ static void wh_settings_get(int c, char* q){
     t = strchr(t, '&'); if (t) t++;
   }
   char body[WH_SET_MAX + 1] = "{}"; long blen = 2;
-  if (w[0] && wh_name_ok(w, strlen(w))) {
-    char fp[256]; snprintf(fp, sizeof fp, "%s/%s/%s", WH_WIDGETS_DIR, w, WH_SET_FILE);
+  char fp[256];
+  if (wh_settings_path(w, fp, sizeof fp)) {
     int fd = open(fp, O_RDONLY | O_NOFOLLOW);
     if (fd >= 0) {
       struct stat st;
@@ -332,9 +341,8 @@ static void wh_settings_set(int c, char* q){
     else if (!strncmp(t, "h=", 2)) wh_hexdecode(t + 2, body, sizeof body);
     t = strchr(t, '&'); if (t) t++;
   }
-  if (!w[0] || !wh_name_ok(w, strlen(w)) || !body[0] || body[0] != '{') { wh_reply(c, "204 No Content"); return; }
   char fp[256], tp[300];
-  snprintf(fp, sizeof fp, "%s/%s/%s", WH_WIDGETS_DIR, w, WH_SET_FILE);
+  if (!wh_settings_path(w, fp, sizeof fp) || !body[0] || body[0] != '{') { wh_reply(c, "204 No Content"); return; }
   snprintf(tp, sizeof tp, "%s.tmp", fp);
   int fd = open(tp, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644);
   if (fd >= 0) {

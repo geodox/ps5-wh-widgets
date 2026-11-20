@@ -225,6 +225,15 @@
       "fid": 3101,
       "confidence": 0.99,
       "evidence": "unique normalized match (59 insns); all numbers identical; anchors getFormats, registerDateTimeFormatChangeHandler, dateTimeFormatChanged, timeFormat"
+    },
+    {
+      "name": "hubSettingsFollowedGames",
+      "id_1320": 2126,
+      "fid_1320": 22004,
+      "id": 2126,
+      "fid": 22004,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (103 insns); all numbers identical; anchors msgid_followed_games, msgid_follow_new_games, Follow"
     }
   ]
 }

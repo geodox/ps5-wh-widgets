@@ -1020,6 +1020,10 @@
           delete data[name];
         });
       },
+      // Widget data page: the user deleted this widget's data; read it again.
+      __forget: function () {
+        loaded = null;
+      },
     };
     return (wh.__stores[id] = store);
   };
@@ -1056,7 +1060,7 @@
             config: root.__wh_cfgs[id] || {},
             params: pageParams,
             close: close,
-            storage: wh.__storage(id),
+            storage: id.charAt(0) === '.' ? undefined : wh.__storage(id),
           })
         )
       : null;
@@ -2300,6 +2304,345 @@
       logLine('telemetry: filter failed: ' + errorText(e), 0, 1);
     }
   };
+
+  // --- Telemetry switch (Welcome Hub Settings > Telemetry) ---------------------------
+  // 'filter' (the default): the stock telemetry, without our widget ids (above).
+  // 'off': no telemetry event leaves ShellUI's JavaScript. Every event goes through
+  // NativeModules.VshNMTelemetryNq.SetEvent (hub module 863, the telemetry client's
+  // native-queue transport), which callers look up at call time, so one wrapper there
+  // stops all of them. It is installed in every runtime the loader runs in, before
+  // that runtime's app code. The setting is console-wide, kept by the payload
+  // (/__wget?w=.hub); until it arrives, events wait in memory.
+  var HUB_SETTINGS_URL = 'http://127.0.0.1:8098/__wget?w=.hub';
+  wh.__hubSettings = {};
+  wh.__telemetry = { mode: null, queue: [], dropped: 0, send: null };
+  wh.__telemetryApply = function (mode) {
+    var t = wh.__telemetry,
+      queue = t.queue;
+    t.mode = mode === 'off' ? 'off' : 'filter';
+    t.queue = [];
+    if (t.mode === 'off') t.dropped += queue.length;
+    else
+      for (var i = 0; i < queue.length; i++)
+        try {
+          t.send.apply(queue[i][0], queue[i][1]);
+        } catch (e) {}
+    logLine(
+      t.mode === 'off'
+        ? 'telemetry: off (' + t.dropped + ' event(s) not sent so far)'
+        : 'telemetry: on, custom widget ids filtered (' + queue.length + ' held event(s) sent)'
+    );
+  };
+  wh.__telemetryGate = function () {
+    var t = wh.__telemetry,
+      native = null;
+    try {
+      native = vendor && vendor.NativeModules && vendor.NativeModules.VshNMTelemetryNq;
+    } catch (e) {}
+    if (!native || typeof native.SetEvent !== 'function') {
+      logLine('telemetry: switch unavailable (VshNMTelemetryNq not found)', 0, 1);
+      return;
+    }
+    if (native.SetEvent.__wh) return;
+    t.send = native.SetEvent;
+    var gate = function () {
+      if (t.mode === 'filter') return t.send.apply(this, arguments);
+      if (t.mode === 'off' || t.queue.length >= 500) t.dropped++;
+      else t.queue.push([this, arguments]);
+      return root.Promise.resolve();
+    };
+    gate.__wh = 1;
+    try {
+      native.SetEvent = gate;
+    } catch (e) {}
+    if (native.SetEvent !== gate) {
+      logLine('telemetry: switch unavailable (SetEvent is read-only)', 0, 1);
+      return;
+    }
+    // Read the setting; retry for 30 s (the payload may be busy), then send as usual.
+    var tries = 0;
+    var load = function () {
+      var retry = function () {
+        if (++tries < 15) root.setTimeout(load, 2000);
+        else {
+          logLine('telemetry: setting not readable, sending as usual', 0, 1);
+          wh.__telemetryApply('filter');
+        }
+      };
+      try {
+        root
+          .fetch(HUB_SETTINGS_URL)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (saved) {
+            if (saved && typeof saved === 'object') wh.__hubSettings = saved;
+            wh.__telemetryApply(wh.__hubSettings.telemetry);
+          }, retry);
+      } catch (e) {
+        retry();
+      }
+    };
+    load();
+  };
+  wh.__setHubSetting = function (name, value) {
+    wh.__hubSettings[name] = value;
+    try {
+      root.fetch(
+        'http://127.0.0.1:8098/__wset?w=.hub&h=' + hexEncode(root.JSON.stringify(wh.__hubSettings))
+      );
+    } catch (e) {
+      logLine('hub settings not saved: ' + errorText(e), 0, 1);
+    }
+  };
+  wh.__telemetryGate();
+
+  // --- Welcome Hub Settings rows ---------------------------------------------------
+  // The Settings screen builds its rows in a useMemo and reads each row module's
+  // `default` every time, so wrapping the "Followed games" row (hub module
+  // hubSettingsFollowedGames, the last row it always shows) adds ours after it.
+  var DATA_PAGE = '.data'; // a leading dot: never a widget id
+  function hubPickerItems(pairs) {
+    return pairs.map(function (p) {
+      return createElement(wh.Picker.Item, { key: p[1], label: p[0], value: p[1] });
+    });
+  }
+  function TelemetryRow() {
+    var state = React.useState(wh.__telemetry.mode || 'filter'),
+      mode = state[0],
+      setMode = state[1];
+    return createElement(wh.MenuListItemPS.Dropdown, {
+      label: 'Telemetry',
+      description:
+        mode === 'off'
+          ? 'Nothing is reported.'
+          : 'Reported as usual, without your custom widgets.',
+      value: mode,
+      items: hubPickerItems([
+        ['Hide custom widgets', 'filter'],
+        ['Off', 'off'],
+      ]),
+      onValueChange: function (value) {
+        setMode(value);
+        wh.__setHubSetting('telemetry', value);
+        wh.__telemetryApply(value);
+      },
+    });
+  }
+  function WidgetDataRow(props, context) {
+    return createElement(wh.MenuListItemPS.Button, {
+      label: 'Widget Data',
+      description: 'See and delete what widgets saved for you.',
+      onPress: function () {
+        var navigation = context && context.navigation;
+        if (!navigation || typeof navigation.navigate !== 'function' || !wh.__pageRoute()) {
+          logLine('widget data page not opened: no navigation here', 0, 1);
+          return;
+        }
+        navigation.navigate(WH_PAGE_ROUTE, { __wh: DATA_PAGE });
+      },
+    });
+  }
+  // Legacy context: the hub's react-navigation passes `navigation` this way.
+  WidgetDataRow.contextTypes = {
+    navigation: function () {
+      return null;
+    },
+  };
+  wh.__hubSettingsRows = function () {
+    var hubRequire = root.__whRequire,
+      id = (root.__wh_hubmods || {}).hubSettingsFollowedGames;
+    if (typeof hubRequire !== 'function' || !id || !wh.MenuListItemPS || !wh.Picker) {
+      logLine('settings rows unavailable on this firmware', 0, 1);
+      return;
+    }
+    try {
+      var row = hubRequire(id),
+        Stock = row && row['default'];
+      if (!Stock) throw new Error('Followed games row not found');
+      if (Stock.__wh) return;
+      var Rows = function (props) {
+        return [
+          createElement(Stock, root.Object.assign({ key: 'stock' }, props)),
+          createElement(TelemetryRow, { key: 'whTelemetry' }),
+          createElement(WidgetDataRow, { key: 'whData' }),
+        ];
+      };
+      Rows.__wh = 1;
+      row['default'] = Rows;
+      if (row['default'] !== Rows) throw new Error('row is read-only');
+      logLine('settings rows added (Telemetry, Widget data)');
+    } catch (e) {
+      logLine('settings rows not added: ' + errorText(e), 0, 1);
+    }
+  };
+
+  // --- Widget data page ----------------------------------------------------------
+  // Lists what widgets keep with props.storage for the signed-in user (AsyncStorage
+  // 'wh:data:<id>'), so the data of removed widgets can be deleted.
+  function dataSize(chars) {
+    return chars < 1024 ? chars + ' B' : (chars / 1024).toFixed(1) + ' KB';
+  }
+  function WidgetDataPage() {
+    var listState = React.useState(null),
+      list = listState[0],
+      setList = listState[1],
+      askState = React.useState(null),
+      ask = askState[0],
+      setAsk = askState[1];
+    var storage = vendor && vendor.AsyncStorage;
+    var load = function () {
+      if (!storage || typeof storage.getAllKeys !== 'function') {
+        setList([]);
+        return;
+      }
+      root.Promise.resolve(storage.getAllKeys())
+        .then(function (keys) {
+          keys = (keys || []).filter(function (k) {
+            return typeof k === 'string' && k.indexOf(WH_STORAGE_PREFIX) === 0;
+          });
+          return keys.length ? storage.multiGet(keys) : [];
+        })
+        .then(
+          function (pairs) {
+            var out = (pairs || []).map(function (pair) {
+              var id = pair[0].slice(WH_STORAGE_PREFIX.length),
+                text = pair[1] || '',
+                count = 0,
+                cfg = root.__wh_cfgs[id];
+              try {
+                var data = root.JSON.parse(text);
+                if (data && typeof data === 'object') count = root.Object.keys(data).length;
+              } catch (e) {}
+              return {
+                id: id,
+                title: (cfg && cfg.title) || id,
+                installed: !!cfg,
+                size: text.length,
+                count: count,
+              };
+            });
+            out.sort(function (a, b) {
+              if (a.installed !== b.installed) return a.installed ? 1 : -1;
+              return a.title.toLowerCase() < b.title.toLowerCase() ? -1 : 1;
+            });
+            setList(out);
+          },
+          function (e) {
+            logLine('widget data: reading failed: ' + errorText(e), 0, 1);
+            setList([]);
+          }
+        );
+    };
+    React.useEffect(load, []);
+    var remove = function (items) {
+      var ids = items.map(function (item) {
+        return item.id;
+      });
+      root.Promise.all(
+        ids.map(function (id) {
+          return storage.removeItem(WH_STORAGE_PREFIX + id);
+        })
+      ).then(
+        function () {
+          ids.forEach(function (id) {
+            if (wh.__stores[id]) wh.__stores[id].__forget();
+          });
+          logLine('widget data deleted: ' + ids.join(', '));
+          load();
+        },
+        function (e) {
+          logLine('widget data: delete failed: ' + errorText(e), 0, 1);
+          load();
+        }
+      );
+    };
+    var Item = wh.MenuListItemPS;
+    var rows = [];
+    if (!list) rows.push({ kind: 'note', label: 'Loading...' });
+    else if (!list.length) rows.push({ kind: 'note', label: 'No widget data saved for you' });
+    else {
+      var removed = list.filter(function (item) {
+        return !item.installed;
+      });
+      if (removed.length > 1)
+        rows.push({
+          kind: 'removed',
+          label: 'Delete data of all removed widgets',
+          description: removed.length + ' widgets that are not installed',
+          items: removed,
+        });
+      list.forEach(function (item) {
+        rows.push({
+          kind: 'widget',
+          label: item.title,
+          description:
+            (item.installed ? 'Installed' : 'Not installed') +
+            ' - ' +
+            item.count +
+            (item.count === 1 ? ' value, ' : ' values, ') +
+            dataSize(item.size),
+          items: [item],
+        });
+      });
+    }
+    var renderItem = function (row) {
+      return createElement(Item.Button, {
+        label: row.label,
+        description: row.description,
+        onPress: function () {
+          if (row.kind === 'widget')
+            setAsk({ title: 'Delete the data of ' + row.label + '?', items: row.items });
+          else if (row.kind === 'removed')
+            setAsk({ title: 'Delete the data of ' + row.items.length + ' removed widgets?', items: row.items });
+        },
+      });
+    };
+    var answer = function (yes) {
+      return function () {
+        var items = ask && ask.items;
+        setAsk(null);
+        if (yes && items) remove(items);
+      };
+    };
+    var F = wh.FontSizePS;
+    return createElement(
+      View,
+      { style: { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' } },
+      createElement(
+        View,
+        { style: { width: 1500, height: 918, marginTop: 162 } },
+        createElement(wh.Label, { style: { fontSize: F.Size2XLarge } }, 'Widget Data'),
+        createElement(
+          wh.Label,
+          { numberOfLines: 2, style: { fontSize: F.Size3XSmall, opacity: 0.6, marginTop: 8 } },
+          'What widgets saved for the signed-in user. Deleting it resets that widget; one on screen keeps what it shows until you sign out and back in.'
+        ),
+        wh.List
+          ? createElement(wh.List, {
+              data: rows,
+              renderItem: renderItem,
+              style: { flex: 1, width: '100%', marginVertical: 40 },
+            })
+          : null
+      ),
+      ask && wh.AlertDialogPS
+        ? createElement(
+            wh.AlertDialogPS,
+            {
+              title: ask.title,
+              buttons: {
+                positive: { text: 'Delete', onPress: answer(true) },
+                negative: { text: 'Cancel', onPress: answer(false) },
+              },
+              onRequestClose: answer(false),
+            },
+            createElement(Text, null, 'This cannot be undone.')
+          )
+        : null
+    );
+  }
+  root.__wh_pages[DATA_PAGE] = WidgetDataPage;
   // Custom placements survive a boot without the payload. The hub keeps the saved
   // layout in AsyncStorage 'widget:customTemplates' ({templateId: columns of widget
   // ids}). Without the payload it loads our ids as empty (null) cells, and the next
@@ -2632,6 +2975,11 @@
           wh.__layoutBackup();
           wh.__registerMini();
           wh.__hideTelemetry();
+          if (!wh.__hsr) {
+            // Once the hub's own startup code has run (the row module's dependencies).
+            wh.__hsr = 1;
+            root.setTimeout(wh.__hubSettingsRows, 0);
+          }
         },
       });
       if (previousMap) root.__whWidgetMap = previousMap;
