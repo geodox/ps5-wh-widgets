@@ -76,7 +76,7 @@
   var GAP = 8, MIN_H = 64;
   function cardGrid(W, H, columns) {
     var cols = (+columns || 2) * (W > 600 ? 2 : 1);
-    var avail = H - 64 - (H > 200 ? 48 : 16);   // title row above, focus key guide below
+    var avail = H - 64 - 16;   // title row above, bottom padding below
     var rows = Math.max(1, Math.floor((avail + GAP) / (MIN_H + GAP)));
     return { cols: cols, rows: rows, w: Math.floor((W - 32 - GAP * (cols - 1)) / cols),
       h: Math.floor((avail - GAP * (rows - 1)) / rows) };

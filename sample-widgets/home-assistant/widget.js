@@ -445,7 +445,7 @@
   var CARD_GAP = 8, CARD_MIN_H = 64;
   function cardGrid(W, H, columns) {
     var cols = (+columns || 3) * (W > 600 ? 2 : 1);
-    var avail = H - 64 - (H > 200 ? 48 : 16);   // title row above, focus key guide below
+    var avail = H - 64 - 16;   // title row above, bottom padding below
     var rows = Math.max(1, Math.floor((avail + CARD_GAP) / (CARD_MIN_H + CARD_GAP)));
     return {
       cols: cols,
