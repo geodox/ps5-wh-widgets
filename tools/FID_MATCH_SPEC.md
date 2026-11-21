@@ -153,7 +153,11 @@ Ids come from the global code's module table (`CreateClosure r, F; PutOwnByIndex
 the factory function is matched like any target. An entry may list `need` strings
 (`miniWidgets` does): the matched factory's closure tree must contain every one,
 otherwise the module is left unresolved (`MISSING ANCHORS` in the evidence), so an
-aligned match can never hand the loader a different module.
+aligned match can never hand the loader a different module. When alignment fails
+(older hubs, e.g. 11.40, ship fewer stock widgets, so the id tables are much
+smaller), the only module whose closure tree has every `need` string is taken at
+confidence 0.9; two or more such modules leave it unresolved. `need` strings are
+chosen to hold on every supported firmware.
 
 `build_deltas.js` passes each firmware's resolved modules to the loader as a JS
 object literal keyed by name (`globalThis.__wh_hubmods`).

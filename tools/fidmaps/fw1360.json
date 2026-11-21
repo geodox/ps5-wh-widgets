@@ -134,7 +134,7 @@
       "id": 108,
       "fid": 1191,
       "confidence": 0.97,
-      "evidence": "aligned match sim=0.994 (runner-up F5770 0.550); +1/-1 insns [+ LoadConstUInt8 r1 # | - LoadConstInt r1 #]"
+      "evidence": "aligned match sim=0.994 (runner-up F5770 0.550); +1/-1 insns [+ LoadConstUInt8 r1 # | - LoadConstInt r1 #]; anchors optionsMenuRef, onPressEdit, renderTemplate, templateFocusable"
     },
     {
       "name": "stockHeader",
@@ -161,7 +161,7 @@
       "id": 157,
       "fid": 1643,
       "confidence": 0.961,
-      "evidence": "aligned match sim=0.961 (runner-up F8273 0.111); +9/-5 insns [+ GetById r6 r6 _ \"STORE\" | + GetById r8 r6 _ \"WISHLIST\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r8 # | + GetById r6 r5 _ \"default\" | + GetById r6 r5 _ \"default\" | + GetById r7 r6 _ \"BETA\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r7 # | - GetById r9 r6 _ \"STORE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\"]; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
+      "evidence": "aligned match sim=0.961 (runner-up F8273 0.111); +9/-5 insns [+ GetById r6 r6 _ \"STORE\" | + GetById r8 r6 _ \"WISHLIST\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r8 # | + GetById r6 r5 _ \"default\" | + GetById r6 r5 _ \"default\" | + GetById r7 r6 _ \"BETA\" | + LoadConstUInt8 r6 # | + PutOwnByVal r3 r6 r7 # | - GetById r9 r6 _ \"STORE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\"]; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, CODES"
     },
     {
       "name": "widgetIds",
@@ -170,7 +170,7 @@
       "id": 17,
       "fid": 128,
       "confidence": 0.963,
-      "evidence": "aligned match sim=0.963 (runner-up F1823 0.315); +5/-0 insns [+ LoadConstString r1 \"flare\" | + PutById r3 r1 _ \"FLARE\" | + LoadConstString r4 \"beta\" | + LoadConstString r3 \"BETA\" | + PutOwnByVal r1 r4 r3 #]; anchors ACTIVITY_FEED, campaigns, EDITABLE"
+      "evidence": "aligned match sim=0.963 (runner-up F1823 0.315); +5/-0 insns [+ LoadConstString r1 \"flare\" | + PutById r3 r1 _ \"FLARE\" | + LoadConstString r4 \"beta\" | + LoadConstString r3 \"BETA\" | + PutOwnByVal r1 r4 r3 #]; anchors EDITABLE, FRIENDS_ONLINE, TROPHY_SUMMARY, ONBOARDING"
     },
     {
       "name": "editTitles",
@@ -188,7 +188,7 @@
       "id": 2004,
       "fid": 20638,
       "confidence": 0.97,
-      "evidence": "aligned match sim=0.976 (runner-up F20671 0.423); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + LoadConstString r5 \"signal_flare\" | + PutOwnByVal r1 r5 r6 # | + GetById r5 r3 _ \"default\"]; anchors from_ps, trending"
+      "evidence": "aligned match sim=0.976 (runner-up F20671 0.423); +4/-0 insns [+ GetById r6 r5 _ \"FLARE\" | + LoadConstString r5 \"signal_flare\" | + PutOwnByVal r1 r5 r6 # | + GetById r5 r3 _ \"default\"]; anchors battery_full, feeds_activities, ps_store, app_media_gallery"
     },
     {
       "name": "editDescs",
@@ -206,7 +206,7 @@
       "id": 1291,
       "fid": 14897,
       "confidence": 0.99,
-      "evidence": "unique normalized match (93 insns); numbers moved: LoadConstUInt8@65 arg1 58->51, LoadConstUInt8@85 arg1 86->78, LoadConstInt@146 arg1 764->793, LoadConstInt@194 arg1 421->445, LoadConstInt@210 arg1 2100->2166, LoadConstInt@226 arg1 785->814, LoadConstInt@264 arg1 2110->2176, LoadConstInt@280 arg1 2115->2181, LoadConstInt@296 arg1 276->286; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
+      "evidence": "unique normalized match (93 insns); numbers moved: LoadConstUInt8@65 arg1 58->51, LoadConstUInt8@85 arg1 86->78, LoadConstInt@146 arg1 764->793, LoadConstInt@194 arg1 421->445, LoadConstInt@210 arg1 2100->2166, LoadConstInt@226 arg1 785->814, LoadConstInt@264 arg1 2110->2176, LoadConstInt@280 arg1 2115->2181, LoadConstInt@296 arg1 276->286; anchors accessibilitySpeakOnSceneChangeEnabled, Root, StackNavigatorPS"
     },
     {
       "name": "hubSdk",

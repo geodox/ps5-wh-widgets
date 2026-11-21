@@ -134,7 +134,7 @@
       "id": 106,
       "fid": 1186,
       "confidence": 0.99,
-      "evidence": "unique normalized match (178 insns); all numbers identical"
+      "evidence": "unique normalized match (178 insns); all numbers identical; anchors optionsMenuRef, onPressEdit, renderTemplate, templateFocusable"
     },
     {
       "name": "stockHeader",
@@ -161,7 +161,7 @@
       "id": 145,
       "fid": 1539,
       "confidence": 0.99,
-      "evidence": "unique normalized match (179 insns); all numbers identical; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, TELEMETRY_IDS, CODES"
+      "evidence": "unique normalized match (179 insns); all numbers identical; anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, CODES"
     },
     {
       "name": "widgetIds",
@@ -170,7 +170,7 @@
       "id": 17,
       "fid": 128,
       "confidence": 0.99,
-      "evidence": "unique normalized match (65 insns); all numbers identical; anchors ACTIVITY_FEED, campaigns, EDITABLE"
+      "evidence": "unique normalized match (65 insns); all numbers identical; anchors EDITABLE, FRIENDS_ONLINE, TROPHY_SUMMARY, ONBOARDING"
     },
     {
       "name": "editTitles",
@@ -188,7 +188,7 @@
       "id": 1938,
       "fid": 20067,
       "confidence": 0.99,
-      "evidence": "unique normalized match (83 insns); all numbers identical; anchors from_ps, trending"
+      "evidence": "unique normalized match (83 insns); all numbers identical; anchors battery_full, feeds_activities, ps_store, app_media_gallery"
     },
     {
       "name": "editDescs",
@@ -206,7 +206,7 @@
       "id": 1068,
       "fid": 12589,
       "confidence": 0.99,
-      "evidence": "unique normalized match (93 insns); all numbers identical; anchors accessibilitySpeakOnSceneChangeEnabled, Root, ScreenSaverSettings"
+      "evidence": "unique normalized match (93 insns); all numbers identical; anchors accessibilitySpeakOnSceneChangeEnabled, Root, StackNavigatorPS"
     },
     {
       "name": "hubSdk",

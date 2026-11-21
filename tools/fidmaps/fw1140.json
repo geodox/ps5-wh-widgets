@@ -1,0 +1,239 @@
+{
+  "fw": 1140,
+  "source_sha1": "cc7b5ff1c0c562ce90d908eb034162a95a1ee160",
+  "ref_sha1": "12c6c475d9c4dc8a7166b8f379e236671dce85cb",
+  "targets": [
+    {
+      "name": "(lock A)",
+      "fid_1320": 5916,
+      "hook": "lock",
+      "fid": 5621,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (22 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "(lock B)",
+      "fid_1320": 19960,
+      "hook": "lock",
+      "fid": 18484,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "__whWidgetMap",
+      "fid_1320": 7374,
+      "hook": "global",
+      "fid": 6780,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (56 insns); numbers moved: LoadConstUInt8@203 arg1 175->144; WIDGET_MAP export true; require=param3 true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whWidgetMap",
+            "valReg": 1,
+            "at": null
+          },
+          {
+            "name": "__whRequire",
+            "valReg": 7,
+            "at": 12
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whSizeDown",
+      "fid_1320": 19931,
+      "hook": "sizeStep",
+      "fid": 18456,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; Math.max true",
+      "params": {
+        "at": 46,
+        "env": 0,
+        "res": 2,
+        "s": [
+          1,
+          3,
+          4,
+          3
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whSizeUp",
+      "fid_1320": 19932,
+      "hook": "sizeStep",
+      "fid": 18457,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (73 insns); all numbers identical; Math.min true FULL true",
+      "params": {
+        "at": 72,
+        "env": 2,
+        "res": 8,
+        "s": [
+          0,
+          1,
+          7,
+          1
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whScrollTo",
+      "fid_1320": 19985,
+      "hook": "prefix",
+      "fid": 18509,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (27 insns); all numbers identical; scroll ref .current/.start/.end true",
+      "params": {
+        "frame": 0,
+        "prologue_ok": true,
+        "envDepth": 1,
+        "envSlot": 4
+      }
+    },
+    {
+      "name": "__whLayoutResize",
+      "fid_1320": 1674,
+      "hook": "prefix",
+      "fid": 2220,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (81 insns); all numbers identical; Array.fill true",
+      "params": {
+        "frame": 6,
+        "prologue_ok": true
+      }
+    },
+    {
+      "name": "__whFind",
+      "fid_1320": 1665,
+      "hook": "prefix",
+      "fid": 2211,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (19 insns); all numbers identical; returns {id,position,size} true",
+      "params": {
+        "frame": 5,
+        "prologue_ok": true
+      }
+    }
+  ],
+  "modules": [
+    {
+      "name": "stockFrame",
+      "id_1320": 106,
+      "fid_1320": 1186,
+      "id": 85,
+      "fid": 958,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.550 (runner-up F958 0.537); +54/-90 insns [+ CreateEnvironment r3 | + LoadParam r7 # | + CreateClosure r1 r3 F:5b91886f8dd07e30 | + StoreToEnvironment r3 # r1 | + Call2 r8 r7 r0 r1 | + NewObject r4 | + LoadConstTrue r1 | + PutNewOwnById r4 r1 \"value\" | + Call4 r1 r5 r6 r2 r1 r4 | + PutById r2 r0 _ \"getDescriptors\" | + Call2 r1 r7 r0 r1 | + Call2 r1 r7 r0 r1 | + Call2 r4 r8 r0 r1 | + Call2 r5 r7 r0 r1 | + Call2 r9 r7 r0 r1 | + LoadConstInt r1 # | + Call2 r1 r7 r0 r1 | + LoadConstInt r6 # | + Call2 r6 r7 r0 r6 | + Call2 r8 r8 r0 r6 | + Call2 r12 r7 r0 r6 | + LoadFromEnvironment r11 r3 # | + StoreToEnvironment r3 # r10 | + StoreToEnvironment r3 # r4 | + StoreToEnvironment r3 # r9 | + StoreToEnvironment r3 # r8 | + StoreToEnvironment r3 # r7 | + StoreToEnvironment r3 # r6 | + LoadConstUInt8 r6 # | + Call2 r6 r7 r0 r6 | + StoreToEnvironment r3 # r6 | + LoadConstUInt8 r6 # | + Call2 r6 r7 r0 r6 | + StoreToEnvironment r3 # r6 | + GetById r7 r5 _ \"StyleSheet\" | + GetById r6 r7 _ \"create\" | + NewObject r9 | + LoadConstUInt8 r5 # | + PutNewOwnById r9 r5 \"height\" | + NewObject r8 | + LoadConstString r5 \"#b3b3b3\" | + PutNewOwnById r8 r5 \"color\" | + PutNewOwnById r5 r9 \"root\" | + PutNewOwnById r5 r8 \"text\" | + Call2 r5 r6 r7 r5 | + StoreToEnvironment r3 # r5 | + CreateClosure r5 r3 F:562b66bdbfb38f70 | + StoreToEnvironment r3 # r5 | + PutById r2 r5 _ \"getDescriptors\" | + GetById r5 r4 _ \"default\" | + GetById r4 r5 _ \"memo\" | + CreateClosure r3 r3 F:9afb8f65bcd1b274 | + Call2 r3 r4 r5 r3 | + Call2 r1 r1 r0 r3 | - CreateEnvironment r4 | - LoadParam r9 # | - CreateClosure r1 r4 F:5b91886f8dd07e30 | - StoreToEnvironment r4 # r1 | - Call2 r8 r9 r0 r1 | - NewObject r3 | - LoadConstTrue r7 | - PutNewOwnById r3 r7 \"value\" | - Call4 r1 r5 r6 r2 r1 r3 | - TryGetById r6 r22 _ \"Object\" | - GetById r5 r6 _ \"defineProperty\" | - NewObject r3 | - PutNewOwnById r3 r7 \"enumerable\" | - CreateClosure r1 r4 F:3dda6a10147a615b | - PutNewOwnById r3 r1 \"get\" | - LoadConstString r1 \"styles\" | - Call4 r1 r5 r6 r2 r1 r3 | - Call2 r1 r9 r0 r1 | - Call2 r1 r9 r0 r1 | - Call2 r5 r8 r0 r1 | - Call2 r1 r9 r0 r1 | - Call2 r3 r8 r0 r1 | - Call2 r1 r9 r0 r1 | - Call2 r12 r9 r0 r6 | - LoadFromEnvironment r11 r4 # | - StoreToEnvironment r4 # r10 | - StoreToEnvironment r4 # r5 | - StoreToEnvironment r4 # r3 | - StoreToEnvironment r4 # r1 | - StoreToEnvironment r4 # r9 | - LoadConstUInt8 r1 # | - Call2 r1 r9 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - Call2 r1 r8 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstUInt8 r1 # | - Call2 r1 r9 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstUInt8 r1 # | - Call2 r1 r9 r0 r1 | - Call2 r1 r8 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstUInt8 r1 # | - Call2 r1 r9 r0 r1 | - Call2 r5 r8 r0 r1 | - StoreToEnvironment r4 # r5 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - Call2 r1 r8 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - Call2 r1 r8 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstUInt8 r1 # | - Call2 r1 r9 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - Call2 r1 r8 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - StoreToEnvironment r4 # r1 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - Call2 r3 r8 r0 r1 | - LoadConstInt r1 # | - Call2 r1 r9 r0 r1 | - Call2 r1 r8 r0 r1 | - LoadConstUInt8 r8 # | - Call2 r8 r9 r0 r8 | - StoreToEnvironment r4 # r8 | - NewArrayWithBuffer r8 _ _ _ | - StoreToEnvironment r4 # r8 | - CreateClosure r8 r4 F:2e72544f4cd877b7 | - StoreToEnvironment r4 # r8 | - GetById r6 r6 _ \"PureComponent\" | - CreateClosure r4 r4 F:8b512f11f97a37cd | - Call2 r4 r4 r0 r6 | - GetById r5 r5 _ \"default\" | - GetById r6 r5 _ \"DEFAULT\" | - PutNewOwnById r5 r7 \"focusable\" | - PutNewOwnById r5 r6 \"size\" | - PutById r4 r5 _ \"defaultProps\" | - GetById r3 r3 _ \"default\" | - Call2 r1 r1 r0 r4 | - Call2 r1 r3 r0 r1]; REJECTED: sim < 0.9; resolved by the only module with anchors optionsMenuRef, onPressEdit, renderTemplate, templateFocusable"
+    },
+    {
+      "name": "stockHeader",
+      "id_1320": 77,
+      "fid_1320": 922,
+      "id": 119,
+      "fid": 1842,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.992 (runner-up F20478 0.917); +1/-1 insns [+ CreateClosure r1 r1 F:8d9d1faf528bca83 | - CreateClosure r1 r1 F:0652cd93064cfb5f]"
+    },
+    {
+      "name": "miniWidgets",
+      "id_1320": 199,
+      "fid_1320": 2018,
+      "id": 332,
+      "fid": 5091,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.467 (runner-up F18560 0.223); +37/-61 insns [+ CreateEnvironment r4 | + LoadParam r5 # | + StoreToEnvironment r4 # r5 | + Call2 r3 r5 r0 r1 | + Call2 r1 r5 r0 r1 | + Call2 r3 r3 r0 r1 | + NewObject r5 | + PutNewOwnById r5 r1 \"NEW_WIDGET\" | + PutById r2 r5 _ \"IDS\" | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:7f2d087d3905bc78 | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:7f2d087d3905bc78 | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:7f2d087d3905bc78 | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:7f2d087d3905bc78 | + GetById r7 r5 _ \"NEW_WIDGET\" | + CreateClosure r6 r4 F:7f2d087d3905bc78 | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:b262c79e8a7ba62f | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:b262c79e8a7ba62f | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:b262c79e8a7ba62f | + GetById r6 r3 _ \"default\" | + CreateClosure r6 r4 F:b262c79e8a7ba62f | + GetById r5 r5 _ \"NEW_WIDGET\" | + CreateClosure r4 r4 F:b262c79e8a7ba62f | + PutOwnGetterSetterByVal r1 r5 r4 r0 # | + GetById r1 r3 _ \"default\" | + GetById r4 r1 _ \"TRANSFERS\" | + GetById r4 r3 _ \"default\" | + GetById r4 r4 _ \"PS_PLUS\" | + PutOwnByIndex r1 r4 # | + GetById r3 r3 _ \"default\" | + GetById r3 r3 _ \"HIGHLIGHTS\" | - CreateEnvironment r5 | - LoadParam r4 # | - StoreToEnvironment r5 # r4 | - Call2 r3 r4 r0 r1 | - Call2 r1 r4 r0 r1 | - Call2 r4 r3 r0 r1 | - NewObject r3 | - PutNewOwnById r3 r1 \"NEW_WIDGET\" | - PutById r2 r3 _ \"IDS\" | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - PutOwnGetterSetterByVal r1 r7 r6 r0 # | - GetById r6 r4 _ \"default\" | - GetById r7 r6 _ \"STORE\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - PutOwnGetterSetterByVal r1 r7 r6 r0 # | - GetById r6 r4 _ \"default\" | - GetById r7 r6 _ \"CAMPAIGNS\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - GetById r7 r3 _ \"NEW_WIDGET\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - PutOwnGetterSetterByVal r1 r7 r6 r0 # | - GetById r6 r4 _ \"default\" | - GetById r7 r6 _ \"STORE\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - GetById r6 r4 _ \"default\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - PutOwnGetterSetterByVal r1 r7 r6 r0 # | - GetById r6 r4 _ \"default\" | - GetById r7 r6 _ \"CAMPAIGNS\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - GetById r6 r3 _ \"NEW_WIDGET\" | - CreateClosure r5 r5 F:b262c79e8a7ba62f | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r1 r4 _ \"default\" | - GetById r5 r1 _ \"TRANSFERS\" | - PutOwnByIndex r1 r5 # | - GetById r5 r4 _ \"default\" | - GetById r5 r5 _ \"CAMPAIGNS\" | - PutOwnByIndex r1 r5 # | - GetById r5 r4 _ \"default\" | - GetById r5 r5 _ \"PS_PLUS\" | - PutOwnByIndex r1 r5 # | - GetById r5 r4 _ \"default\" | - GetById r5 r5 _ \"STORE\" | - PutOwnByIndex r1 r5 # | - GetById r4 r4 _ \"default\" | - GetById r4 r4 _ \"HIGHLIGHTS\" | - GetById r3 r3 _ \"NEW_WIDGET\"]; REJECTED: sim < 0.9; resolved by the only module with anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
+    },
+    {
+      "name": "widgetTelemetry",
+      "id_1320": 145,
+      "fid_1320": 1539,
+      "id": 190,
+      "fid": 2525,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.304 (runner-up F20591 0.071); +105/-128 insns [+ LoadParam r8 # | + CreateClosure r3 r4 F:f06776e4b0890000 | + StoreToEnvironment r4 # r3 | + Call2 r5 r8 r0 r5 | + GetGlobalObject r6 | + TryGetById r10 r6 _ \"Object\" | + NewObject r7 | + LoadConstTrue r6 | + PutNewOwnById r7 r6 \"value\" | + LoadConstString r6 \"__esModule\" | + Call4 r6 r9 r10 r2 r6 r7 | + CreateClosure r6 r4 F:0b7d7f1b352c9357 | + PutById r2 r6 _ \"widgetConfiguration\" | + CreateClosure r6 r4 F:39ee446442ddd1af | + PutById r2 r6 _ \"widgetEncodedLayout\" | + PutById r2 r3 _ \"widgetState\" | + Call2 r3 r8 r0 r7 | + Call2 r6 r5 r0 r3 | + StoreToEnvironment r4 # r6 | + LoadConstUInt8 r3 # | + Call2 r3 r8 r0 r3 | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"ACCESSIBILITY\" | + LoadConstString r8 \"isAccessibilityWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"BATTERY\" | + LoadConstString r8 \"isBatteryWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"FRIENDS_ACTIVITY\" | + LoadConstString r8 \"isFriendsActivityWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"FRIENDS_ONLINE\" | + LoadConstString r8 \"isFriendsOnlineWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"MEDIA\" | + LoadConstString r8 \"isMediaWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"MESSAGES\" | + LoadConstString r8 \"isMessagesWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"NEWS\" | + LoadConstString r8 \"isNewsWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"PS_PLUS\" | + LoadConstString r8 \"isPsPlusWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"STORAGE\" | + LoadConstString r8 \"isStorageWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"STORE\" | + LoadConstString r8 \"isStoreWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"TROPHY_SUMMARY\" | + LoadConstString r8 \"isTrophySummaryWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r5 _ \"default\" | + GetById r9 r8 _ \"WISHLIST\" | + LoadConstString r8 \"isWishlistWidgetEnabled\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r6 _ \"default\" | + GetById r9 r8 _ \"DEFAULT\" | + LoadConstString r8 \"small\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r6 _ \"default\" | + GetById r9 r8 _ \"LARGE\" | + LoadConstString r8 \"medium\" | + PutOwnByVal r3 r8 r9 # | + GetById r8 r6 _ \"FULL\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"ACCESSIBILITY\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"BATTERY\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"DISCOVERY\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"FRIENDS_ACTIVITY\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"FRIENDS_ONLINE\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"MEDIA\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"NEWS\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"ONBOARDING\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"PS_PLUS\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"STORAGE\" | + PutOwnByVal r3 r6 r8 # | + GetById r8 r6 _ \"TROPHY_SUMMARY\" | + GetById r8 r6 _ \"STORE\" | + GetById r6 r6 _ \"WISHLIST\" | + GetById r6 r5 _ \"MESSAGES\" | + LoadConstUInt8 r5 # | + PutById r2 r3 _ \"CODES\" | - LoadParam r3 # | - CreateClosure r6 r4 F:f06776e4b0890000 | - StoreToEnvironment r4 # r6 | - Call2 r5 r3 r0 r5 | - GetGlobalObject r7 | - TryGetById r10 r7 _ \"Object\" | - NewObject r8 | - LoadConstTrue r7 | - PutNewOwnById r8 r7 \"value\" | - LoadConstString r7 \"__esModule\" | - Call4 r7 r9 r10 r2 r7 r8 | - PutById r2 r0 _ \"TELEMETRY_IDS\" | - CreateClosure r7 r4 F:d50502636f1854f1 | - PutById r2 r7 _ \"widgetConfiguration\" | - CreateClosure r7 r4 F:39ee446442ddd1af | - PutById r2 r7 _ \"widgetEncodedLayout\" | - PutById r2 r6 _ \"widgetState\" | - LoadConstUInt8 r8 # | - Call2 r6 r3 r0 r8 | - Call2 r6 r5 r0 r6 | - StoreToEnvironment r4 # r6 | - Call2 r3 r3 r0 r7 | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"ACCESSIBILITY\" | - LoadConstString r9 \"isAccessibilityWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"BATTERY\" | - LoadConstString r9 \"isBatteryWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"COMMUNITY_ACTIVITY\" | - LoadConstString r9 \"isCommunityActivityWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"FRIENDS_ACTIVITY\" | - LoadConstString r9 \"isFriendsActivityWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"FRIENDS_ONLINE\" | - LoadConstString r9 \"isFriendsOnlineWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"MEDIA\" | - LoadConstString r9 \"isMediaWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"MESSAGES\" | - LoadConstString r9 \"isMessagesWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"NEWS\" | - LoadConstString r9 \"isNewsWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"PS_PLUS\" | - LoadConstString r9 \"isPsPlusWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"RECENTLY_PLAYED\" | - LoadConstString r9 \"isRecentlyPlayedWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"STORAGE\" | - LoadConstString r9 \"isStorageWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"STORE\" | - LoadConstString r9 \"isStoreWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"TROPHY_SUMMARY\" | - LoadConstString r9 \"isTrophySummaryWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"WISHLIST\" | - LoadConstString r9 \"isWishlistWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r6 _ \"default\" | - GetById r10 r9 _ \"DEFAULT\" | - LoadConstString r9 \"small\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r6 _ \"default\" | - GetById r10 r9 _ \"LARGE\" | - LoadConstString r9 \"medium\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r6 _ \"FULL\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"ACCESSIBILITY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"BATTERY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"DISCOVERY\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"FRIENDS_ACTIVITY\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"FRIENDS_ONLINE\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"MEDIA\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"NEWS\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"ONBOARDING\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"PS_PLUS\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"STORAGE\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"TROPHY_SUMMARY\" | - PutOwnByVal r3 r6 r9 # | - GetById r9 r6 _ \"STORE\" | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\" | - PutOwnByVal r3 r8 r6 # | - GetById r8 r6 _ \"MESSAGES\" | - GetById r8 r6 _ \"RECENTLY_PLAYED\" | - GetById r6 r6 _ \"COMMUNITY_ACTIVITY\" | - StoreToEnvironment r4 # r3 | - PutById r2 r3 _ \"CODES\" | - NewObject r3 | - GetById r6 r5 _ \"RECENTLY_PLAYED\" | - LoadConstString r5 \"recently played\" | - PutById r2 r3 _ \"TELEMETRY_IDS\"]; REJECTED: sim < 0.9; resolved by the only module with anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, CODES"
+    },
+    {
+      "name": "widgetIds",
+      "id_1320": 17,
+      "fid_1320": 128,
+      "id": 17,
+      "fid": 115,
+      "confidence": 0.917,
+      "evidence": "aligned match sim=0.917 (runner-up F1987 0.315); +0/-10 insns [- LoadConstString r1 \"activity:feed\" | - PutById r3 r1 _ \"ACTIVITY_FEED\" | - LoadConstString r1 \"activity:recent\" | - PutById r3 r1 _ \"ACTIVITY_RECENT\" | - LoadConstString r1 \"recently.played\" | - PutById r3 r1 _ \"RECENTLY_PLAYED\" | - LoadConstString r1 \"campaigns\" | - PutById r3 r1 _ \"CAMPAIGNS\" | - LoadConstString r1 \"community activity\" | - PutById r3 r1 _ \"COMMUNITY_ACTIVITY\"]; anchors EDITABLE, FRIENDS_ONLINE, TROPHY_SUMMARY, ONBOARDING"
+    },
+    {
+      "name": "editTitles",
+      "id_1320": 383,
+      "fid_1320": 5162,
+      "id": 1638,
+      "fid": 18597,
+      "confidence": 0.902,
+      "evidence": "aligned match sim=0.902 (runner-up F18612 0.756); +2/-14 insns [+ GetById r4 r4 _ \"WISHLIST\" | + CreateClosure r3 r3 F:54a6a401db0269ee | - GetById r6 r5 _ \"ACTIVITY_RECENT\" | - CreateClosure r5 r3 F:8ac6c16c4998d6fa | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r5 r4 _ \"default\" | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"WISHLIST\" | - CreateClosure r5 r3 F:54a6a401db0269ee | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"COMMUNITY_ACTIVITY\" | - CreateClosure r5 r3 F:d2b05399c17422c3 | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r4 r4 _ \"RECENTLY_PLAYED\" | - CreateClosure r3 r3 F:ee5e9869b5964c48]; anchors msgid_discover_tips, msgid_playstation_store"
+    },
+    {
+      "name": "editIcons",
+      "id_1320": 1938,
+      "fid_1320": 20067,
+      "id": 1639,
+      "fid": 18611,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.423 (runner-up F5077 0.394); +14/-57 insns [+ GetById r5 r4 _ \"SUGGESTED\" | + LoadConstString r4 \"rating\" | + GetById r5 r4 _ \"TEAM_PLAYER\" | + LoadConstString r4 \"multiplay_coop\" | + PutOwnByVal r1 r4 r5 # | + GetById r4 r3 _ \"default\" | + GetById r5 r4 _ \"SOLO\" | + GetById r4 r3 _ \"default\" | + GetById r5 r4 _ \"ADD\" | + LoadConstString r4 \"add\" | + PutOwnByVal r1 r4 r5 # | + GetById r4 r3 _ \"CUSTOM\" | + LoadConstString r3 \"all\" | + PutOwnByVal r1 r3 r4 # | - GetById r5 r4 _ \"ACCESSIBILITY\" | - LoadConstString r4 \"accessibility\" | - GetById r5 r4 _ \"ACTIVITY_RECENT\" | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"BATTERY\" | - LoadConstString r5 \"battery_full\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"DISCOVERY\" | - LoadConstString r5 \"discover\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"FRIENDS_ONLINE\" | - LoadConstString r5 \"friend\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"FRIENDS_ACTIVITY\" | - LoadConstString r5 \"feeds_activities\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"MEDIA\" | - LoadConstString r5 \"app_media_gallery\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"MESSAGES\" | - LoadConstString r5 \"messages\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"NEWS\" | - LoadConstString r5 \"from_ps\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"PS_PLUS\" | - LoadConstString r5 \"ps_plus\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"STORAGE\" | - LoadConstString r5 \"storage\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"STORE\" | - LoadConstString r5 \"ps_store\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"TROPHY_SUMMARY\" | - LoadConstString r5 \"trophies\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"WISHLIST\" | - LoadConstString r5 \"favorite\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"COMMUNITY_ACTIVITY\" | - LoadConstString r5 \"trending\" | - PutOwnByVal r1 r5 r6 # | - GetById r3 r3 _ \"RECENTLY_PLAYED\" | - PutOwnByVal r1 r4 r3 #]; REJECTED: sim < 0.9; resolved by the only module with anchors battery_full, feeds_activities, ps_store, app_media_gallery"
+    },
+    {
+      "name": "editDescs",
+      "id_1320": 1939,
+      "fid_1320": 20068,
+      "id": 1640,
+      "fid": 18612,
+      "confidence": 0.902,
+      "evidence": "aligned match sim=0.902 (runner-up F18597 0.756); +2/-14 insns [+ GetById r4 r4 _ \"WISHLIST\" | + CreateClosure r3 r3 F:cc04b9de95c123f5 | - GetById r6 r5 _ \"ACTIVITY_RECENT\" | - CreateClosure r5 r3 F:5441c427d79db1fc | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r5 r4 _ \"default\" | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"WISHLIST\" | - CreateClosure r5 r3 F:cc04b9de95c123f5 | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"COMMUNITY_ACTIVITY\" | - CreateClosure r5 r3 F:ba4663f34815fb60 | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r4 r4 _ \"RECENTLY_PLAYED\" | - CreateClosure r3 r3 F:b1615ded6bab1495]; anchors msgid_learn_new_features, msgid_show_ps_store"
+    },
+    {
+      "name": "mainNavigator",
+      "id_1320": 1068,
+      "fid_1320": 12589,
+      "id": 921,
+      "fid": 11589,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.194 (runner-up F11589 0.170); +28/-80 insns [+ CreateEnvironment r3 | + LoadParam r7 # | + StoreToEnvironment r3 # r7 | + CreateClosure r1 r3 F:cd1ea183ae9edf1e | + StoreToEnvironment r3 # r1 | + Call2 r6 r7 r0 r4 | + TryGetById r9 r4 _ \"Object\" | + GetById r8 r9 _ \"defineProperty\" | + Call4 r4 r8 r9 r2 r4 r5 | + PutById r2 r1 _ \"toClientError\" | + Call2 r4 r7 r0 r1 | + Call2 r1 r7 r0 r1 | + Call2 r1 r6 r0 r1 | + LoadConstInt r5 # | + Call2 r5 r7 r0 r5 | + Call2 r5 r6 r0 r5 | + GetById r6 r5 _ \"default\" | + GetById r5 r6 _ \"ignoreAllLogs\" | + Call1 r5 r5 r6 | + CreateClosure r5 r3 F:0af5c5ed610e253e | + StoreToEnvironment r3 # r5 | + GetById r6 r4 _ \"setJSExceptionHandler\" | + CreateClosure r5 r3 F:4566d6204670e629 | + Call2 r5 r6 r0 r5 | + GetById r4 r4 _ \"setUnhandledPromiseRejectionHandler\" | + CreateClosure r3 r3 F:4566d6204670e629 | + Call2 r3 r4 r0 r3 | + GetById r1 r1 _ \"default\" | - CreateEnvironment r1 | - LoadParam r3 # | - StoreToEnvironment r1 # r3 | - Call2 r6 r3 r0 r4 | - TryGetById r8 r4 _ \"Object\" | - GetById r7 r8 _ \"defineProperty\" | - Call4 r4 r7 r8 r2 r4 r5 | - PutById r2 r0 _ \"initialRouteName\" | - LoadConstUInt8 r4 # | - Call2 r4 r3 r0 r4 | - LoadConstUInt8 r5 # | - Call2 r5 r3 r0 r5 | - StoreToEnvironment r1 # r5 | - LoadConstUInt8 r5 # | - Call2 r5 r3 r0 r5 | - Call2 r6 r6 r0 r5 | - LoadConstString r5 \"Root\" | - PutById r2 r5 _ \"initialRouteName\" | - GetById r4 r4 _ \"StackNavigatorPS\" | - GetById r8 r6 _ \"default\" | - CreateClosure r7 r1 F:a4f5b5f169f9aa40 | - Call2 r7 r8 r0 r7 | - NewObject r17 | - PutNewOwnById r17 r7 \"screen\" | - CreateClosure r7 r1 F:d5d553feb9751b6f | - PutNewOwnById r17 r7 \"navigationOptions\" | - LoadConstInt r7 # | - Call2 r7 r3 r0 r7 | - GetById r16 r7 _ \"default\" | - GetById r8 r6 _ \"default\" | - CreateClosure r7 r1 F:a4f5b5f169f9aa40 | - Call2 r7 r8 r0 r7 | - NewObject r15 | - PutNewOwnById r15 r7 \"screen\" | - CreateClosure r7 r1 F:9a581ce3b136cb87 | - PutNewOwnById r15 r7 \"navigationOptions\" | - LoadConstInt r7 # | - Call2 r7 r3 r0 r7 | - GetById r14 r7 _ \"default\" | - LoadConstInt r7 # | - Call2 r7 r3 r0 r7 | - GetById r13 r7 _ \"default\" | - LoadConstInt r7 # | - Call2 r7 r3 r0 r7 | - GetById r12 r7 _ \"default\" | - GetById r6 r6 _ \"default\" | - CreateClosure r1 r1 F:a4f5b5f169f9aa40 | - Call2 r1 r6 r0 r1 | - NewObject r11 | - PutNewOwnById r11 r1 \"screen\" | - LoadConstInt r1 # | - Call2 r1 r3 r0 r1 | - GetById r10 r1 _ \"default\" | - Call2 r1 r3 r0 r1 | - GetById r9 r1 _ \"default\" | - Call2 r6 r3 r0 r1 | - GetById r8 r6 _ \"default\" | - Call2 r6 r3 r0 r1 | - GetById r7 r6 _ \"debug\" | - Call2 r6 r3 r0 r1 | - GetById r6 r6 _ \"albums\" | - Call2 r1 r3 r0 r1 | - GetById r1 r1 _ \"screenSaver\" | - NewObject r3 | - PutNewOwnById r3 r17 \"Root\" | - PutNewOwnById r3 r16 \"Details\" | - PutNewOwnById r3 r15 \"Grid\" | - PutNewOwnById r3 r14 \"Follow\" | - PutNewOwnById r3 r13 \"Wishlist\" | - PutNewOwnById r3 r12 \"Background\" | - PutNewOwnById r3 r11 \"Media\" | - PutNewOwnById r3 r10 \"FriendsActivityGrid\" | - PutNewOwnById r3 r9 \"ScreenSaver\" | - PutNewOwnById r3 r8 \"Settings\" | - PutNewOwnById r3 r7 \"DebugSettings\" | - PutNewOwnById r3 r6 \"AlbumSettings\" | - PutNewOwnById r3 r1 \"ScreenSaverSettings\" | - NewObject r1 | - PutNewOwnById r1 r5 \"initialRouteName\" | - Call3 r1 r4 r0 r3 r1]; REJECTED: sim < 0.9; resolved by the only module with anchors accessibilitySpeakOnSceneChangeEnabled, Root, StackNavigatorPS"
+    },
+    {
+      "name": "hubSdk",
+      "id_1320": 32,
+      "fid_1320": 345,
+      "id": 32,
+      "fid": 293,
+      "confidence": 0.959,
+      "evidence": "aligned match sim=0.959 (runner-up F7969 0.470); +3/-3 insns [+ CreateClosure r4 r1 F:921bc35c6889465d | + CreateClosure r4 r1 F:ea1ad77f59ae6a06 | + CreateClosure r3 r1 F:ed006a51f4062e59 | - CreateClosure r4 r1 F:1ad329500a6828e9 | - CreateClosure r4 r1 F:dda6e6ba9bfd4c94 | - CreateClosure r3 r1 F:fd0960139abc3520]; anchors HubAppContext, HubAppContextProvider, isFromHubSDK, useHubConfig"
+    },
+    {
+      "name": "dateFormats",
+      "id_1320": 319,
+      "fid_1320": 3101,
+      "id": 252,
+      "fid": 3077,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (59 insns); numbers moved: LoadConstUInt8@134 arg1 5->6, LoadConstUInt8@151 arg1 61->56; anchors getFormats, registerDateTimeFormatChangeHandler, dateTimeFormatChanged, timeFormat"
+    },
+    {
+      "name": "hubSettingsFollowedGames",
+      "id_1320": 2126,
+      "fid_1320": 22004,
+      "id": 1827,
+      "fid": 20443,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (103 insns); numbers moved: LoadConstUInt8@376 arg1 58->99; anchors msgid_followed_games, msgid_follow_new_games, Follow"
+    }
+  ]
+}

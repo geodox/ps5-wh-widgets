@@ -273,26 +273,29 @@ function moduleTable(h) {
 
 // Hub modules the loader require()s by id (framework/loader.js); ids move per fw.
 // `need`: strings the module's closure tree must contain, so an aligned (non-exact)
-// match can never hand the loader a different module.
+// match can never hand the loader a different module. They are picked to hold on
+// every supported firmware: older hubs have fewer stock widgets, so their id tables
+// are smaller. When alignment fails (the module changed too much, e.g. 11.40), the
+// one module whose closure tree has every `need` string is taken instead.
 const MODULES = [
-  { name: 'stockFrame', id_1320: 106 },
+  { name: 'stockFrame', id_1320: 106, need: ['optionsMenuRef', 'onPressEdit', 'renderTemplate', 'templateFocusable'] },
   { name: 'stockHeader', id_1320: 77 },
   // The MINI ("transient") widget registry: WIDGET_MAP / WIDGET_CONFIGS keyed by id
   // and WIDGET_PRIORITY, the order of the MINI row above (or below) the hub tiles.
   { name: 'miniWidgets', id_1320: 199, need: ['WIDGET_MAP', 'WIDGET_CONFIGS', 'WIDGET_PRIORITY', 'TRANSFERS', 'PS_PLUS', 'HIGHLIGHTS', 'newWidget'] },
   // Widget telemetry: widgetConfiguration / widgetEncodedLayout(layout) report the
   // placed widgets (unknown ids go out raw / as -1). The loader filters our ids out.
-  { name: 'widgetTelemetry', id_1320: 145, need: ['widgetConfiguration', 'widgetEncodedLayout', 'widgetInfo', 'TELEMETRY_IDS', 'CODES'] },
+  { name: 'widgetTelemetry', id_1320: 145, need: ['widgetConfiguration', 'widgetEncodedLayout', 'widgetInfo', 'CODES'] },
   // Edit Widgets list: the widget-id enum (EDITABLE = the ids the list offers) and
   // the title, icon and description tables it reads, each a `default` object keyed
   // by widget id. The loader adds our ids to all four.
-  { name: 'widgetIds', id_1320: 17, need: ['ACTIVITY_FEED', 'campaigns', 'EDITABLE'] },
+  { name: 'widgetIds', id_1320: 17, need: ['EDITABLE', 'FRIENDS_ONLINE', 'TROPHY_SUMMARY', 'ONBOARDING'] },
   { name: 'editTitles', id_1320: 383, need: ['msgid_discover_tips', 'msgid_playstation_store'] },
-  { name: 'editIcons', id_1320: 1938, need: ['from_ps', 'trending'] },
+  { name: 'editIcons', id_1320: 1938, need: ['battery_full', 'feeds_activities', 'ps_store', 'app_media_gallery'] },
   { name: 'editDescs', id_1320: 1939, need: ['msgid_learn_new_features', 'msgid_show_ps_store'] },
   // The hub's main stack navigator (StackNavigatorPS of Root, Settings, ...). The
   // loader wraps its router's methods in place to add the WhPage route.
-  { name: 'mainNavigator', id_1320: 1068, need: ['accessibilitySpeakOnSceneChangeEnabled', 'Root', 'ScreenSaverSettings'] },
+  { name: 'mainNavigator', id_1320: 1068, need: ['accessibilitySpeakOnSceneChangeEnabled', 'Root', 'StackNavigatorPS'] },
   // The console's date and time format settings: getFormats() resolves
   // {dateFormat, timeFormat 12|24} from the system registry, and
   // registerDateTimeFormatChangeHandler(fn) reports changes. The loader's wh.locale.
@@ -381,15 +384,25 @@ function main() {
   }
   const refMods = moduleTable(ref), tgtMods = moduleTable(h);
   const tgtIdOf = new Map([...tgtMods].map(([id, fid]) => [fid, id]));
+  const stringsOf = new Map();
+  const modStrings = fid => stringsOf.get(fid) || stringsOf.set(fid, treeStrings(h, fid)).get(fid);
   const modules = MODULES.map(md => {
     const rfid = refMods.get(md.id_1320);
     const r = matchFid(ref, h, byKey, rfid);
     let id = r.ok && tgtIdOf.has(r.fid) ? tgtIdOf.get(r.fid) : null;
     if (id !== null && md.need) {
-      const have = treeStrings(h, r.fid);
+      const have = modStrings(r.fid);
       const miss = md.need.filter(s => !have.has(s));
       if (miss.length) { id = null; r.evidence += `; MISSING ANCHORS: ${miss.join(', ')}`; }
       else r.evidence += `; anchors ${md.need.join(', ')}`;
+    }
+    if (id === null && md.need) {
+      const hits = [...tgtMods].filter(([, fid]) => md.need.every(s => modStrings(fid).has(s)));
+      if (hits.length === 1) {
+        [id, r.fid] = hits[0];
+        r.confidence = 0.9;
+        r.evidence += `; resolved by the only module with anchors ${md.need.join(', ')}`;
+      } else r.evidence += `; anchor fallback: ${hits.length} modules have every anchor`;
     }
     if (id === null) ok = false;
     const e = { name: md.name, id_1320: md.id_1320, fid_1320: rfid, id, fid: r.fid, confidence: id === null ? Math.min(r.confidence, 0.5) : r.confidence, evidence: r.evidence };
