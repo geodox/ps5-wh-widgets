@@ -180,10 +180,16 @@ Screenshots from other setups, shared by the [NiDUS](https://github.com/manchild
 ## ❤️ Credits
 
 - **[VintendoPower](https://github.com/manchildtechnologies-ui)** — co-author.
-- **[@pm5krj](https://github.com/pm5krj)** — the FW 13.40 hub dump and on-console testing that added 13.40 support.
 - **[@ghost1372](https://github.com/ghost1372)** — [WelcomeHubActivator](https://github.com/ghost1372/WelcomeHubActivator), which enables the Welcome Hub where it is not already active, and the projects it credits.
 - **[NiDUS](https://github.com/manchildtechnologies-ui/NiDUS)** — the community screenshots in the showcase above, and the in-place refresh approach (fingerprint + revision-stamped prelude) this loader's widget reload is based on.
 - **PS5 homebrew community** — [ps5-payload-sdk](https://github.com/ps5-payload-dev/ps5-payload-sdk) and the payload tooling this project builds with.
+
+### Dumps & Testers
+
+Thanks to everyone who provided stock hub dumps and on-console testing:
+
+- **[@pm5krj](https://github.com/pm5krj)**
+- **[@TRIPSLORD](https://github.com/TRIPSLORD)**
 
 This is an independent, unofficial community homebrew project. It is not affiliated with or endorsed by Sony Interactive Entertainment or PlayStation.
 
