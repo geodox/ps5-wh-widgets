@@ -17,7 +17,11 @@ structure) live in `docs/INTERNALS.md`, which is kept locally and not published.
    describes the changed hub bytecode; the detour rebuilds the bridge HBC inside
    ShellUI from the hub's own copy, after checking the hub's size and header hash
    match the dump the delta was built from. A hub that does not match runs stock.
-   See `tools/make_delta.js` and `tools/gen_detour.py`.
+   A delta is a list of ops: copy a run of the hub's bytes, insert literal bytes, or
+   copy function headers with their bytecode and info offsets shifted. The bridge's
+   new strings and longer hooked bodies move every function, so without the header
+   op the whole function header table (about 350 KB) would be literal. With it, a
+   delta is about 2 KB. See `tools/make_delta.js` and `tools/gen_detour.py`.
 4. **Install the prelude.** The prelude runs before every evaluation. It passes
    this firmware's hub module ids (`__wh_hubmods`, see below), registers the
    payload's own `globalThis.__wh` surface and starts the loader; the bridge hands

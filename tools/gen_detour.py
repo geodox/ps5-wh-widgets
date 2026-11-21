@@ -11,6 +11,7 @@ Layout of markers patched by the installer (main.c):
   MATCH: 0x4E4E=&needle (signature string, in the cave)
          0xDE1D=&delta blob (tools/make_delta.js layout); the bridge is rebuilt from
                 the hub's own bytecode + the delta the first time the hub is seen
+                (ops: copy from the hub, literal from the blob, shifted function headers)
   SIZE/DATA buffer descriptors: 0xDDDD=size imm  0xEEEE=data ptr
 Counters [+0]=entered [+8]=prelude_ret [+16]=swapped [+24]=bundle_ret
 """
@@ -76,10 +77,26 @@ MATCH = "\n".join([
   "mov rdx, [r10 + 8]","mov r9, [r10 + 16]","lea r11, [r10 + 96]",  # dst, op count, ops
   "oploop:","test r9, r9","jz built",
   "mov rsi, [r11]","mov rcx, [r11 + 8]","btr rcx, 63","jc lit",
+  "btr rcx, 62","jc hdr",
   "add rsi, r8","jmp cpy",                                          # copy from the hub buffer
   "lit:","add rsi, r10",                                            # literal bytes in the blob
   "cpy:","mov rdi, rdx","cld","rep movsb","mov rdx, rdi",
-  "add r11, 16","dec r9","jmp oploop",
+  "opnext:","add r11, 16","dec r9","jmp oploop",
+  # function headers: rcx = count << 50 | b << 25 | a. Copy `count` 16-byte records
+  # from the hub buffer, adding a / b (mod 2^25) to the low 25 bits of words 0 / 2:
+  # rotated left by 7, those bits are the top of the word, so a plain 32-bit add of
+  # a << 7 wraps mod 2^25 and leaves the high 7 bits (now at the bottom) alone.
+  "hdr:","add rsi, r8","push rbx",
+  "mov rdi, rcx","shr rdi, 50",                                     # count
+  "mov eax, ecx","shl eax, 7",                                      # a << 7
+  "shr rcx, 25","shl ecx, 7",                                       # b << 7
+  "hrec:","test rdi, rdi","jz hdone",
+  "mov ebx, [rsi]","rol ebx, 7","add ebx, eax","ror ebx, 7","mov [rdx], ebx",
+  "mov ebx, [rsi + 4]","mov [rdx + 4], ebx",
+  "mov ebx, [rsi + 8]","rol ebx, 7","add ebx, ecx","ror ebx, 7","mov [rdx + 8], ebx",
+  "mov ebx, [rsi + 12]","mov [rdx + 12], ebx",
+  "add rsi, 16","add rdx, 16","dec rdi","jmp hrec",
+  "hdone:","pop rbx","jmp opnext",
   "built:","mov qword ptr [r10 + 24], 1",
   "retbr:","mov rax, [rbp - 16]","jmp done",
   "mismatch:","lock inc qword ptr [r10 + 64]","jmp retsrc",
@@ -101,7 +118,7 @@ def carr(n,b): return f"static const uint8_t {n}[{len(b)}] = {{{','.join(f'0x{x:
 
 det=asm(DET); mat=asm(MATCH); sz=asm(SIZE_FN); da=asm(DATA_FN); dt=asm(DTOR_FN)
 assert len(det) <= 0x100, f"detour {len(det)} > 0x100"
-assert len(mat) <= 0x1e0, f"match {len(mat)} > 0x1e0"
+assert len(mat) <= 0x1a0, f"match {len(mat)} > 0x1a0 (cave.h: CV_MATCH 0x360 .. CV_PRELUDE 0x500)"
 DET_ORIG = finds(det,(0xCCCCCCCCCCCCCCCC).to_bytes(8,"little"))
 DET_CTR  = finds(det,(0xF000000000000000).to_bytes(8,"little"))
 assert len(DET_ORIG)==2 and len(DET_CTR)==4, (len(DET_ORIG),len(DET_CTR))
