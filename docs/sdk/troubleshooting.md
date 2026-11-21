@@ -10,7 +10,7 @@ python scripts/whctl.py --host <console-ip> log
 
 | tag | written by | examples |
 |---|---|---|
-| `[installer]` | the payload | each install step; `start fw=13600007 delta=...`; `no hub delta for FW 13.50 in this build (supported: 11.40, 13.20, 13.40, 13.60); not installing`; `skip <folder>: config.json missing`; `glyph file x.png not found`; `install failed (rc=13): evaluateJavaScript prologue mismatch (unsupported firmware?)` |
+| `[installer]` | the payload | each install step; `start fw=13600007 delta=...`; `no hub delta for FW 13.50 in this build (supported: 11.20, 11.40, 13.20, 13.40, 13.60); not installing`; `skip <folder>: config.json missing`; `glyph file x.png not found`; `install failed (rc=13): evaluateJavaScript prologue mismatch (unsupported firmware?)` |
 | `[hub]` | the loader inside the hub | `loader ready in the hub runtime`, `hub registered 2 widget(s) [...]`, `edit list title set ...`, glyph images that failed and fell back |
 | `[widget:<id>]` | the loader / your widget | `loaded (size 1, glyph glyph.png)`, `not loaded: widget.js ran but never called wh.register(Component)`, `render error (tile hidden): <message> \| <stack>` |
 | `[assets]` | the asset server | refused requests with the reason (`file not found`, `not a .png/.jpg image`), server handoffs |

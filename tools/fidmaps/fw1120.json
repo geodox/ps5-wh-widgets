@@ -1,0 +1,257 @@
+{
+  "fw": 1120,
+  "source_sha1": "d0b213f107c20d23d93dfae6bdb5eb8933b0909e",
+  "ref_sha1": "12c6c475d9c4dc8a7166b8f379e236671dce85cb",
+  "targets": [
+    {
+      "name": "(lock A)",
+      "fid_1320": 5916,
+      "hook": "lock",
+      "fid": 5904,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (22 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "(lock B)",
+      "fid_1320": 19960,
+      "hook": "lock",
+      "fid": 19335,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; editing/repeat key handler, ends `LoadConstTrue; Ret`",
+      "params": {
+        "frameSize_ok": true
+      }
+    },
+    {
+      "name": "__whWidgetMap",
+      "fid_1320": 7374,
+      "hook": "global",
+      "fid": 7213,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (56 insns); numbers moved: LoadConstUInt8@77 arg1 17->16, LoadConstUInt8@203 arg1 175->160; WIDGET_MAP export true; require=param3 true",
+      "params": {
+        "inj": [
+          {
+            "name": "__whWidgetMap",
+            "valReg": 1,
+            "at": null
+          },
+          {
+            "name": "__whRequire",
+            "valReg": 7,
+            "at": 12
+          }
+        ]
+      }
+    },
+    {
+      "name": "__whSizeDown",
+      "fid_1320": 19931,
+      "hook": "sizeStep",
+      "fid": 19307,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (21 insns); all numbers identical; Math.max true",
+      "params": {
+        "at": 46,
+        "env": 0,
+        "res": 2,
+        "s": [
+          1,
+          3,
+          4,
+          3
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whSizeUp",
+      "fid_1320": 19932,
+      "hook": "sizeStep",
+      "fid": 19308,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (73 insns); all numbers identical; Math.min true FULL true",
+      "params": {
+        "at": 71,
+        "env": 2,
+        "res": 8,
+        "s": [
+          0,
+          1,
+          7,
+          1
+        ],
+        "slot": 22
+      }
+    },
+    {
+      "name": "__whScrollTo",
+      "fid_1320": 19985,
+      "hook": "prefix",
+      "fid": 19360,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (27 insns); all numbers identical; scroll ref .current/.start/.end true",
+      "params": {
+        "frame": 0,
+        "prologue_ok": true,
+        "envDepth": 1,
+        "envSlot": 4
+      }
+    },
+    {
+      "name": "__whLayoutResize",
+      "fid_1320": 1674,
+      "hook": "prefix",
+      "fid": 2092,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (81 insns); all numbers identical; Array.fill true",
+      "params": {
+        "frame": 6,
+        "prologue_ok": true
+      }
+    },
+    {
+      "name": "__whFind",
+      "fid_1320": 1665,
+      "hook": "prefix",
+      "fid": 2083,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (19 insns); all numbers identical; returns {id,position,size} true",
+      "params": {
+        "frame": 5,
+        "prologue_ok": true
+      }
+    }
+  ],
+  "modules": [
+    {
+      "name": "stockFrame",
+      "id_1320": 106,
+      "fid_1320": 1186,
+      "id": 94,
+      "fid": 1033,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.994 (runner-up F5397 0.550); +1/-1 insns [+ CreateClosure r4 r4 F:68b6221f3a5fb1cc | - CreateClosure r4 r4 F:8b512f11f97a37cd]; anchors optionsMenuRef, onPressEdit, renderTemplate, templateFocusable"
+    },
+    {
+      "name": "stockHeader",
+      "id_1320": 77,
+      "fid_1320": 922,
+      "id": 83,
+      "fid": 877,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (123 insns); numbers moved: LoadConstUInt8@396 arg1 94->113, LoadConstUInt8@413 arg1 21->29"
+    },
+    {
+      "name": "miniWidgets",
+      "id_1320": 199,
+      "fid_1320": 2018,
+      "id": 179,
+      "fid": 2408,
+      "confidence": 0.924,
+      "evidence": "aligned match sim=0.924 (runner-up F19442 0.207); +2/-13 insns [+ CreateClosure r6 r5 F:bd83bc5ae7d3e3a9 | + CreateClosure r6 r5 F:c386f2780567a117 | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - PutOwnGetterSetterByVal r1 r7 r6 r0 # | - GetById r6 r4 _ \"default\" | - GetById r7 r6 _ \"CAMPAIGNS\" | - CreateClosure r6 r5 F:7f2d087d3905bc78 | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - PutOwnGetterSetterByVal r1 r7 r6 r0 # | - GetById r6 r4 _ \"default\" | - GetById r7 r6 _ \"CAMPAIGNS\" | - CreateClosure r6 r5 F:b262c79e8a7ba62f | - GetById r5 r5 _ \"CAMPAIGNS\" | - PutOwnByIndex r1 r5 # | - GetById r5 r4 _ \"default\"]; anchors WIDGET_MAP, WIDGET_CONFIGS, WIDGET_PRIORITY, TRANSFERS, PS_PLUS, HIGHLIGHTS, newWidget"
+    },
+    {
+      "name": "widgetTelemetry",
+      "id_1320": 145,
+      "fid_1320": 1539,
+      "id": 161,
+      "fid": 2222,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.533 (runner-up F7206 0.111); +69/-89 insns [+ CreateClosure r7 r4 F:0b7d7f1b352c9357 | + Call2 r7 r5 r0 r6 | + StoreToEnvironment r4 # r7 | + LoadConstUInt8 r6 # | + Call2 r3 r3 r0 r6 | + GetById r9 r7 _ \"default\" | + GetById r9 r7 _ \"default\" | + GetById r7 r7 _ \"default\" | + GetById r9 r7 _ \"FULL\" | + LoadConstString r7 \"large\" | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"ACCESSIBILITY\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"BATTERY\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"DISCOVERY\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"FRIENDS_ACTIVITY\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"FRIENDS_ONLINE\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"MEDIA\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"NEWS\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"ONBOARDING\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"PS_PLUS\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"STORAGE\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"TROPHY_SUMMARY\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r9 r7 _ \"STORE\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r9 # | + GetById r7 r5 _ \"default\" | + GetById r7 r7 _ \"WISHLIST\" | + PutOwnByVal r3 r8 r7 # | + GetById r7 r5 _ \"default\" | + GetById r8 r7 _ \"MESSAGES\" | + LoadConstUInt8 r7 # | + PutOwnByVal r3 r7 r8 # | + GetById r5 r5 _ \"ACTIVITY_RECENT\" | + PutOwnByVal r3 r6 r5 # | + PutById r2 r3 _ \"CODES\" | - PutById r2 r0 _ \"TELEMETRY_IDS\" | - CreateClosure r7 r4 F:d50502636f1854f1 | - Call2 r6 r5 r0 r6 | - StoreToEnvironment r4 # r6 | - LoadConstUInt8 r7 # | - Call2 r3 r3 r0 r7 | - GetById r10 r9 _ \"COMMUNITY_ACTIVITY\" | - LoadConstString r9 \"isCommunityActivityWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r10 r9 _ \"RECENTLY_PLAYED\" | - LoadConstString r9 \"isRecentlyPlayedWidgetEnabled\" | - PutOwnByVal r3 r9 r10 # | - GetById r9 r5 _ \"default\" | - GetById r9 r6 _ \"default\" | - GetById r9 r6 _ \"default\" | - GetById r6 r6 _ \"default\" | - GetById r9 r6 _ \"FULL\" | - LoadConstString r6 \"large\" | - PutOwnByVal r3 r6 r9 # | - StoreToEnvironment r4 # r3 | - NewObject r3 | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"ACCESSIBILITY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"BATTERY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"DISCOVERY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"FRIENDS_ACTIVITY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"FRIENDS_ONLINE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"MEDIA\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"NEWS\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"ONBOARDING\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"PS_PLUS\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"STORAGE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"TROPHY_SUMMARY\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r9 r6 _ \"STORE\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r9 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"WISHLIST\" | - PutOwnByVal r3 r8 r6 # | - GetById r6 r5 _ \"default\" | - GetById r8 r6 _ \"MESSAGES\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r8 # | - GetById r6 r5 _ \"default\" | - GetById r8 r6 _ \"RECENTLY_PLAYED\" | - LoadConstUInt8 r6 # | - PutOwnByVal r3 r6 r8 # | - GetById r6 r5 _ \"default\" | - GetById r6 r6 _ \"COMMUNITY_ACTIVITY\" | - PutOwnByVal r3 r7 r6 # | - PutById r2 r3 _ \"CODES\" | - GetById r6 r5 _ \"RECENTLY_PLAYED\" | - LoadConstString r5 \"recently played\" | - PutOwnByVal r3 r5 r6 # | - PutById r2 r3 _ \"TELEMETRY_IDS\"]; REJECTED: sim < 0.9; resolved by the only module with anchors widgetConfiguration, widgetEncodedLayout, widgetInfo, CODES"
+    },
+    {
+      "name": "widgetIds",
+      "id_1320": 17,
+      "fid_1320": 128,
+      "id": 16,
+      "fid": 83,
+      "confidence": 0.952,
+      "evidence": "aligned match sim=0.952 (runner-up F2163 0.315); +0/-6 insns [- LoadConstString r1 \"recently.played\" | - PutById r3 r1 _ \"RECENTLY_PLAYED\" | - LoadConstString r1 \"campaigns\" | - PutById r3 r1 _ \"CAMPAIGNS\" | - LoadConstString r1 \"community activity\" | - PutById r3 r1 _ \"COMMUNITY_ACTIVITY\"]; anchors EDITABLE, FRIENDS_ONLINE, TROPHY_SUMMARY, ONBOARDING"
+    },
+    {
+      "name": "editTitles",
+      "id_1320": 383,
+      "fid_1320": 5162,
+      "id": 670,
+      "fid": 8587,
+      "confidence": 0.907,
+      "evidence": "aligned match sim=0.907 (runner-up F19442 0.774); +6/-10 insns [+ GetById r6 r5 _ \"ACTIVITY_FEED\" | + CreateClosure r5 r3 F:605fe980d5f968a1 | + PutOwnGetterSetterByVal r1 r6 r5 r0 # | + GetById r5 r4 _ \"default\" | + GetById r4 r4 _ \"WISHLIST\" | + CreateClosure r3 r3 F:54a6a401db0269ee | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"WISHLIST\" | - CreateClosure r5 r3 F:54a6a401db0269ee | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"COMMUNITY_ACTIVITY\" | - CreateClosure r5 r3 F:d2b05399c17422c3 | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r4 r4 _ \"RECENTLY_PLAYED\" | - CreateClosure r3 r3 F:ee5e9869b5964c48]; anchors msgid_discover_tips, msgid_playstation_store"
+    },
+    {
+      "name": "editIcons",
+      "id_1320": 1938,
+      "fid_1320": 20067,
+      "id": 1784,
+      "fid": 19441,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.423 (runner-up F5345 0.394); +14/-57 insns [+ GetById r5 r4 _ \"SUGGESTED\" | + LoadConstString r4 \"rating\" | + GetById r5 r4 _ \"TEAM_PLAYER\" | + LoadConstString r4 \"multiplay_coop\" | + PutOwnByVal r1 r4 r5 # | + GetById r4 r3 _ \"default\" | + GetById r5 r4 _ \"SOLO\" | + GetById r4 r3 _ \"default\" | + GetById r5 r4 _ \"ADD\" | + LoadConstString r4 \"add\" | + PutOwnByVal r1 r4 r5 # | + GetById r4 r3 _ \"CUSTOM\" | + LoadConstString r3 \"all\" | + PutOwnByVal r1 r3 r4 # | - GetById r5 r4 _ \"ACCESSIBILITY\" | - LoadConstString r4 \"accessibility\" | - GetById r5 r4 _ \"ACTIVITY_RECENT\" | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"BATTERY\" | - LoadConstString r5 \"battery_full\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"DISCOVERY\" | - LoadConstString r5 \"discover\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"FRIENDS_ONLINE\" | - LoadConstString r5 \"friend\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"FRIENDS_ACTIVITY\" | - LoadConstString r5 \"feeds_activities\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"MEDIA\" | - LoadConstString r5 \"app_media_gallery\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"MESSAGES\" | - LoadConstString r5 \"messages\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"NEWS\" | - LoadConstString r5 \"from_ps\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"PS_PLUS\" | - LoadConstString r5 \"ps_plus\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"STORAGE\" | - LoadConstString r5 \"storage\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"STORE\" | - LoadConstString r5 \"ps_store\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"TROPHY_SUMMARY\" | - LoadConstString r5 \"trophies\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"WISHLIST\" | - LoadConstString r5 \"favorite\" | - PutOwnByVal r1 r5 r6 # | - GetById r5 r3 _ \"default\" | - GetById r6 r5 _ \"COMMUNITY_ACTIVITY\" | - LoadConstString r5 \"trending\" | - PutOwnByVal r1 r5 r6 # | - GetById r3 r3 _ \"RECENTLY_PLAYED\" | - PutOwnByVal r1 r4 r3 #]; REJECTED: sim < 0.9; resolved by the only module with anchors battery_full, feeds_activities, ps_store, app_media_gallery"
+    },
+    {
+      "name": "editDescs",
+      "id_1320": 1939,
+      "fid_1320": 20068,
+      "id": 1785,
+      "fid": 19442,
+      "confidence": 0.929,
+      "evidence": "aligned match sim=0.929 (runner-up F8587 0.756); +2/-10 insns [+ GetById r4 r4 _ \"WISHLIST\" | + CreateClosure r3 r3 F:cc04b9de95c123f5 | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"WISHLIST\" | - CreateClosure r5 r3 F:cc04b9de95c123f5 | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r5 r4 _ \"default\" | - GetById r6 r5 _ \"COMMUNITY_ACTIVITY\" | - CreateClosure r5 r3 F:ba4663f34815fb60 | - PutOwnGetterSetterByVal r1 r6 r5 r0 # | - GetById r4 r4 _ \"RECENTLY_PLAYED\" | - CreateClosure r3 r3 F:b1615ded6bab1495]; anchors msgid_learn_new_features, msgid_show_ps_store"
+    },
+    {
+      "name": "mainNavigator",
+      "id_1320": 1068,
+      "fid_1320": 12589,
+      "id": 995,
+      "fid": 12058,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.625 (runner-up F9263 0.194); +28/-38 insns [+ NewObject r14 | + PutNewOwnById r14 r7 \"screen\" | + PutNewOwnById r14 r7 \"navigationOptions\" | + GetById r13 r7 _ \"default\" | + NewObject r12 | + PutNewOwnById r12 r7 \"screen\" | + PutNewOwnById r12 r7 \"navigationOptions\" | + GetById r11 r7 _ \"default\" | + Call2 r8 r3 r0 r7 | + GetById r10 r8 _ \"default\" | + GetById r9 r7 _ \"debug\" | + GetById r8 r7 _ \"default\" | + LoadConstInt r7 # | + Call2 r7 r3 r0 r7 | + GetById r7 r7 _ \"default\" | + NewObject r6 | + PutNewOwnById r6 r1 \"screen\" | + GetById r1 r1 _ \"default\" | + PutNewOwnById r3 r14 \"Root\" | + PutNewOwnById r3 r13 \"Details\" | + PutNewOwnById r3 r12 \"Grid\" | + PutNewOwnById r3 r11 \"Follow\" | + PutNewOwnById r3 r10 \"Settings\" | + PutNewOwnById r3 r9 \"DebugSettings\" | + PutNewOwnById r3 r8 \"Wishlist\" | + PutNewOwnById r3 r7 \"Background\" | + PutNewOwnById r3 r6 \"Media\" | + PutNewOwnById r3 r1 \"FriendsActivityGrid\" | - NewObject r17 | - PutNewOwnById r17 r7 \"screen\" | - PutNewOwnById r17 r7 \"navigationOptions\" | - GetById r16 r7 _ \"default\" | - NewObject r15 | - PutNewOwnById r15 r7 \"screen\" | - PutNewOwnById r15 r7 \"navigationOptions\" | - GetById r14 r7 _ \"default\" | - GetById r13 r7 _ \"default\" | - GetById r12 r7 _ \"default\" | - NewObject r11 | - PutNewOwnById r11 r1 \"screen\" | - LoadConstInt r1 # | - Call2 r1 r3 r0 r1 | - GetById r10 r1 _ \"default\" | - LoadConstInt r1 # | - Call2 r1 r3 r0 r1 | - GetById r9 r1 _ \"default\" | - Call2 r6 r3 r0 r1 | - GetById r8 r6 _ \"default\" | - Call2 r6 r3 r0 r1 | - GetById r7 r6 _ \"debug\" | - Call2 r6 r3 r0 r1 | - GetById r6 r6 _ \"albums\" | - GetById r1 r1 _ \"screenSaver\" | - PutNewOwnById r3 r17 \"Root\" | - PutNewOwnById r3 r16 \"Details\" | - PutNewOwnById r3 r15 \"Grid\" | - PutNewOwnById r3 r14 \"Follow\" | - PutNewOwnById r3 r13 \"Wishlist\" | - PutNewOwnById r3 r12 \"Background\" | - PutNewOwnById r3 r11 \"Media\" | - PutNewOwnById r3 r10 \"FriendsActivityGrid\" | - PutNewOwnById r3 r9 \"ScreenSaver\" | - PutNewOwnById r3 r8 \"Settings\" | - PutNewOwnById r3 r7 \"DebugSettings\" | - PutNewOwnById r3 r6 \"AlbumSettings\" | - PutNewOwnById r3 r1 \"ScreenSaverSettings\"]; REJECTED: sim < 0.9; resolved by the only module with anchors accessibilitySpeakOnSceneChangeEnabled, Root, StackNavigatorPS"
+    },
+    {
+      "name": "hubSdk",
+      "id_1320": 32,
+      "fid_1320": 345,
+      "id": 34,
+      "fid": 498,
+      "confidence": 0.959,
+      "evidence": "aligned match sim=0.959 (runner-up F8382 0.470); +3/-3 insns [+ CreateClosure r4 r1 F:921bc35c6889465d | + CreateClosure r4 r1 F:ea1ad77f59ae6a06 | + CreateClosure r3 r1 F:ed006a51f4062e59 | - CreateClosure r4 r1 F:1ad329500a6828e9 | - CreateClosure r4 r1 F:dda6e6ba9bfd4c94 | - CreateClosure r3 r1 F:fd0960139abc3520]; anchors HubAppContext, HubAppContextProvider, isFromHubSDK, useHubConfig"
+    },
+    {
+      "name": "dateFormats",
+      "id_1320": 319,
+      "fid_1320": 3101,
+      "id": 284,
+      "fid": 3372,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (59 insns); numbers moved: LoadConstUInt8@151 arg1 61->59; anchors getFormats, registerDateTimeFormatChangeHandler, dateTimeFormatChanged, timeFormat"
+    },
+    {
+      "name": "hubSettingsFollowedGames",
+      "id_1320": 2126,
+      "fid_1320": 22004,
+      "id": 1977,
+      "fid": 21304,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (103 insns); numbers moved: LoadConstUInt8@376 arg1 58->63; anchors msgid_followed_games, msgid_follow_new_games, Follow"
+    },
+    {
+      "name": "editMenu",
+      "id_1320": 1937,
+      "fid_1320": 20041,
+      "id": 1783,
+      "fid": 19415,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (189 insns); numbers moved: LoadConstInt@416 arg1 383->670, LoadConstInt@436 arg1 1938->1784, LoadConstUInt8@456 arg1 76->71, LoadConstUInt8@473 arg1 47->46, LoadConstUInt8@497 arg1 21->29, LoadConstInt@509 arg1 1939->1785; anchors msgid_must_minimum_widgets_enabled, edit-menu, itemActiveDisabled"
+    },
+    {
+      "name": "jsxRuntime",
+      "id_1320": 3,
+      "fid_1320": 17,
+      "id": 3,
+      "fid": 17,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (9 insns); numbers moved: LoadConstUInt8@5 arg1 82->75; anchors DkKR87qr"
+    }
+  ]
+}
