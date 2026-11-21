@@ -234,6 +234,24 @@
       "fid": 22004,
       "confidence": 0.99,
       "evidence": "unique normalized match (103 insns); all numbers identical; anchors msgid_followed_games, msgid_follow_new_games, Follow"
+    },
+    {
+      "name": "editMenu",
+      "id_1320": 1937,
+      "fid_1320": 20041,
+      "id": 1937,
+      "fid": 20041,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (189 insns); all numbers identical; anchors msgid_must_minimum_widgets_enabled, edit-menu, itemActiveDisabled"
+    },
+    {
+      "name": "jsxRuntime",
+      "id_1320": 3,
+      "fid_1320": 17,
+      "id": 3,
+      "fid": 17,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (9 insns); all numbers identical; anchors DkKR87qr"
     }
   ]
 }

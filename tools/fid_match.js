@@ -304,6 +304,14 @@ const MODULES = [
   // The screen reads this module's `default` each time it builds its rows, so the
   // loader wraps it to add its own rows after it (Telemetry, Widget data).
   { name: 'hubSettingsFollowedGames', id_1320: 2126, need: ['msgid_followed_games', 'msgid_follow_new_games', 'Follow'] },
+  // The Edit Widgets list (a component, `default`): the widget section reads it at
+  // render time and passes the widget `map`. The loader wraps it to show the stock
+  // and the custom widgets as two lists (L2 / R2 switch).
+  { name: 'editMenu', id_1320: 1937, need: ['msgid_must_minimum_widgets_enabled', 'edit-menu', 'itemActiveDisabled'] },
+  // react/jsx-runtime (`module.exports = require(<cjs build>)`): every hub component
+  // reads `.jsx` from it at call time. The loader wraps it to correct the Edit Widgets
+  // rows' `enabled` flag (the "keep 3 widgets" rule) when the list shows one part.
+  { name: 'jsxRuntime', id_1320: 3, need: ['DkKR87qr'] },
 ];
 
 // Every string operand in fid and the closures it creates.

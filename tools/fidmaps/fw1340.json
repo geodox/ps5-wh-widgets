@@ -234,6 +234,24 @@
       "fid": 22583,
       "confidence": 0.99,
       "evidence": "unique normalized match (103 insns); numbers moved: LoadConstUInt8@376 arg1 58->51; anchors msgid_followed_games, msgid_follow_new_games, Follow"
+    },
+    {
+      "name": "editMenu",
+      "id_1320": 1937,
+      "fid_1320": 20041,
+      "id": 2003,
+      "fid": 20617,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (189 insns); numbers moved: LoadConstUInt8@404 arg1 23->25, LoadConstInt@416 arg1 383->403, LoadConstInt@436 arg1 1938->2004, LoadConstUInt8@456 arg1 76->52, LoadConstUInt8@473 arg1 47->46, LoadConstUInt8@497 arg1 21->20, LoadConstInt@509 arg1 1939->2005; anchors msgid_must_minimum_widgets_enabled, edit-menu, itemActiveDisabled"
+    },
+    {
+      "name": "jsxRuntime",
+      "id_1320": 3,
+      "fid_1320": 17,
+      "id": 3,
+      "fid": 17,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (9 insns); numbers moved: LoadConstUInt8@5 arg1 82->88; anchors DkKR87qr"
     }
   ]
 }

@@ -191,7 +191,8 @@ You cannot see the console screen. The user can; the log is yours.
    seconds after it settles.
 3. Ask the user to **sign out and back in**: only a new hub runtime loads new
    widget code. Leaving the hub and coming back does not.
-4. Ask the user to add the widget from **Edit Widgets** the first time.
+4. Ask the user to add the widget from **Edit Widgets** the first time (custom
+   widgets are in the **Custom Widgets** list: press L2 / R2 there).
 5. Read the log: `python scripts/whctl.py --host <console-ip> log`, or
    `/data/wh-widgets/wh.log` over FTP. Look for `[widget:<id>] loaded`, then for
    `render error` or `not loaded` lines (see [troubleshooting](troubleshooting.md)).

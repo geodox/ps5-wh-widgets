@@ -145,6 +145,9 @@ per firmware. The map's `modules` array gives each one's id on the target:
 | `mainNavigator` | 1068 | main stack navigator: `default.router` (the loader adds the `WhPage` route) |
 | `hubSdk` | 32 | Hub SDK index: `HubAppContext` (`isHubFocused`, `isStandaloneMode`; the loader's `props.hubFocused`) |
 | `dateFormats` | 319 | date and time format settings: `getFormats()`, `registerDateTimeFormatChangeHandler(fn)` (`wh.getLocale` / `wh.useLocale`) |
+| `hubSettingsFollowedGames` | 2126 | Welcome Hub Settings "Followed games" row (`default`); the loader appends its Telemetry and Widget Data rows |
+| `editMenu` | 1937 | Edit Widgets list component (`default`); the loader wraps it into the Stock and Custom lists |
+| `jsxRuntime` | 3 | react/jsx-runtime (`jsx`, read at call time); the loader corrects the Edit Widgets rows' `enabled` flag |
 
 Ids come from the global code's module table (`CreateClosure r, F; PutOwnByIndex arr, r, <id>`);
 the factory function is matched like any target. An entry may list `need` strings

@@ -2627,6 +2627,201 @@
     }
   };
 
+  // --- Edit Widgets: stock and custom widgets as two lists ---------------------------
+  // The widget section reads the Edit Widgets list component (hub module editMenu) at
+  // render time and passes it the layout `config` (columns of placed ids) and the
+  // widget `map`. Its rows are the placed ids of `config`, then the map's other ids,
+  // rebuilt whenever `config` changes after an item got focus. The wrapper passes
+  // either the stock or the custom part of both, and remounts the list (key) when the
+  // user switches, so each list shows only its own widgets.
+  // The list lets a placed widget be turned off only when more than 3 are placed in
+  // the `config` it gets: a row's `enabled` flag, set when the row is created through
+  // the hub's jsx runtime. A list of one part would count only that part, so a
+  // wrapper on the runtime's `jsx` turns `enabled` back on for this list's placed
+  // rows while the whole layout has more than 3 widgets placed.
+  // L2 / R2 switch lists while the list is shown (a global key observer: the list's
+  // own key handlers belong to the hub), and a line above the list names the one shown.
+  var EDIT_MODES_WITH_LIST = { default: 1, modify: 1 },
+    EDIT_LABEL_Y = 80, // window y of the list name, in the empty band above the list
+    EDIT_MIN_PLACED = 3; // the hub keeps at least this many widgets placed
+  function isCustomId(widgetId) {
+    return !!root.__wh_widgets[widgetId];
+  }
+  // Rows the jsx wrapper may enable: the shown part's map (null = no split shown), and
+  // whether the whole layout has more than EDIT_MIN_PLACED widgets placed.
+  var editGate = { ids: null, open: false };
+  function wrapEditRows(runtime) {
+    var stockJsx = runtime && runtime.jsx;
+    if (typeof stockJsx !== 'function') return false;
+    if (stockJsx.__wh) return true;
+    var jsx = function (type, props) {
+      if (
+        props &&
+        props.enabled === false &&
+        props.active === true &&
+        editGate.open &&
+        editGate.ids &&
+        typeof props.index === 'number' &&
+        typeof props.id === 'string' &&
+        root.Object.prototype.hasOwnProperty.call(editGate.ids, props.id)
+      ) {
+        var args = root.Array.prototype.slice.call(arguments);
+        args[1] = root.Object.assign({}, props, { enabled: true });
+        return stockJsx.apply(this, args);
+      }
+      return stockJsx.apply(this, arguments);
+    };
+    jsx.__wh = 1;
+    runtime.jsx = jsx;
+    return runtime.jsx === jsx;
+  }
+  wh.__editLists = function () {
+    var hubRequire = root.__whRequire,
+      mods = root.__wh_hubmods || {},
+      id = mods.editMenu;
+    if (typeof hubRequire !== 'function' || !id) {
+      logLine('edit list split unavailable on this firmware', 0, 1);
+      return;
+    }
+    try {
+      var menu = hubRequire(id),
+        Stock = menu && menu['default'];
+      if (!Stock) throw new Error('Edit Widgets list not found');
+      if (Stock.__wh) return;
+      var gateOk = false;
+      try {
+        gateOk = wrapEditRows(mods.jsxRuntime ? hubRequire(mods.jsxRuntime) : null);
+      } catch (e) {}
+      if (!gateOk)
+        logLine('edit list: jsx runtime not found, each list counts only its own widgets toward the minimum', 0, 1);
+      var Lists = function (props) {
+        var listState = React.useState(false),
+          custom = listState[0],
+          setCustom = listState[1],
+          map = props.map,
+          shown = !!EDIT_MODES_WITH_LIST[props.editMode],
+          shownRef = React.useRef(shown);
+        shownRef.current = shown;
+        var hasCustom = false;
+        if (map) for (var k in map) if (isCustomId(k)) hasCustom = true;
+        var listMap = React.useMemo(
+          function () {
+            if (!map || !hasCustom) return map;
+            var out = {};
+            for (var key in map)
+              if (root.Object.prototype.hasOwnProperty.call(map, key) && isCustomId(key) === custom)
+                out[key] = map[key];
+            return out;
+          },
+          [map, custom, hasCustom]
+        );
+        var config = props.config,
+          listKey = hasCustom ? (custom ? 'custom' : 'stock') : 'list';
+        // This part's placed ids only, and how many widgets the whole layout places.
+        var parts = React.useMemo(
+          function () {
+            if (!root.Array.isArray(config)) return { config: config, placed: 0 };
+            var placed = 0,
+              seen = {};
+            var columns = config.map(function (column) {
+              if (!root.Array.isArray(column)) return column;
+              return column.map(function (cell) {
+                if (typeof cell === 'string' && cell && !seen[cell]) {
+                  seen[cell] = 1;
+                  placed++;
+                }
+                return !hasCustom || isCustomId(cell) === custom ? cell : null;
+              });
+            });
+            return { config: hasCustom ? columns : config, placed: placed };
+          },
+          [config, custom, hasCustom]
+        );
+        // Read by the jsx wrapper when the list creates its rows (in its effects, after
+        // this render). Only one Edit Widgets list exists at a time.
+        editGate.ids = hasCustom ? listMap : null;
+        editGate.open = parts.placed > EDIT_MIN_PLACED;
+        // The label goes at a fixed spot on screen above the list; its parent's position
+        // is not known, so it measures where it landed and moves by the difference.
+        var labelState = React.useState(-340),
+          labelTop = labelState[0],
+          setLabelTop = labelState[1],
+          labelRef = React.useRef(null);
+        React.useEffect(
+          function () {
+            var observer = vendor && vendor.KeyEventObserverPS;
+            if (!hasCustom || !observer || typeof observer.addEventListener !== 'function') return;
+            var subscription = observer.addEventListener('onKeyDown', function (e) {
+              if (!e || (e.keyType !== 'L2' && e.keyType !== 'R2') || e.keyEventType === 'Repeat') return;
+              if (!shownRef.current) return;
+              setCustom(function (c) {
+                return !c;
+              });
+              wh.playSound('move');
+            });
+            return function () {
+              try {
+                if (subscription && typeof subscription.remove === 'function') subscription.remove();
+              } catch (e) {}
+            };
+          },
+          [hasCustom]
+        );
+        var list = createElement(
+          Stock,
+          root.Object.assign({}, props, {
+            key: listKey,
+            map: listMap,
+            config: parts.config,
+          })
+        );
+        if (!hasCustom || !shown) return list;
+        return [
+          list,
+          createElement(
+            View,
+            {
+              key: 'whListName',
+              ref: labelRef,
+              pointerEvents: 'none',
+              style: { position: 'absolute', left: 0, top: labelTop },
+              onLayout: function () {
+                var node = labelRef.current;
+                if (!node || typeof node.measureInWindow !== 'function') return;
+                node.measureInWindow(function (x, y) {
+                  if (typeof y === 'number' && Math.abs(y - EDIT_LABEL_Y) > 2)
+                    setLabelTop(function (top) {
+                      return top + (EDIT_LABEL_Y - y);
+                    });
+                });
+              },
+            },
+            createElement(
+              View,
+              { style: { flexDirection: 'row', alignItems: 'baseline' } },
+              createElement(
+                wh.Label,
+                { style: { fontSize: wh.FontSizePS.SizeSmall, fontWeight: 'bold' } },
+                custom ? 'Custom Widgets' : 'Stock Widgets'
+              ),
+              createElement(
+                wh.Label,
+                { style: { fontSize: wh.FontSizePS.Size2XSmall, opacity: 0.7, marginLeft: 24 } },
+                'L2 / R2: ' + (custom ? 'Stock Widgets' : 'Custom Widgets')
+              )
+            )
+          ),
+        ];
+      };
+      Lists.__wh = 1;
+      menu['default'] = Lists;
+      if (menu['default'] !== Lists) throw new Error('list module is read-only');
+      logLine('edit list split into stock and custom widgets (L2 / R2)');
+    } catch (e) {
+      logLine('edit list split failed: ' + errorText(e), 0, 1);
+    }
+  };
+
   // --- Widget data page ----------------------------------------------------------
   // Lists what widgets keep with props.storage for the signed-in user (AsyncStorage
   // 'wh:data:<id>'), so the data of removed widgets can be deleted.
@@ -3128,7 +3323,10 @@
           if (!wh.__hsr) {
             // Once the hub's own startup code has run (the row module's dependencies).
             wh.__hsr = 1;
-            root.setTimeout(wh.__hubSettingsRows, 0);
+            root.setTimeout(function () {
+              wh.__hubSettingsRows();
+              wh.__editLists();
+            }, 0);
           }
         },
       });

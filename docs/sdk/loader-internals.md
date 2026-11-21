@@ -99,13 +99,16 @@ the stock widget frame and header, the MINI widget registry, the telemetry modul
 and the Edit Widgets tables. Hub module ids move between firmware builds, so the
 prelude passes this firmware's ids as `globalThis.__wh_hubmods`, keyed by the map's
 module names (`stockFrame`, `stockHeader`, `miniWidgets`, `widgetTelemetry`,
-`widgetIds`, `editTitles`, `editIcons`, `editDescs`). A module the matcher could
-not resolve is left out:
+`widgetIds`, `editTitles`, `editIcons`, `editDescs`, `editMenu`, `jsxRuntime`, ...).
+A module the matcher could not resolve is left out:
 - without the frame, the loader draws its own tile mat and settings menu;
 - without the Edit Widgets tables, custom widgets cannot be added in Edit Widgets
   (`wh.log` says so);
 - without the registry, MINI widgets are not shown (`wh.log` says so);
-- without the telemetry module, ids are not filtered (`wh.log` says so).
+- without the telemetry module, ids are not filtered (`wh.log` says so);
+- without `editMenu`, Edit Widgets shows one list with the custom widgets last;
+  without `jsxRuntime`, each of the two lists counts only its own widgets toward
+  the hub's minimum (`wh.log` says so).
 
 **Stock frame.** Each tile renders inside the hub's own widget frame, with the
 loader's tile as the frame's `Template`. The frame always draws the stock mat
@@ -121,6 +124,29 @@ table, and reads each entry's title, icon and description from three tables keye
 widget id. They are read when the list is built, so the loader fills all four when
 the hub runtime comes up (the `__whWidgetMap` setter). `wh.log`: `edit list title
 set for N widget(s)` (and `iconId`, `description`).
+
+**Stock and Custom lists.** The stock list puts custom widgets after every stock
+one, so the loader splits it in two: **Stock Widgets** and **Custom Widgets**, with
+L2 / R2 switching between them while the list is shown (edit modes `default` and
+`modify`). A line above the list names the one shown and the L2 / R2 hint.
+- The widget section reads the list component (`editMenu`, a `default` export) at
+  render time and passes it the layout `config` (columns of placed ids) and the
+  widget `map`. The loader replaces `default` with a wrapper that passes only the
+  shown part of both, and remounts the list (`key`) when the user switches.
+- The list's rows are the placed ids in `config`, then the map's other ids. It
+  rebuilds them whenever `config` changes after a row got focus, so anything in
+  `config` becomes a row: the wrapper can never add the other list's ids to it.
+- The list lets a placed widget be turned off only when more than 3 are placed in
+  the `config` it gets (`msgid_must_minimum_widgets_enabled`). That is each row's
+  `enabled` prop, set when the list creates the row through the hub's jsx runtime
+  (`jsxRuntime`, read at call time). With one part per list, that count would
+  only include that part, so the loader wraps the runtime's `jsx`: a row that is
+  placed (`active`), disabled, and in the shown list's map gets `enabled: true`
+  while the whole layout has more than 3 widgets placed. Every other element passes
+  through unchanged.
+- L2 / R2 come from a global `KeyEventObserverPS` listener, since the list's own key
+  handlers belong to the hub. They act only while the list is shown.
+- `wh.log`: `edit list split into stock and custom widgets (L2 / R2)`.
 
 **Hidden MINI widgets.** The row counts an item as shown while the ref it passed
 holds an instance, and skips items without one when it lays out and scrolls the row.
