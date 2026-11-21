@@ -72,7 +72,7 @@ The payload and loader have been run on-console: the hook installs into SceShell
 
 | Firmware | Status |
 | :--- | :--- |
-| **11.40** | Patch built and verified offline against the stock hub; awaiting on-console testing. |
+| **11.40** | Verified on-console. |
 | **13.20** | Verified on-console. |
 | **13.40** | Verified on-console. |
 | **13.60** | Verified on-console. |
