@@ -1,0 +1,135 @@
+{
+  "name": "Welcome Hub Official Widgets",
+  "widgets": [
+    {
+      "id": "console-stats",
+      "name": "Console Stats",
+      "description": "Temperatures, fan speed, optional SoC power & clocks, storage and uptime of your console.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "System",
+      "size": 1,
+      "iconId": "ps5",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/console-stats/config.json",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/console-stats/widget.js"
+      }
+    },
+    {
+      "id": "hello-mini",
+      "name": "Hello Mini",
+      "description": "A reference MINI widget: one line in the MINI row above (or below) the hub tiles.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "Reference",
+      "size": 0,
+      "iconId": "app_welcome",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/hello-mini/config.json",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/hello-mini/widget.js"
+      }
+    },
+    {
+      "id": "hello-wh",
+      "name": "Hello Hub",
+      "description": "A reference widget: a live clock built with the Welcome Hub SDK.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "Reference",
+      "size": 1,
+      "iconId": "date_time",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/hello-wh/config.json",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/hello-wh/widget.js"
+      }
+    },
+    {
+      "id": "home-assistant",
+      "name": "Home Assistant",
+      "description": "Control and watch your Home Assistant entities.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "Smart Home",
+      "size": 2,
+      "iconId": "home",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/home-assistant/config.json",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/home-assistant/widget.js"
+      }
+    },
+    {
+      "id": "network-info",
+      "name": "Network Info",
+      "description": "Local IP, Wi-Fi signal, band, channel and link status \u2014 completely offline.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "System",
+      "size": 1,
+      "iconId": "wifi",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/network-info/config.json",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/network-info/widget.js"
+      }
+    },
+    {
+      "id": "payload-launcher",
+      "name": "Payload Launcher",
+      "description": "Open the web pages of running payloads in the console's browser.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "Tools",
+      "size": 1,
+      "iconId": "discover",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/payload-launcher/config.json",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/payload-launcher/widget.js"
+      }
+    },
+    {
+      "id": "payload-monitor",
+      "name": "Payload Monitor",
+      "description": "See which payloads are running and how much memory they use.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "System",
+      "size": 1,
+      "iconId": "",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/payload-monitor/config.json",
+        "glyph.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/payload-monitor/glyph.png",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/payload-monitor/widget.js"
+      }
+    },
+    {
+      "id": "weather",
+      "name": "Weather",
+      "description": "Current weather and forecast for your places, anywhere in the world.",
+      "version": "26.11.22 beta",
+      "author": "geodox",
+      "category": "Weather",
+      "size": 2,
+      "iconId": "",
+      "files": {
+        "config.json": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/config.json",
+        "glyph.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/glyph.png",
+        "icon-cloud.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-cloud.png",
+        "icon-fog.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-fog.png",
+        "icon-moon.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-moon.png",
+        "icon-partly-day.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-partly-day.png",
+        "icon-partly-night.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-partly-night.png",
+        "icon-rain.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-rain.png",
+        "icon-snow.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-snow.png",
+        "icon-storm.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-storm.png",
+        "icon-sun.png": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/icon-sun.png",
+        "weather-clear-day.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-clear-day.jpg",
+        "weather-clear-night.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-clear-night.jpg",
+        "weather-cloudy.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-cloudy.jpg",
+        "weather-fog.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-fog.jpg",
+        "weather-rain.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-rain.jpg",
+        "weather-snow.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-snow.jpg",
+        "weather-storm.jpg": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/weather-storm.jpg",
+        "widget.js": "https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/sample-widgets/weather/widget.js"
+      }
+    }
+  ]
+}

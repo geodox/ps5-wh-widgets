@@ -289,6 +289,14 @@ need a payload reinstall, which also reloads the Welcome Hub automatically.
   (`gamesBackgrounds`, optional) and persists selected loopback backgrounds (and
   their `.audio` / `muted` flag) across sign-out/sign-in in `AsyncStorage` under
   `wh:customBg` by wrapping `bgStore`.
+* `GET /__store` - embedded Widget Store web app (`framework/store.html`) opened
+  in the console browser from **Welcome Hub Settings → Widget Store** (or directly
+  at `http://127.0.0.1:8098/__store` in the native browser / BrowserPS5). Fetches
+  `widgets.json` catalogs (official + custom sources stored in
+  `/data/wh-widgets/.store.json`), supports raw file lists and `.zip` packages,
+  and installs/uninstalls widgets via `GET /__store/state`,
+  `POST /__store/file?id=<id>&name=<file>`, `POST /__store/uninstall?id=<id>`,
+  and `POST /__store/sources` (loopback only, `wh_name_ok` validated, 1 MB cap).
 * `GET /__reload` - cleanly reloads only the embedded Welcome Hub runtime without
   killing `SceShellUI` or signing out (4 s cooldown, detached thread): launches
   `pshomeui:navigateToHome?spaceId=media` → `700 ms` → `pscontrolcenter:main`

@@ -11,3 +11,9 @@
 wh_loader:
 .incbin "loader.min.js"
 .byte 0
+
+.align 16
+.global wh_store_html
+wh_store_html:
+.incbin "store.html"
+.byte 0

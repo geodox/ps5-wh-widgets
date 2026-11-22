@@ -52,7 +52,9 @@ Send `wh_bridge.elf` from the [releases](https://github.com/geodox/ps5-wh-widget
 
 ### Adding Widgets
 
-Once the payload is installed and running, place each unpacked widget in its own folder on the console:
+Open **Welcome Hub Settings → Widget Store** (or visit `http://127.0.0.1:8098/__store` in the console browser or BrowserPS5) to browse, install, update, and remove widgets from the official [`widgets.json`](widgets.json) catalog or your own custom `widgets.json` sources — no PC or FTP needed.
+
+You can also install widgets manually by placing each unpacked widget in its own folder on the console:
 
 ```text
 /data/wh-widgets/

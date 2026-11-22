@@ -2646,6 +2646,15 @@
       return null;
     },
   };
+  function WidgetStoreRow() {
+    return createElement(wh.MenuListItemPS.Button, {
+      label: 'Widget Store',
+      description: 'Browse, install, update and remove custom widgets.',
+      onPress: function () {
+        wh.launch('http://127.0.0.1:8098/__store');
+      },
+    });
+  }
   function ReloadHubRow() {
     var state = React.useState(false),
       busy = state[0],
@@ -2693,6 +2702,7 @@
     }
     var customRows = function () {
       return [
+        createElement(WidgetStoreRow, { key: 'whStore' }),
         createElement(ReloadHubRow, { key: 'whReload' }),
         createElement(TelemetryRow, { key: 'whTelemetry' }),
         createElement(WidgetDataRow, { key: 'whData' }),

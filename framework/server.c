@@ -41,6 +41,7 @@
 #include "util.h"
 
 /* System services for app launch (see wh_launch_action). */
+extern const char wh_store_html[];
 int sceKernelLoadStartModule(const char*, size_t, const void*, uint32_t, void*, uint32_t*);
 int sceUserServiceInitialize(void*);
 int sceUserServiceGetForegroundUser(uint32_t*);
@@ -541,32 +542,217 @@ static void wh_bg_asset(int c, char* name, const char* range_hdr){
   }
   close(fd);
 }
+/* ---- Built-in Widget Store (/__store, loopback only) --------------------- */
+#define WH_STORE_SOURCES WH_WIDGETS_DIR "/.store.json"
+#define WH_STORE_SRC_MAX 4096
+static int wh_store_ext_ok(const char* f){
+  const char* d = strrchr(f, '.');
+  if (!d) return 0;
+  return !strcasecmp(d, ".json") || !strcasecmp(d, ".js") || !strcasecmp(d, ".png") ||
+         !strcasecmp(d, ".jpg") || !strcasecmp(d, ".jpeg") || !strcasecmp(d, ".md") || !strcasecmp(d, ".txt");
+}
+static void wh_json_esc(char* out, size_t cap, const char* in){
+  size_t o = 0;
+  for (; in && *in && o + 2 < cap; in++) {
+    unsigned char ch = (unsigned char)*in;
+    if (ch == '"' || ch == '\\') { out[o++] = '\\'; out[o++] = (char)ch; }
+    else if (ch >= 32 && ch != 127) out[o++] = (char)ch;
+  }
+  out[o] = 0;
+}
+static void wh_json_str_field(const char* fp, const char* key, char* out, size_t cap){
+  out[0] = 0;
+  int fd = open(fp, O_RDONLY | O_NOFOLLOW);
+  if (fd < 0) return;
+  char buf[2048]; ssize_t r = read(fd, buf, sizeof buf - 1); close(fd);
+  if (r <= 0) return;
+  buf[r] = 0;
+  char pat[64]; snprintf(pat, sizeof pat, "\"%s\"", key);
+  char* p = strstr(buf, pat);
+  if (!p) return;
+  p += strlen(pat);
+  while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+  if (*p != ':') return;
+  p++;
+  while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+  if (*p != '"') return;
+  p++;
+  size_t o = 0;
+  while (*p && *p != '"' && o + 1 < cap) {
+    if (*p == '\\' && p[1]) p++;
+    out[o++] = *p++;
+  }
+  out[o] = 0;
+}
+static void wh_store_page(int c){
+  size_t len = strlen(wh_store_html);
+  char h[200];
+  int hn = snprintf(h, sizeof h,
+    "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: %zu\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n",
+    len);
+  if (wh_send_all(c, h, (size_t)hn) == 0) wh_send_all(c, wh_store_html, len);
+}
+static void wh_store_state(int c){
+  char* out = (char*)malloc(32768);
+  if (!out) { wh_reply(c, "500 Internal Server Error"); return; }
+  size_t cap = 32768, o = 0;
+  struct stat bst;
+  int has_bps5 = (stat("/data/homebrew/PPSA97024/eboot.bin", &bst) == 0);
+  o += (size_t)snprintf(out + o, cap - o, "{\"version\":\"%s\",\"browserPS5\":%s,\"installed\":[",
+                        WH_VERSION, has_bps5 ? "true" : "false");
+  DIR* d = opendir(WH_WIDGETS_DIR);
+  int first = 1;
+  if (d) {
+    struct dirent* e;
+    while ((e = readdir(d)) && o + 512 < cap) {
+      size_t nl = strlen(e->d_name);
+      if (!wh_name_ok(e->d_name, nl)) continue;
+      char cfg[256], meta[256];
+      snprintf(cfg, sizeof cfg, "%s/%s/config.json", WH_WIDGETS_DIR, e->d_name);
+      struct stat st;
+      if (stat(cfg, &st) || !S_ISREG(st.st_mode)) continue;
+      snprintf(meta, sizeof meta, "%s/%s/.meta.json", WH_WIDGETS_DIR, e->d_name);
+      char title[128], ver[64], et[256], ev[128];
+      wh_json_str_field(cfg, "title", title, sizeof title);
+      wh_json_str_field(meta, "version", ver, sizeof ver);
+      if (!ver[0]) wh_json_str_field(cfg, "version", ver, sizeof ver);
+      wh_json_esc(et, sizeof et, title[0] ? title : e->d_name);
+      wh_json_esc(ev, sizeof ev, ver);
+      o += (size_t)snprintf(out + o, cap - o, "%s{\"id\":\"%s\",\"title\":\"%s\",\"version\":\"%s\"}",
+                            first ? "" : ",", e->d_name, et, ev);
+      first = 0;
+    }
+    closedir(d);
+  }
+  char srcs[WH_STORE_SRC_MAX + 1] = "[]";
+  int sfd = open(WH_STORE_SOURCES, O_RDONLY | O_NOFOLLOW);
+  if (sfd >= 0) {
+    ssize_t sr = read(sfd, srcs, WH_STORE_SRC_MAX);
+    close(sfd);
+    if (sr > 0 && srcs[0] == '[') srcs[sr] = 0;
+    else strcpy(srcs, "[]");
+  }
+  o += (size_t)snprintf(out + o, cap - o, "],\"sources\":%s}", srcs);
+  wh_reply_json(c, 200, out);
+  free(out);
+}
+static void wh_store_file(int c, char* q, const char* body, size_t blen){
+  char id[72] = "", name[72] = "";
+  for (char* t = q; t && *t; ) {
+    if (!strncmp(t, "id=", 3)) wh_urldecode(t + 3, id, sizeof id);
+    else if (!strncmp(t, "name=", 5)) wh_urldecode(t + 5, name, sizeof name);
+    t = strchr(t, '&'); if (t) t++;
+  }
+  int name_ok = !strcmp(name, ".meta.json") || (wh_name_ok(name, strlen(name)) && wh_store_ext_ok(name));
+  if (!wh_name_ok(id, strlen(id)) || !name_ok) {
+    wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"bad id or filename\"}"); return;
+  }
+  char dir[256], fp[320];
+  snprintf(dir, sizeof dir, "%s/%s", WH_WIDGETS_DIR, id);
+  mkdir(dir, 0755);
+  snprintf(fp, sizeof fp, "%s/%s", dir, name);
+  int fd = open(fp, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644);
+  if (fd < 0) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"open failed\"}"); return; }
+  size_t off = 0; int ok = 1;
+  while (off < blen) {
+    ssize_t w = write(fd, body + off, blen - off);
+    if (w <= 0) { ok = 0; break; }
+    off += (size_t)w;
+  }
+  close(fd);
+  if (!ok) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"write failed\"}"); return; }
+  wh_flog("assets", "store: wrote %s/%s (%zuB)", id, name, blen);
+  wh_reply_json(c, 200, "{\"ok\":true}");
+}
+static void wh_store_uninstall(int c, char* q){
+  char id[72] = "";
+  for (char* t = q; t && *t; ) {
+    if (!strncmp(t, "id=", 3)) wh_urldecode(t + 3, id, sizeof id);
+    t = strchr(t, '&'); if (t) t++;
+  }
+  if (!wh_name_ok(id, strlen(id))) { wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"bad id\"}"); return; }
+  char dir[256]; snprintf(dir, sizeof dir, "%s/%s", WH_WIDGETS_DIR, id);
+  DIR* d = opendir(dir);
+  if (!d) { wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"not found\"}"); return; }
+  struct dirent* e;
+  while ((e = readdir(d))) {
+    if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+    char fp[384]; snprintf(fp, sizeof fp, "%s/%s", dir, e->d_name);
+    unlink(fp);
+  }
+  closedir(d);
+  if (rmdir(dir) != 0) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"rmdir failed\"}"); return; }
+  wh_flog("assets", "store: uninstalled %s", id);
+  wh_reply_json(c, 200, "{\"ok\":true}");
+}
+static void wh_store_sources(int c, const char* body, size_t blen){
+  if (blen < 2 || blen > WH_STORE_SRC_MAX || body[0] != '[') {
+    wh_reply_json(c, 400, "{\"ok\":false,\"error\":\"bad sources\"}"); return;
+  }
+  int fd = open(WH_STORE_SOURCES, O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW, 0644);
+  if (fd < 0) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"open failed\"}"); return; }
+  ssize_t w = write(fd, body, blen); close(fd);
+  if (w != (ssize_t)blen) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"write failed\"}"); return; }
+  wh_flog("assets", "store: saved sources (%zuB)", blen);
+  wh_reply_json(c, 200, "{\"ok\":true}");
+}
 static void wh_asset_conn(int c){
-  char req[2048]; size_t got = 0;
+  char req[2048]; size_t got = 0; char* hdr_end = 0;
   while (got < sizeof req - 1){
     ssize_t r = read(c, req + got, sizeof req - 1 - got);
     if (r <= 0) break;
     got += (size_t)r; req[got] = 0;
-    if (strstr(req, "\r\n\r\n")) break;
+    hdr_end = strstr(req, "\r\n\r\n");
+    if (hdr_end) break;
   }
   req[got] = 0;
+  if (!hdr_end) { wh_reply(c, "400 Bad Request"); return; }
   char* eol = strstr(req, "\r\n");
   if (!eol) { wh_reply(c, "400 Bad Request"); return; }
-  char range[64] = "";
-  for (char* p = eol + 2; p && *p; ) {
+  char range[64] = ""; long clen_hdr = 0;
+  for (char* p = eol + 2; p && p < hdr_end; ) {
     char* nl = strstr(p, "\r\n");
     if (!nl || nl == p) break;
     if (!strncasecmp(p, "Range:", 6)) {
       char* v = p + 6; while (v < nl && (*v == ' ' || *v == '\t')) v++;
       size_t rl = (size_t)(nl - v); if (rl >= sizeof range) rl = sizeof range - 1;
       memcpy(range, v, rl); range[rl] = 0;
+    } else if (!strncasecmp(p, "Content-Length:", 15)) {
+      clen_hdr = strtol(p + 15, 0, 10);
     }
     p = nl + 2;
   }
   *eol = 0;
+  if (!strncmp(req, "POST /__store/", 14)) {
+    if (clen_hdr < 0 || clen_hdr > WH_ASSET_MAX) { wh_reply(c, "413 Payload Too Large"); return; }
+    char* path = req + 6;                    /* after "POST /" */
+    char* sp = strchr(path, ' '); if (sp) *sp = 0;
+    size_t need = (size_t)clen_hdr;
+    char* body = (char*)malloc(need + 1);
+    if (!body) { wh_reply(c, "500 Internal Server Error"); return; }
+    size_t hdr_len = (size_t)((hdr_end + 4) - req);
+    size_t have = got > hdr_len ? got - hdr_len : 0;
+    if (have > need) have = need;
+    if (have) memcpy(body, hdr_end + 4, have);
+    while (have < need) {
+      ssize_t r = read(c, body + have, need - have);
+      if (r <= 0) break;
+      have += (size_t)r;
+    }
+    body[have] = 0;
+    if (have != need) { free(body); wh_reply(c, "400 Bad Request"); return; }
+    if (!strncmp(path, "__store/file?", 13)) wh_store_file(c, path + 13, body, have);
+    else if (!strncmp(path, "__store/uninstall?", 18)) wh_store_uninstall(c, path + 18);
+    else if (!strcmp(path, "__store/sources")) wh_store_sources(c, body, have);
+    else wh_reply(c, "404 Not Found");
+    free(body);
+    return;
+  }
   if (strncmp(req, "GET /", 5)) { wh_reply(c, "405 Method Not Allowed"); return; }
   char* path = req + 5;                      /* after "GET /" */
   char* sp = strchr(path, ' '); if (sp) *sp = 0;
+  if (!strcmp(path, "__store") || !strcmp(path, "__store/")) { wh_store_page(c); return; }
+  if (!strcmp(path, "__store/state") || !strncmp(path, "__store/state?", 14)) { wh_store_state(c); return; }
   if (!strncmp(path, "__log?", 6)) { wh_log_endpoint(c, path + 6); return; }
   if (!strncmp(path, "__wget?", 7)) { wh_settings_get(c, path + 7); return; }
   if (!strncmp(path, "__wset?", 7)) { wh_settings_set(c, path + 7); return; }

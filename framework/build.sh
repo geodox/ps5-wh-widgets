@@ -24,7 +24,7 @@ CC="$PS5_PAYLOAD_SDK/bin/prospero-clang"
 [ -f "$LOADER" ] || { echo "MISSING minified loader: $LOADER (node tools/build_loader.js)"; exit 1; }
 mkdir -p "$SDK_ROOT/out"
 BUILD="$(mktemp -d)"
-cp "$HERE"/*.c "$HERE"/*.h "$HERE"/embed.S "$BUILD"/
+cp "$HERE"/*.c "$HERE"/*.h "$HERE"/embed.S "$HERE"/store.html "$BUILD"/
 cp "$DELTAS"/deltas.S "$DELTAS"/deltas.h "$DELTAS"/fw*.delta "$BUILD"/   # deltas.S .incbin names
 cp "$LOADER" "$BUILD"/loader.min.js                                     # embed.S .incbin name
 for d in "$BUILD"/fw*.delta; do echo "embedded $(basename "$d") = $(stat -c %s "$d") bytes"; done

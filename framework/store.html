@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Welcome Hub Widget Store</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #141923;
+    --card: #1a2130;
+    --card-hover: #222b3e;
+    --border: rgba(255,255,255,0.10);
+    --text: #f0f4f8;
+    --muted: #9aa7bd;
+    --accent: #3b82f6;
+    --accent-hi: #60a5fa;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at top right, #162238 0%, var(--bg) 55%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 28px 36px 48px;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  button, .pill {
+    font: inherit;
+    color: var(--text);
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  button:hover, button:focus-visible, .pill:hover, .pill:focus-visible {
+    background: var(--card-hover);
+    border-color: #fff;
+    outline: none;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  button.primary:hover, button.primary:focus-visible { background: var(--accent-hi); border-color: #fff; }
+  button.danger { background: rgba(239,68,68,0.16); border-color: rgba(239,68,68,0.45); color: #fecaca; }
+  button.danger:hover, button.danger:focus-visible { background: rgba(239,68,68,0.35); border-color: #fff; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin: 20px 0 18px;
+  }
+  .toolbar input {
+    flex: 1;
+    min-width: 220px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 15px;
+  }
+  .toolbar input:focus { border-color: var(--accent-hi); outline: none; }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { padding: 8px 14px; font-size: 14px; border-radius: 999px; }
+  .pill.active { background: var(--accent); border-color: var(--accent-hi); font-weight: 600; }
+  .banner {
+    display: none;
+    margin: 0 0 18px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(59,130,246,0.15);
+    border: 1px solid rgba(96,165,250,0.4);
+    font-size: 14px;
+  }
+  .banner.show { display: block; }
+  .banner.err { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.45); color: #fecaca; }
+  .banner.ok { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.45); color: #bbf7d0; }
+  .sources-panel {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+  .sources-panel.open { display: block; }
+  .sources-panel h2 { margin: 0 0 10px; font-size: 18px; }
+  .src-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--card);
+    margin-bottom: 8px;
+    font-size: 13px;
+    word-break: break-all;
+  }
+  .src-add { display: flex; gap: 10px; margin-top: 12px; }
+  .src-add input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .card h3 { margin: 0; font-size: 19px; }
+  .meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .desc { margin: 0; font-size: 14px; color: #d5deeb; line-height: 1.45; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: var(--muted);
+  }
+  .badge.inst { background: rgba(34,197,94,0.18); color: #86efac; }
+  .badge.upd { background: rgba(245,158,11,0.22); color: #fde68a; }
+  .card-foot { display: flex; gap: 8px; justify-content: flex-end; }
+  .empty { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 16px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Welcome Hub Widget Store</h1>
+    <p id="subtitle">Loading console state...</p>
+  </div>
+  <div class="actions">
+    <button id="btnRefresh">Refresh</button>
+    <button id="btnSources">Sources</button>
+    <button id="btnReload" class="primary">Reload Welcome Hub</button>
+  </div>
+</header>
+
+<div id="banner" class="banner"></div>
+
+<section id="sourcesPanel" class="sources-panel">
+  <h2>Widget Sources (widgets.json)</h2>
+  <div id="sourcesList"></div>
+  <div class="src-add">
+    <input id="srcInput" type="url" placeholder="https://raw.githubusercontent.com/.../widgets.json">
+    <button id="btnAddSrc" class="primary">Add Source</button>
+  </div>
+</section>
+
+<div class="toolbar">
+  <input id="search" type="search" placeholder="Search widgets...">
+  <div id="pills" class="pills"></div>
+</div>
+
+<main id="grid" class="grid"></main>
+
+<script>
+(function () {
+  var OFFICIAL = 'https://raw.githubusercontent.com/geodox/ps5-wh-widgets/main/widgets.json';
+  var state = { version: '', installed: {}, sources: [], catalog: [], cat: 'All', q: '' };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function notify(msg, cls) {
+    var b = $('banner');
+    b.className = 'banner show' + (cls ? ' ' + cls : '');
+    b.textContent = msg;
+  }
+  function sizeName(sz) {
+    return sz === 0 ? 'MINI' : sz === 2 ? 'LARGE' : sz === 3 ? 'FULL' : 'DEFAULT';
+  }
+
+  // Minimal ZIP extractor (stored + deflate-raw via DecompressionStream) for .zip sources
+  async function extractZip(buf) {
+    var view = new DataView(buf), bytes = new Uint8Array(buf);
+    var eocd = -1;
+    for (var i = bytes.length - 22; i >= Math.max(0, bytes.length - 65558); i--) {
+      if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('Invalid ZIP file');
+    var count = view.getUint16(eocd + 10, true);
+    var cdOff = view.getUint32(eocd + 16, true);
+    var dec = new TextDecoder();
+    var out = {};
+    var p = cdOff;
+    for (var n = 0; n < count; n++) {
+      if (view.getUint32(p, true) !== 0x02014b50) break;
+      var method = view.getUint16(p + 10, true);
+      var csize = view.getUint32(p + 20, true);
+      var nlen = view.getUint16(p + 28, true);
+      var elen = view.getUint16(p + 30, true);
+      var clen = view.getUint16(p + 32, true);
+      var lhoff = view.getUint32(p + 42, true);
+      var rawName = dec.decode(bytes.subarray(p + 46, p + 46 + nlen));
+      p += 46 + nlen + elen + clen;
+      if (rawName.endsWith('/')) continue;
+      var parts = rawName.split('/').filter(Boolean);
+      var fname = parts[parts.length - 1];
+      if (!fname || fname.startsWith('.')) continue;
+      var lhNlen = view.getUint16(lhoff + 26, true);
+      var lhElen = view.getUint16(lhoff + 28, true);
+      var dataOff = lhoff + 30 + lhNlen + lhElen;
+      var comp = bytes.subarray(dataOff, dataOff + csize);
+      if (method === 0) {
+        out[fname] = comp;
+      } else if (method === 8 && typeof DecompressionStream === 'function') {
+        var ds = new DecompressionStream('deflate-raw');
+        var w = ds.writable.getWriter();
+        w.write(comp); w.close();
+        var ab = await new Response(ds.readable).arrayBuffer();
+        out[fname] = new Uint8Array(ab);
+      } else {
+        throw new Error('Unsupported ZIP compression method ' + method);
+      }
+    }
+    return out;
+  }
+
+  async function uploadFile(id, name, body) {
+    var r = await fetch('/__store/file?id=' + encodeURIComponent(id) + '&name=' + encodeURIComponent(name), {
+      method: 'POST',
+      body: body
+    });
+    if (!r.ok) {
+      var t = await r.text().catch(function () { return ''; });
+      throw new Error('Save ' + name + ' failed (' + r.status + ') ' + t);
+    }
+  }
+
+  async function installWidget(w) {
+    notify('Installing ' + w.name + '...', '');
+    try {
+      var files = {};
+      if (w.files && typeof w.files === 'object') {
+        var names = Object.keys(w.files);
+        for (var i = 0; i < names.length; i++) {
+          var fn = names[i];
+          var resp = await fetch(w.files[fn]);
+          if (!resp.ok) throw new Error('Download ' + fn + ' failed (' + resp.status + ')');
+          files[fn] = new Uint8Array(await resp.arrayBuffer());
+        }
+      } else if (w.zip || w.url) {
+        var zresp = await fetch(w.zip || w.url);
+        if (!zresp.ok) throw new Error('Download ZIP failed (' + zresp.status + ')');
+        files = await extractZip(await zresp.arrayBuffer());
+      } else {
+        throw new Error('Catalog entry has no files or zip URL');
+      }
+      if (!files['config.json'] || !files['widget.js']) {
+        throw new Error('Widget package missing config.json or widget.js');
+      }
+      var fnames = Object.keys(files);
+      for (var j = 0; j < fnames.length; j++) {
+        await uploadFile(w.id, fnames[j], files[fnames[j]]);
+      }
+      var meta = JSON.stringify({ version: w.version || '', source: w._source || '' });
+      await uploadFile(w.id, '.meta.json', new TextEncoder().encode(meta));
+      await loadState();
+      render();
+      notify('Installed ' + w.name + '. Welcome Hub will reload automatically in ~5 seconds.', 'ok');
+    } catch (e) {
+      notify('Install failed for ' + w.name + ': ' + (e.message || e), 'err');
+    }
+  }
+
+  async function uninstallWidget(id, name) {
+    if (!confirm('Uninstall "' + name + '"?')) return;
+    notify('Uninstalling ' + name + '...', '');
+    try {
+      var r = await fetch('/__store/uninstall?id=' + encodeURIComponent(id), { method: 'POST' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      await loadState();
+      render();
+      notify('Uninstalled ' + name + '. Welcome Hub will reload automatically in ~5 seconds.', 'ok');
+    } catch (e) {
+      notify('Uninstall failed: ' + (e.message || e), 'err');
+    }
+  }
+
+  async function saveSources(list) {
+    var r = await fetch('/__store/sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(list)
+    });
+    if (!r.ok) throw new Error('Failed to save sources (' + r.status + ')');
+  }
+
+  async function loadState() {
+    var r = await fetch('/__store/state');
+    var d = await r.json();
+    state.version = d.version || '';
+    state.sources = Array.isArray(d.sources) ? d.sources : [];
+    state.installed = {};
+    (d.installed || []).forEach(function (it) { state.installed[it.id] = it; });
+    var count = Object.keys(state.installed).length;
+    $('subtitle').textContent = 'WHBridge ' + state.version + ' · ' + count + ' widget(s) installed';
+  }
+
+  async function loadCatalogs() {
+    var urls = [OFFICIAL].concat(state.sources.filter(function (u) { return u && u !== OFFICIAL; }));
+    var merged = [], seen = {}, errs = [];
+    for (var i = 0; i < urls.length; i++) {
+      try {
+        var r = await fetch(urls[i], { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        var j = await r.json();
+        var list = Array.isArray(j.widgets) ? j.widgets : [];
+        list.forEach(function (w) {
+          if (!w || !w.id || seen[w.id]) return;
+          seen[w.id] = 1;
+          w._source = j.name || urls[i];
+          merged.push(w);
+        });
+      } catch (e) {
+        errs.push(urls[i] + ' (' + (e.message || e) + ')');
+      }
+    }
+    // Include locally installed widgets that aren't in any remote catalog
+    Object.keys(state.installed).forEach(function (id) {
+      if (seen[id]) return;
+      var loc = state.installed[id];
+      merged.push({
+        id: id,
+        name: loc.title || id,
+        description: 'Installed locally on console.',
+        version: loc.version || '',
+        author: 'Local',
+        category: 'Local',
+        size: 1,
+        _localOnly: true
+      });
+    });
+    state.catalog = merged;
+    if (errs.length) notify('Some sources failed to load: ' + errs.join('; '), 'err');
+  }
+
+  function renderSources() {
+    var html = '<div class="src-row"><span><strong>Official:</strong> ' + esc(OFFICIAL) + '</span><span class="badge">Built-in</span></div>';
+    state.sources.forEach(function (u, idx) {
+      html += '<div class="src-row"><span>' + esc(u) + '</span><button class="danger" data-rm-src="' + idx + '">Remove</button></div>';
+    });
+    $('sourcesList').innerHTML = html;
+    $('sourcesList').querySelectorAll('[data-rm-src]').forEach(function (btn) {
+      btn.onclick = async function () {
+        var idx = parseInt(btn.getAttribute('data-rm-src'), 10);
+        var next = state.sources.filter(function (_, i) { return i !== idx; });
+        try {
+          await saveSources(next);
+          state.sources = next;
+          renderSources();
+          await loadCatalogs();
+          render();
+          notify('Source removed.', 'ok');
+        } catch (e) { notify(e.message, 'err'); }
+      };
+    });
+  }
+
+  function render() {
+    var cats = ['All', 'Installed'];
+    state.catalog.forEach(function (w) {
+      var c = w.category || 'Widgets';
+      if (cats.indexOf(c) < 0) cats.push(c);
+    });
+    $('pills').innerHTML = cats.map(function (c) {
+      return '<button class="pill' + (state.cat === c ? ' active' : '') + '" data-cat="' + esc(c) + '">' + esc(c) + '</button>';
+    }).join('');
+    $('pills').querySelectorAll('[data-cat]').forEach(function (b) {
+      b.onclick = function () { state.cat = b.getAttribute('data-cat'); render(); };
+    });
+
+    var q = state.q.trim().toLowerCase();
+    var items = state.catalog.filter(function (w) {
+      var inst = !!state.installed[w.id];
+      if (state.cat === 'Installed' && !inst) return false;
+      if (state.cat !== 'All' && state.cat !== 'Installed' && (w.category || 'Widgets') !== state.cat) return false;
+      if (q && (w.name + ' ' + w.id + ' ' + w.description + ' ' + (w.author || '')).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    });
+
+    if (!items.length) {
+      $('grid').innerHTML = '<div class="empty">No matching widgets found.</div>';
+      return;
+    }
+
+    $('grid').innerHTML = items.map(function (w) {
+      var inst = state.installed[w.id];
+      var hasUpdate = inst && w.version && inst.version && inst.version !== w.version;
+      var badges = '<span class="badge">' + esc(sizeName(w.size)) + '</span>';
+      if (w.category) badges += '<span class="badge">' + esc(w.category) + '</span>';
+      if (hasUpdate) badges += '<span class="badge upd">Update ' + esc(w.version) + '</span>';
+      else if (inst) badges += '<span class="badge inst">Installed</span>';
+
+      var btns = '';
+      if (inst) {
+        if (!w._localOnly) {
+          btns += '<button class="primary" data-inst="' + esc(w.id) + '">' + (hasUpdate ? 'Update' : 'Reinstall') + '</button>';
+        }
+        btns += '<button class="danger" data-uninst="' + esc(w.id) + '">Uninstall</button>';
+      } else {
+        btns += '<button class="primary" data-inst="' + esc(w.id) + '">Install</button>';
+      }
+      return '<article class="card">' +
+        '<div>' +
+          '<div class="card-head"><div><h3>' + esc(w.name) + '</h3>' +
+          '<div class="meta">' + esc(w.author || 'Community') + (w.version ? ' · v' + esc(w.version) : '') + '</div></div>' +
+          '<div class="badges">' + badges + '</div></div>' +
+          '<p class="desc" style="margin-top:10px">' + esc(w.description || '') + '</p>' +
+        '</div>' +
+        '<div class="card-foot">' + btns + '</div>' +
+      '</article>';
+    }).join('');
+
+    $('grid').querySelectorAll('[data-inst]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-inst');
+        var w = state.catalog.find(function (x) { return x.id === id; });
+        if (w) installWidget(w);
+      };
+    });
+    $('grid').querySelectorAll('[data-uninst]').forEach(function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-uninst');
+        var w = state.catalog.find(function (x) { return x.id === id; });
+        uninstallWidget(id, (w && w.name) || id);
+      };
+    });
+  }
+
+  $('search').oninput = function (e) { state.q = e.target.value; render(); };
+  $('btnSources').onclick = function () { $('sourcesPanel').classList.toggle('open'); };
+  $('btnAddSrc').onclick = async function () {
+    var url = $('srcInput').value.trim();
+    if (!/^https?:\/\//i.test(url)) { notify('Enter a valid http(s):// widgets.json URL.', 'err'); return; }
+    if (state.sources.indexOf(url) >= 0 || url === OFFICIAL) { notify('Source already added.', ''); return; }
+    var next = state.sources.concat([url]);
+    try {
+      await saveSources(next);
+      state.sources = next;
+      $('srcInput').value = '';
+      renderSources();
+      await loadCatalogs();
+      render();
+      notify('Added source.', 'ok');
+    } catch (e) { notify(e.message, 'err'); }
+  };
+  $('btnRefresh').onclick = async function () {
+    notify('Refreshing catalogs...', '');
+    await loadState();
+    await loadCatalogs();
+    render();
+    notify('Catalogs refreshed.', 'ok');
+  };
+  $('btnReload').onclick = async function () {
+    try {
+      var r = await fetch('/__reload');
+      if (r.ok) notify('Reloading Welcome Hub...', 'ok');
+      else notify('Reload rate-limited or failed (HTTP ' + r.status + ').', 'err');
+    } catch (e) { notify('Reload failed: ' + e.message, 'err'); }
+  };
+
+  (async function init() {
+    try {
+      await loadState();
+      renderSources();
+      await loadCatalogs();
+      render();
+    } catch (e) {
+      notify('Failed to initialize store: ' + (e.message || e), 'err');
+    }
+  })();
+})();
+</script>
+</body>
+</html>
