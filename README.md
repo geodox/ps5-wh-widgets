@@ -62,7 +62,7 @@ Once the payload is installed and running, place each unpacked widget in its own
     glyph.png       # optional
 ```
 
-The folder name should match its widget id. Changes are picked up while the payload is running; see [Applying widget changes](#applying-widget-changes). See the [SDK getting-started guide](docs/sdk/getting-started.md) for deployment and troubleshooting.
+The folder name should match its widget id. Changes are picked up while the payload is running; see [Applying widget changes](#-applying-widget-changes). See the [SDK getting-started guide](docs/sdk/getting-started.md) for deployment and troubleshooting.
 
 ### Custom Animated Backgrounds
 

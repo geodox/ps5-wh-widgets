@@ -72,9 +72,10 @@ static uint64_t wh_now_ms(void){
   return (uint64_t)ts.tv_sec * 1000u + (uint64_t)(ts.tv_nsec / 1000000);
 }
 
-static void wh_send_all(int c, const void* b, size_t n){
+static int wh_send_all(int c, const void* b, size_t n){
   const char* p = (const char*)b;
-  while (n){ ssize_t w = write(c, p, n); if (w <= 0) return; p += w; n -= (size_t)w; }
+  while (n){ ssize_t w = write(c, p, n); if (w <= 0) return -1; p += w; n -= (size_t)w; }
+  return 0;
 }
 static void wh_reply(int c, const char* status){
   klog_printf("[wc] assets: %s\n", status);
@@ -488,11 +489,33 @@ static void wh_bg_asset(int c, char* name, const char* range_hdr){
     const char* r = range_hdr + 6;
     char* dash = strchr(r, '-');
     if (dash) {
-      start = strtol(r, 0, 10);
-      if (dash[1] >= '0' && dash[1] <= '9') end = strtol(dash + 1, 0, 10);
-      if (start < 0) start = 0;
+      int valid = 0;
+      if (dash == r) {
+        /* Suffix range: bytes=-N requests the last N bytes. */
+        if (dash[1] >= '0' && dash[1] <= '9') {
+          long suffix = strtol(dash + 1, 0, 10);
+          if (suffix > 0) {
+            start = suffix >= total ? 0 : total - suffix;
+            end = total - 1;
+            valid = 1;
+          }
+        }
+      } else if (r[0] >= '0' && r[0] <= '9') {
+        start = strtol(r, 0, 10);
+        end = (dash[1] >= '0' && dash[1] <= '9') ? strtol(dash + 1, 0, 10) : total - 1;
+        valid = 1;
+      }
+      if (!valid || start < 0 || start >= total || end < start) {
+        char rh[160];
+        int rn = snprintf(rh, sizeof rh,
+          "HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */%ld\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+          total);
+        wh_send_all(c, rh, (size_t)rn);
+        close(fd);
+        return;
+      }
       if (end >= total) end = total - 1;
-      if (start <= end) partial = 1;
+      partial = 1;
     }
   }
   long clen = end - start + 1;
@@ -508,12 +531,12 @@ static void wh_bg_asset(int c, char* name, const char* range_hdr){
       type, total);
   }
   if (is_mp4) wh_flog("assets", "bg %s %s %ld-%ld/%ld", partial ? "206" : "200", name, start, end, total);
-  wh_send_all(c, h, (size_t)hn);
+  if (wh_send_all(c, h, (size_t)hn) < 0) { close(fd); return; }
   char buf[16384]; long rem = clen;
   while (rem > 0) {
     ssize_t r = read(fd, buf, rem > (long)sizeof buf ? sizeof buf : (size_t)rem);
     if (r <= 0) break;
-    wh_send_all(c, buf, (size_t)r);
+    if (wh_send_all(c, buf, (size_t)r) < 0) break;
     rem -= (long)r;
   }
   close(fd);
@@ -573,9 +596,9 @@ static void wh_asset_conn(int c){
     "HTTP/1.0 200 OK\r\nContent-Type: %s\r\nContent-Length: %ld\r\nCache-Control: max-age=60\r\nConnection: close\r\n\r\n",
     type, (long)st.st_size);
   klog_printf("[wc] assets: 200 /%s/%s %ldB\n", path, sl + 1, (long)st.st_size);
-  wh_send_all(c, h, (size_t)n);
+  if (wh_send_all(c, h, (size_t)n) < 0) { close(fd); return; }
   char buf[8192]; ssize_t r;
-  while ((r = read(fd, buf, sizeof buf)) > 0) wh_send_all(c, buf, (size_t)r);
+  while ((r = read(fd, buf, sizeof buf)) > 0) { if (wh_send_all(c, buf, (size_t)r) < 0) break; }
   close(fd);
 }
 unsigned wh_gen_read(void){
@@ -627,7 +650,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
   uint64_t applied = wh_prelude_sig;         /* fingerprint live in SceShellUI */
   uint64_t candidate = wh_prelude_sig;
   uint64_t candidate_since = 0, next_sample = wh_now_ms() + WH_SAMPLE_MS;
-  int attempts = 0;
+  int attempts = 0, pending_reload = 0;
   for (;;) {
     struct pollfd pf = { s, POLLIN, 0 };
     int pr = poll(&pf, 1, 250);
@@ -635,6 +658,10 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
       klog_printf("[wc] assets: gen %u superseded, retiring\n", my);
       wh_flog("assets", "server gen %u handed over to a newer install, exiting", my);
       close(s); _exit(0);
+    }
+    if (pending_reload) {
+      int rrc = wh_reload_hub_async("widget-refresh");
+      if (rrc == 0 || rrc < -1) pending_reload = 0;   /* started or non-cooldown failure */
     }
     uint64_t t = wh_now_ms();
     if (t >= next_sample) {                  /* ~1 Hz by deadline, not by iterations */
@@ -647,7 +674,10 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
           wh_flog("assets", "widget sources stable for %us (sig %016llx); refreshing prelude in place",
                   (unsigned)(WH_STABLE_MS / 1000u), (unsigned long long)candidate);
           int rr = wh_refresh_in_place(shell, br);
-          if (rr == 0) { applied = candidate = wh_prelude_sig; attempts = 0; wh_reload_hub_async("widget-refresh"); }
+          if (rr == 0) {
+            applied = candidate = wh_prelude_sig; attempts = 0;
+            if (wh_reload_hub_async("widget-refresh") == -1) pending_reload = 1;
+          }
           else if (++attempts >= 3) {
             wh_flog("assets", "in-place refresh failed 3x (rc=%d); waiting for the next change", rr);
             applied = candidate = wh_prelude_sig; attempts = 0;

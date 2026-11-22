@@ -2761,7 +2761,6 @@
   // L2 / R2 switch lists while the list is shown (a global key observer: the list's
   // own key handlers belong to the hub), and a line above the list names the one shown.
   var EDIT_MODES_WITH_LIST = { default: 1, modify: 1 },
-    EDIT_LABEL_Y = 80, // window y of the list name, in the empty band above the list
     EDIT_MIN_PLACED = 3; // the hub keeps at least this many widgets placed
   function isCustomId(widgetId) {
     return !!root.__wh_widgets[widgetId];
@@ -2860,12 +2859,6 @@
         // this render). Only one Edit Widgets list exists at a time.
         editGate.ids = hasCustom ? listMap : null;
         editGate.open = parts.placed > EDIT_MIN_PLACED;
-        // The label goes at a fixed spot on screen above the list; its parent's position
-        // is not known, so it measures where it landed and moves by the difference.
-        var labelState = React.useState(-340),
-          labelTop = labelState[0],
-          setLabelTop = labelState[1],
-          labelRef = React.useRef(null);
         React.useEffect(
           function () {
             var observer = vendor && vendor.KeyEventObserverPS;
@@ -2886,51 +2879,55 @@
           },
           [hasCustom]
         );
-        var list = createElement(
-          Stock,
-          root.Object.assign({}, props, {
-            key: listKey,
-            map: listMap,
-            config: parts.config,
-          })
-        );
-        if (!hasCustom || !shown) return list;
-        return [
-          list,
+        if (!hasCustom || !shown) {
+          return createElement(
+            Stock,
+            root.Object.assign({}, props, {
+              key: listKey,
+              map: listMap,
+              config: parts.config,
+            })
+          );
+        }
+        return createElement(
+          View,
+          { style: props.style },
           createElement(
             View,
             {
               key: 'whListName',
-              ref: labelRef,
               pointerEvents: 'none',
-              style: { position: 'absolute', left: 0, top: labelTop },
-              onLayout: function () {
-                var node = labelRef.current;
-                if (!node || typeof node.measureInWindow !== 'function') return;
-                node.measureInWindow(function (x, y) {
-                  if (typeof y === 'number' && Math.abs(y - EDIT_LABEL_Y) > 2)
-                    setLabelTop(function (top) {
-                      return top + (EDIT_LABEL_Y - y);
-                    });
-                });
+              style: {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: -110,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
               },
             },
             createElement(
-              View,
-              { style: { flexDirection: 'row', alignItems: 'baseline' } },
-              createElement(
-                wh.Label,
-                { style: { fontSize: wh.FontSizePS.SizeSmall, fontWeight: 'bold' } },
-                custom ? 'Custom Widgets' : 'Stock Widgets'
-              ),
-              createElement(
-                wh.Label,
-                { style: { fontSize: wh.FontSizePS.Size2XSmall, opacity: 0.7, marginLeft: 24 } },
-                'L2 / R2: ' + (custom ? 'Stock Widgets' : 'Custom Widgets')
-              )
+              wh.Label,
+              { style: { fontSize: wh.FontSizePS.SizeSmall, fontWeight: 'bold', width: 230 } },
+              custom ? 'Custom Widgets' : 'Stock Widgets'
+            ),
+            createElement(
+              wh.Label,
+              { style: { fontSize: wh.FontSizePS.Size2XSmall, opacity: 0.7, width: 260, textAlign: 'right' } },
+              'L2 / R2: ' + (custom ? 'Stock Widgets' : 'Custom Widgets')
             )
           ),
-        ];
+          createElement(
+            Stock,
+            root.Object.assign({}, props, {
+              key: listKey,
+              map: listMap,
+              config: parts.config,
+              style: { flex: 1 },
+            })
+          )
+        );
       };
       Lists.__wh = 1;
       menu['default'] = Lists;

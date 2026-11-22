@@ -156,11 +156,13 @@
     var isWifi = d.device === 1;
     var isWired = d.device === 0;
     var connected = d.link === 1;
+    var disconnected = d.link === 0;
     var band = isWifi ? bandLabel(d.band) : null;
 
     var badge = null;
     if (info) {
-      if (!connected) badge = 'Offline';
+      if (disconnected) badge = 'Offline';
+      else if (d.link == null) badge = 'Unavailable';
       else if (isWired) badge = 'Wired';
       else if (isWifi) badge = band ? 'Wi-Fi ' + band : 'Wi-Fi';
     }
@@ -168,7 +170,8 @@
     var sigVal = '-';
     var sigSty = null;
     if (info) {
-      if (!connected) { sigVal = 'Down'; sigSty = styles.bad; }
+      if (disconnected) { sigVal = 'Down'; sigSty = styles.bad; }
+      else if (d.link == null) { sigVal = '-'; }
       else if (isWired) { sigVal = 'Wired'; sigSty = styles.good; }
       else if (d.rssiPct != null) { sigVal = d.rssiPct + '%'; sigSty = signalStyle(d.rssiPct); }
     }
