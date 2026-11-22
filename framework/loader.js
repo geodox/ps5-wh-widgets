@@ -229,6 +229,52 @@
       wh.LayoutAnimation = vendor.LayoutAnimation;
       wh.findNodeHandle = vendor.findNodeHandle;
       if (!Image) Image = vendor.Image;
+      // Lazy-forwarded RN-PS vendor UI components (zero startup cost until accessed).
+      // vendor.Button is exposed as wh.ButtonPS because wh.Button holds controller keys.
+      if (!wh.__vLazy) {
+        wh.__vLazy = 1;
+        var lazyPairs = [
+          ['ButtonPS', 'Button'],
+          ['ProgressBarPS', 'ProgressBarPS'],
+          ['TabViewPS', 'TabViewPS'],
+          ['TagPS', 'TagPS'],
+          ['PlatformTagPS', 'PlatformTagPS'],
+          ['SectionHeaderPS', 'SectionHeaderPS'],
+          ['GridListViewPS', 'GridListViewPS'],
+          ['DialogPS', 'DialogPS'],
+          ['PopupMenuPS', 'PopupMenuPS'],
+          ['TooltipPS', 'TooltipPS'],
+          ['PopupHintPS', 'PopupHintPS'],
+          ['ParagraphPS', 'ParagraphPS'],
+          ['BulletParagraphPS', 'BulletParagraphPS'],
+          ['TextListPanelPS', 'TextListPanelPS'],
+          ['SystemSoundPS', 'SystemSoundPS'],
+          ['StyleManagerPS', 'StyleManagerPS'],
+          ['StyleManagerContextPS', 'StyleManagerContextPS'],
+          ['WebViewPS', 'WebViewPS'],
+          ['VideoPS', 'VideoPS'],
+          ['Switch', 'Switch'],
+          ['Slider', 'Slider'],
+          ['CheckBox', 'CheckBox'],
+          ['Modal', 'Modal'],
+        ];
+        for (var li = 0; li < lazyPairs.length; li++) {
+          (function (pub, src) {
+            if (Object.prototype.hasOwnProperty.call(wh, pub)) return;
+            Object.defineProperty(wh, pub, {
+              configurable: true,
+              enumerable: true,
+              get: function () {
+                try {
+                  return vendor[src];
+                } catch (e) {
+                  return undefined;
+                }
+              },
+            });
+          })(lazyPairs[li][0], lazyPairs[li][1]);
+        }
+      }
     } catch (e) {}
   }
   // Hub tile sizes. A widget with a MINI* size goes to the hub's MINI row instead of

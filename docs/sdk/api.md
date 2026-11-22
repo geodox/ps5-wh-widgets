@@ -22,9 +22,11 @@
 | `playSound(name)` | play a stock UI sound, see [Sounds](#sounds) |
 | `useHubState()` | `{visible, focused}`, the `hubVisible` / `hubFocused` props as a hook (for pages), see [Hub state](#hub-state) |
 | `getLocale()`, `useLocale()` | the console's language and date and time formats, see [Locale](#locale) |
-| `AlertDialogPS` | the stock alert dialog, see [Dialogs](#dialogs) |
+| `AlertDialogPS`, `DialogPS` | the stock alert dialog and lower-level modal dialog, see [Dialogs](#dialogs) |
 | `TextInput` | a text field with the system keyboard, for pages, see [pages](pages.md#text-input) |
 | `List`, `MenuListItemPS`, `SeparatorPS`, `Picker` | the stock scrolling list, Settings-style rows and native separator, for pages, see [pages](pages.md#lists) |
+| `ButtonPS`, `Switch`, `Slider`, `CheckBox`, `Modal` | PS-native controls lazily forwarded from `vendor` (`ButtonPS` wraps `vendor.Button` so `wh.Button` keeps controller keys) |
+| `ProgressBarPS`, `TabViewPS`, `TagPS`, `PlatformTagPS`, `SectionHeaderPS`, `GridListViewPS`, `PopupMenuPS`, `TooltipPS`, `PopupHintPS`, `ParagraphPS`, `BulletParagraphPS`, `TextListPanelPS`, `SystemSoundPS`, `StyleManagerPS`, `StyleManagerContextPS`, `WebViewPS`, `VideoPS` | additional PS-native vendor UI components and helpers, lazily forwarded on first access (guard for `undefined` on older firmwares) |
 | `config` | your parsed `config.json` |
 
 `wh.IconPS.iconIds` is the console's list of valid stock icon ids; see
