@@ -307,6 +307,9 @@ const MODULES = [
   // The screen reads this module's `default` each time it builds its rows, so the
   // loader wraps it to add its own rows after it (Telemetry, Widget data).
   { name: 'hubSettingsFollowedGames', id_1320: 2126, need: ['msgid_followed_games', 'msgid_follow_new_games', 'Follow'] },
+  // Welcome Hub Settings, "Showcase Mode" row: the top row when screenSaver is enabled.
+  // Wrapped to insert "Reload Welcome Hub" above Showcase Mode.
+  { name: 'hubSettingsShowcaseMode', id_1320: 2127, need: ['msgid_showcase_mode_beta', 'ScreenSaverSettings'], optional: true },
   // The Edit Widgets list (a component, `default`): the widget section reads it at
   // render time and passes the widget `map`. The loader wraps it to show the stock
   // and the custom widgets as two lists (L2 / R2 switch).

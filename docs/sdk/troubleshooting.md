@@ -34,20 +34,23 @@ broken ones with the exact error. Use `--force` to upload anyway.
 
 ## New widget code needs a new hub runtime
 
-The payload watches `config.json` / `widget.js` and swaps the new widget set into
-the running shell about six seconds after a change settles. The hub only evaluates
-that prelude in a new JS runtime:
+The payload watches `config.json` / `widget.js`, swaps the new widget set into
+the running shell about six seconds after a change settles, and **automatically
+reloads the embedded Welcome Hub** so the new runtime picks it up immediately (no
+sign-out or ShellUI restart).
 
-1. **Sign out and back in.** That restarts the hub app, and the new runtime runs the
-   installed prelude.
-2. Leaving the hub and coming back does **not** work - that runtime is kept.
+If you ever need to reload manually:
+
+1. Use **Welcome Hub Settings → Reload Welcome Hub** (or `GET http://127.0.0.1:8098/__reload`).
+2. **Sign out and back in** also starts a fresh hub runtime as a fallback.
+3. Leaving the hub and coming back does **not** reload it - that runtime is kept.
 
 `wh.log` shows the handoff: `widget sources stable for 5s ... refreshing prelude in
-place`, `INSTALLED slot2->... (reload, bridge reused)`, then on the next runtime
-`loader ready in the hub runtime (vendor ok, icons wrapped)`.
+place`, `INSTALLED slot2->... (reload, bridge reused)`, `hub reload (widget-refresh): rc=0,0,0`,
+then `loader ready in the hub runtime (vendor ok, icons wrapped)`.
 
 Changes to `framework/loader.js` itself (or a new payload build) take the same
-route: install without `--race`, then sign out and back in.
+route: install without `--race` and the Welcome Hub reloads automatically.
 
 ```
 python scripts/whctl.py --host <console-ip> install out/wh_bridge.elf
@@ -75,7 +78,8 @@ was left stock. Report it with your `[installer] start fw=...` line.
    or the file threw while evaluating.
 3. Check the folder name matches `config.json`'s `id` and is not a
    [reserved stock id](config.md#reserved-stock-ids).
-4. Sign out and back in so a new hub runtime loads the refreshed prelude.
+4. Use **Welcome Hub Settings → Reload Welcome Hub** (or sign out and back in) if
+   the automatic reload did not trigger.
 
 ## Render errors
 

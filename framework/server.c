@@ -16,6 +16,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,6 +184,49 @@ static void wh_launch_action(int c, char* q){
   int rc = wh_native_launch(uri);
   wh_flog("assets", "launch: %s rc=%d", uri, rc);
   if (rc) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"launch failed\"}"); return; }
+  wh_reply_json(c, 200, "{\"ok\":true}");
+}
+/* ---- Clean embedded Welcome Hub reload (no ShellUI kill, no sign-out) ----
+ * Unfocuses the embedded Welcome Hub (media space), opens Control Center so
+ * Home UI's AppState transitions to 'inactive' and useHubPooling evicts the
+ * unfocused hub runtime, then navigates back to NPXS40063 to mount a fresh
+ * embedded hub (re-triggering our evaluateJavaScript hook). Runs on a detached
+ * thread so the asset server keeps serving 127.0.0.1:8098 during the reload. */
+static volatile int g_reloading = 0;
+static time_t g_reload_last = 0;
+static void* wh_reload_thread(void* arg){
+  const char* why = (const char*)arg;
+  int r1 = wh_native_launch("pshomeui:navigateToHome?spaceId=media");
+  usleep(700000);
+  int r2 = wh_native_launch("pscontrolcenter:main");
+  usleep(700000);
+  int r3 = wh_native_launch("pshomeui:navigateToHome?titleId=NPXS40063");
+  wh_flog("assets", "hub reload (%s): rc=%d,%d,%d", why ? why : "?", r1, r2, r3);
+  g_reloading = 0;
+  return 0;
+}
+static int wh_reload_hub_async(const char* why){
+  time_t now = time(0);
+  if (g_reloading || (now - g_reload_last) < 4) return -1;
+  if (wh_shellui_resolve()) return -2;
+  if (wh_user_service()) {
+    uint32_t user = 0;
+    if (sceUserServiceGetForegroundUser(&user)) return -2;
+  }
+  g_reloading = 1;
+  g_reload_last = now;
+  pthread_attr_t attr; pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  pthread_t th;
+  int rc = pthread_create(&th, &attr, wh_reload_thread, (void*)why);
+  pthread_attr_destroy(&attr);
+  if (rc) { g_reloading = 0; wh_flog("assets", "hub reload pthread failed rc=%d", rc); return -3; }
+  return 0;
+}
+static void wh_reload_action(int c){
+  int rc = wh_reload_hub_async("manual");
+  if (rc == -1) { wh_reply_json(c, 429, "{\"ok\":false,\"error\":\"rate-limited\"}"); return; }
+  if (rc < 0) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"reload failed\"}"); return; }
   wh_reply_json(c, 200, "{\"ok\":true}");
 }
 /* GET /__notify?text=<url-encoded UTF-8> -> a system notification. Control characters
@@ -488,6 +532,7 @@ static void wh_asset_conn(int c){
   if (!strncmp(path, "__wget?", 7)) { wh_settings_get(c, path + 7); return; }
   if (!strncmp(path, "__wset?", 7)) { wh_settings_set(c, path + 7); return; }
   if (!strncmp(path, "__launch?", 9)) { wh_launch_action(c, path + 9); return; }
+  if (!strcmp(path, "__reload") || !strncmp(path, "__reload?", 9)) { wh_reload_action(c); return; }
   if (!strncmp(path, "__notify?", 9)) { wh_notify_action(c, path + 9); return; }
   if (!strcmp(path, "__stats") || !strncmp(path, "__stats?", 8)) { wh_stats_action(c); return; }
   if (!strcmp(path, "__backgrounds") || !strncmp(path, "__backgrounds?", 14)) { wh_backgrounds_list(c); return; }
@@ -552,11 +597,12 @@ int wh_asset_open(unsigned* gen, const char** why){
   LOG("assets: serving %s on 127.0.0.1:%d (gen %u)\n", WH_WIDGETS_DIR, WH_ASSET_PORT, my);
   return s;
 }
-void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br){
+void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, int auto_reload){
   signal(SIGPIPE, SIG_IGN);
   fflush(stdout); fflush(stderr);
   int dn = open("/dev/null", O_RDWR);        /* detach stdio so the loader connection ends */
   if (dn >= 0) { dup2(dn, 0); dup2(dn, 1); dup2(dn, 2); if (dn > 2) close(dn); }
+  if (auto_reload) wh_reload_hub_async("install");
   struct timeval tv = { 2, 0 };
   /* In-place widget refresh: sample the source fingerprint at ~1 Hz and rebuild
    * the prelude once a change has been identical for WH_STABLE_MS. Sampling is
@@ -585,7 +631,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br){
           wh_flog("assets", "widget sources stable for %us (sig %016llx); refreshing prelude in place",
                   (unsigned)(WH_STABLE_MS / 1000u), (unsigned long long)candidate);
           int rr = wh_refresh_in_place(shell, br);
-          if (rr == 0) { applied = candidate = wh_prelude_sig; attempts = 0; }
+          if (rr == 0) { applied = candidate = wh_prelude_sig; attempts = 0; wh_reload_hub_async("widget-refresh"); }
           else if (++attempts >= 3) {
             wh_flog("assets", "in-place refresh failed 3x (rc=%d); waiting for the next change", rr);
             applied = candidate = wh_prelude_sig; attempts = 0;

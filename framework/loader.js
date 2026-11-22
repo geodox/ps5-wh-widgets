@@ -221,6 +221,7 @@
       wh.KeyGuidePS = vendor.KeyGuidePS;
       wh.OptionsMenuPS = vendor.OptionsMenuPS;
       wh.MenuListItemPS = vendor.MenuListItemPS;
+      wh.SeparatorPS = vendor.SeparatorPS;
       wh.AlertDialogPS = vendor.AlertDialogPS;
       wh.TextInput = vendor.TextInput;
       wh.Picker = vendor.Picker; // Picker.Item elements for MenuListItemPS.Dropdown items
@@ -2599,10 +2600,83 @@
       return null;
     },
   };
+  function ReloadHubRow() {
+    var state = React.useState(false),
+      busy = state[0],
+      setBusy = state[1];
+    return createElement(wh.MenuListItemPS.Button, {
+      label: 'Reload Welcome Hub',
+      description: busy
+        ? 'Reloading Welcome Hub...'
+        : 'Reload custom widgets and backgrounds without signing out.',
+      disabled: busy,
+      onPress: function () {
+        if (busy) return;
+        setBusy(true);
+        try {
+          root.fetch('http://127.0.0.1:8098/__reload').catch(function () {});
+        } catch (e) {}
+        root.setTimeout(function () {
+          setBusy(false);
+        }, 5000);
+      },
+    });
+  }
+  function SettingsSeparator() {
+    if (wh.SeparatorPS) return createElement(wh.SeparatorPS, null);
+    return createElement(
+      wh.View,
+      {
+        style: {
+          height: 1,
+          backgroundColor: 'rgba(255,255,255,0.2)',
+          marginVertical: 8,
+        },
+      },
+      null
+    );
+  }
   wh.__hubSettingsRows = function () {
     var hubRequire = root.__whRequire,
-      id = (root.__wh_hubmods || {}).hubSettingsFollowedGames;
-    if (typeof hubRequire !== 'function' || !id || !wh.MenuListItemPS || !wh.Picker) {
+      mods = root.__wh_hubmods || {},
+      id = mods.hubSettingsFollowedGames,
+      scId = mods.hubSettingsShowcaseMode;
+    if (typeof hubRequire !== 'function' || (!id && !scId) || !wh.MenuListItemPS || !wh.Picker) {
+      logLine('settings rows unavailable on this firmware', 0, 1);
+      return;
+    }
+    var customRows = function () {
+      return [
+        createElement(ReloadHubRow, { key: 'whReload' }),
+        createElement(TelemetryRow, { key: 'whTelemetry' }),
+        createElement(WidgetDataRow, { key: 'whData' }),
+      ];
+    };
+    if (scId) {
+      try {
+        var scRow = hubRequire(scId),
+          ScStock = scRow && scRow['default'];
+        if (ScStock && !ScStock.__wh) {
+          var ScRows = function (props) {
+            return customRows().concat([
+              createElement(SettingsSeparator, { key: 'whSep' }),
+              createElement(ScStock, root.Object.assign({ key: 'stock' }, props)),
+            ]);
+          };
+          ScRows.__wh = 1;
+          scRow['default'] = ScRows;
+          if (scRow['default'] === ScRows) {
+            logLine('settings rows added above Showcase (Reload, Telemetry, Widget data)');
+            return;
+          }
+        } else if (ScStock && ScStock.__wh) {
+          return;
+        }
+      } catch (e) {
+        logLine('showcase row wrap skipped: ' + errorText(e), 0, 1);
+      }
+    }
+    if (!id) {
       logLine('settings rows unavailable on this firmware', 0, 1);
       return;
     }
@@ -2614,14 +2688,13 @@
       var Rows = function (props) {
         return [
           createElement(Stock, root.Object.assign({ key: 'stock' }, props)),
-          createElement(TelemetryRow, { key: 'whTelemetry' }),
-          createElement(WidgetDataRow, { key: 'whData' }),
-        ];
+          createElement(SettingsSeparator, { key: 'whSep' }),
+        ].concat(customRows());
       };
       Rows.__wh = 1;
       row['default'] = Rows;
       if (row['default'] !== Rows) throw new Error('row is read-only');
-      logLine('settings rows added (Telemetry, Widget data)');
+      logLine('settings rows added (Reload, Telemetry, Widget data)');
     } catch (e) {
       logLine('settings rows not added: ' + errorText(e), 0, 1);
     }

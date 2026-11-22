@@ -232,13 +232,16 @@ telemetry outside ShellUI's JavaScript is not affected. `wh.log`: `telemetry: of
 (N event(s) not sent so far)`.
 
 **Welcome Hub Settings rows.** The Settings screen builds its rows in a `useMemo`
-and reads each row module's `default` every time. The loader wraps the "Followed
-games" row (`hubSettingsFollowedGames`, the last row always shown) so it renders
-the stock row followed by *Telemetry* (a `MenuListItemPS.Dropdown`) and *Widget
-Data* (a `Button` that opens the loader's own page, `WhPage` with `__wh: '.data'`;
-a leading dot is never a widget id). The page lists the `wh:data:*` AsyncStorage
-keys of the signed-in user and deletes them on request. `wh.log`: `settings rows
-added (Telemetry, Widget data)`.
+and reads each row module's `default` every time. On firmwares with Showcase Mode
+(`hubSettingsShowcaseMode`), the loader wraps that top row to insert *Reload
+Welcome Hub* (triggers `GET /__reload`), *Telemetry* (a `MenuListItemPS.Dropdown`),
+*Widget Data* (a `Button` that opens `WhPage` with `__wh: '.data'`; a leading dot
+is never a widget id), and a native `SeparatorPS` directly above Showcase Mode. On
+older firmwares without Showcase Mode (`11.20` / `11.40`), it falls back to
+wrapping the "Followed games" row (`hubSettingsFollowedGames`) with a separator
+followed by the same three rows. The Widget Data page lists the `wh:data:*`
+AsyncStorage keys of the signed-in user and deletes them on request. `wh.log`:
+`settings rows added above Showcase (Reload, Telemetry, Widget data)`.
 
 **Focus while entered.** An entered tile keeps native focus the way the stock
 frame's `locked` mode does. Its arrow handlers return **false**: the RN-PS key
@@ -264,12 +267,11 @@ registers a `forwardRef` wrapper and passes that ref on to the stock frame. A ne
 widget revision removes our ids from the registry first (`__miniReset`). `wh.log`:
 `MINI row registered N widget(s) [...]`.
 
-Widgets are hot-reloaded: `server.c` watches the drop folder, rebuilds the prelude
-and swaps the hook in place, so a `config.json` / `widget.js` change lands without
-restarting the payload or the shell (see the runtime flow above). The new set is
-used by the next hub runtime, i.e. after signing out and back in. Changes to
-`loader.js` itself still need a payload reinstall. `config.json` settings are
-validated once and passed on `props.settings`.
+Widgets are hot-reloaded: `server.c` watches the drop folder, rebuilds the prelude,
+swaps the hook in place, and triggers a clean embedded Welcome Hub reload (no
+sign-out, no payload restart, no ShellUI restart). Changes to `loader.js` itself
+need a payload reinstall, which also reloads the Welcome Hub automatically.
+`config.json` settings are validated once and passed on `props.settings`.
 
 ## Asset and settings server
 
@@ -279,9 +281,21 @@ validated once and passed on `props.settings`.
   names validated by `wh_name_ok`.
 * `GET /__backgrounds` and `GET /__bg/<file>` - custom animated backgrounds from
   `/data/wh-backgrounds/`: lists `.mp4` files (with optional `.jpg`/`.png`
-  thumbnail/placeholder and optional `<name>.audio` marker to unmute) and serves
-  images (max 4 MB) and `.mp4` videos (with HTTP `Range` / `206 Partial Content`)
-  to Home UI's native `BackgroundVideo` player.
+  thumbnail/placeholder, falling back to `-placeholder` if `-thumbnail` is absent,
+  and optional `<name>.audio` marker to unmute) and serves images (max 4 MB) and
+  `.mp4` videos (with HTTP `Range` / `206 Partial Content`) to Home UI's native
+  `BackgroundVideo` player. The loader filters unreachable remote `https://` Sony
+  CDN entries from both **From PlayStation** (`psBackgrounds`) and **From Games**
+  (`gamesBackgrounds`, optional) and persists selected loopback backgrounds (and
+  their `.audio` / `muted` flag) across sign-out/sign-in in `AsyncStorage` under
+  `wh:customBg` by wrapping `bgStore`.
+* `GET /__reload` - cleanly reloads only the embedded Welcome Hub runtime without
+  killing `SceShellUI` or signing out (4 s cooldown, detached thread): launches
+  `pshomeui:navigateToHome?spaceId=media` → `700 ms` → `pscontrolcenter:main`
+  (pushes Home `AppState` to `'inactive'` so `useHubPooling` evicts the unfocused
+  hub) → `700 ms` → `pshomeui:navigateToHome?titleId=NPXS40063` (dismisses Control
+  Center and mounts a fresh embedded hub runtime). Also triggered automatically on
+  payload install and after `wh_refresh_in_place`.
 * settings get/set endpoints used by the prelude, persisted under
   `/data/wh-widgets/<id>/.settings.json`; `w=.hub` is the loader's own
   (Welcome Hub Settings rows), `/data/wh-widgets/.hub.json`.

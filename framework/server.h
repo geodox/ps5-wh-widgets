@@ -15,6 +15,6 @@ unsigned wh_gen_read(void);
 /* Serve until a newer install bumps the generation; never returns. Also watches
  * SceShellUI: if it respawns (losing our hook), reinstall before the next focus. */
 struct wh_bridge;
-void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge *br);
+void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge *br, int auto_reload);
 
 #endif

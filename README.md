@@ -115,9 +115,9 @@ It only reads from the console and writes `hub_fw<NNNN>_<hash>.hbc` on your PC. 
 
 ## 🔄 Applying Widget Changes
 
-Widget folders are watched while the payload is resident: a `config.json` or `widget.js` change is noticed within a second and, once it has been stable for five seconds, rebuilt into a fresh prelude and swapped into the running shell — no payload reload, no shell restart.
+Widget folders are watched while the payload is resident: a `config.json` or `widget.js` change is noticed within a second and, once it has been stable for five seconds, rebuilt into a fresh prelude, swapped into the running shell, and **automatically applied by reloading the embedded Welcome Hub** — no sign-out, no payload reload, no shell restart.
 
-The hub only evaluates that prelude when its JS runtime starts, so **sign out and back in** to see the change. Leaving the hub and coming back does not work; that runtime is kept.
+You can also trigger a reload manually anytime from **Welcome Hub Settings → Reload Welcome Hub**. Leaving the hub and coming back does not reload it on its own; that runtime is kept.
 
 > [!TIP]
 > `[widget:<id>] not loaded` means that widget threw while evaluating, or never called `wh.register` — the other widgets still load. A **syntax** error is different: it stops the whole prelude from compiling, so nothing loads. Run `whctl deploy` first; it checks every `widget.js` with `node --check` and skips the broken ones with the exact error.

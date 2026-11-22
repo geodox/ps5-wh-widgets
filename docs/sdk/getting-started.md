@@ -73,14 +73,13 @@ ones - one syntax error stops the whole widget prelude from compiling.
 
 Widget sources are watched while the payload is resident: `config.json` and
 `widget.js` are hashed about once a second, and a change that stays stable for
-five seconds is spliced into a fresh prelude and swapped into the running shell -
-no payload reload, no ShellUI restart.
+five seconds is spliced into a fresh prelude, swapped into the running shell, and
+picked up automatically via a clean embedded Welcome Hub reload - no sign-out, no
+payload reload, no ShellUI restart. You can also trigger a reload manually from
+**Welcome Hub Settings → Reload Welcome Hub**.
 
-The hub picks that prelude up in a new JS runtime: **sign out and back in**. Leaving
-the hub and coming back does not work - that runtime is kept.
-
-The first install of the payload, and a change to `framework/loader.js` itself, use
-the same route: send the ELF (no `--race`), then sign out and back in.
+The first install of the payload, and a change to `framework/loader.js` itself,
+automatically reload the Welcome Hub as well (no `--race`, no sign-out):
 
 ```
 python scripts/whctl.py --host <console-ip> install out/wh_bridge.elf

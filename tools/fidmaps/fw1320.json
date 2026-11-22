@@ -236,6 +236,15 @@
       "evidence": "unique normalized match (103 insns); all numbers identical; anchors msgid_followed_games, msgid_follow_new_games, Follow"
     },
     {
+      "name": "hubSettingsShowcaseMode",
+      "id_1320": 2127,
+      "fid_1320": 22009,
+      "id": 2127,
+      "fid": 22009,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (103 insns); all numbers identical; anchors msgid_showcase_mode_beta, ScreenSaverSettings"
+    },
+    {
       "name": "editMenu",
       "id_1320": 1937,
       "fid_1320": 20041,

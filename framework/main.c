@@ -64,7 +64,7 @@ int main(void){
   if (as >= 0) {
     if (plain) notify("%s  v%s%s\nAsset server: running", hook, WH_VERSION, wsum);
     else notify("%s (rc=%d)  v%s\nAsset server: running", hook, rc, WH_VERSION);
-    wh_asset_loop(as, gen, pid, br);   /* does not return */
+    wh_asset_loop(as, gen, pid, br, rc == WH_OK);   /* does not return */
   }
   if (plain) notify("%s  v%s%s\nAsset server: not running (%s)", hook, WH_VERSION, wsum, why);
   else notify("%s (rc=%d)  v%s\nAsset server: not running (%s)", hook, rc, WH_VERSION, why);

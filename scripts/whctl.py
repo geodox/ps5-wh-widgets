@@ -12,17 +12,16 @@ Subcommands:
   install <elf> [--race]        send ELF to elfldr -> verify hooked. The payload
                                 replaces its own previous hook in place (reusing
                                 the bridge already in ShellUI), so no restore is
-                                needed. The hook is live immediately; the hub runs
-                                the prelude in a new runtime, so sign out and back
-                                in to load the new build. Leaving and re-entering
-                                the hub keeps the runtime.
+                                needed, and automatically reloads the embedded
+                                Welcome Hub so the new build loads immediately
+                                without signing out.
                                 --race: optional. SIGKILL ShellUI and install on
                                 the respawn, as a recovery hatch for a wedged
                                 shell.
   reload                        SIGKILL SceShellUI (out/wh_kill.elf) and wait for
                                 the respawn. Recovery hatch only (wedged shell or
-                                stuck hub); widget and payload changes are applied
-                                by signing out and back in.
+                                stuck hub); normal widget and payload changes
+                                reload the Welcome Hub automatically.
   send <elf>                    Just stream an ELF to elfldr (no restore/verify).
   deploy [local_dir] [--only ID..] [--force]
                                 Mirror a sample-widgets tree to /data/wh-widgets
@@ -181,7 +180,7 @@ def cmd_install(a):
             print(" ", ln)
     print("== verify hooked ==")
     hooked = cmd_check(a) == 1
-    print("installed: sign out and back in to load it (no ShellUI restart needed)" if hooked else "NOT hooked - see output above")
+    print("installed: Welcome Hub reloads automatically (no sign-out or ShellUI restart needed)" if hooked else "NOT hooked - see output above")
     return 0 if hooked else 1
 
 

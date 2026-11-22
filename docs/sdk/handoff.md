@@ -189,8 +189,10 @@ You cannot see the console screen. The user can; the log is yours.
    `python scripts/whctl.py --host <console-ip> deploy <parent folder> --only <id>`
    (or FTP to `/data/wh-widgets/<id>/`). The payload picks the change up about six
    seconds after it settles.
-3. Ask the user to **sign out and back in**: only a new hub runtime loads new
-   widget code. Leaving the hub and coming back does not.
+3. Wait ~6–8 seconds for the payload to rebuild the prelude and **automatically
+   reload the embedded Welcome Hub** (no sign-out needed). If needed, the user can
+   also press **Welcome Hub Settings → Reload Welcome Hub** (or sign out and back
+   in as a fallback).
 4. Ask the user to add the widget from **Edit Widgets** the first time (custom
    widgets are in the **Custom Widgets** list: press L2 / R2 there).
 5. Read the log: `python scripts/whctl.py --host <console-ip> log`, or

@@ -236,6 +236,15 @@
       "evidence": "unique normalized match (103 insns); numbers moved: LoadConstUInt8@376 arg1 58->99; anchors msgid_followed_games, msgid_follow_new_games, Follow"
     },
     {
+      "name": "hubSettingsShowcaseMode",
+      "id_1320": 2127,
+      "fid_1320": 22009,
+      "id": null,
+      "fid": 20424,
+      "confidence": 0.5,
+      "evidence": "aligned match sim=0.990 (runner-up F20443 0.990); +1/-1 insns [+ CreateClosure r3 r3 F:d679687c9607bf15 | - CreateClosure r3 r3 F:827a423c640c2911]; REJECTED: margin < 0.05; anchor fallback: 0 modules have every anchor"
+    },
+    {
       "name": "editMenu",
       "id_1320": 1937,
       "fid_1320": 20041,
