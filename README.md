@@ -64,6 +64,19 @@ Once the payload is installed and running, place each unpacked widget in its own
 
 The folder name should match its widget id. Changes are picked up while the payload is running; see [Applying widget changes](#applying-widget-changes). See the [SDK getting-started guide](docs/sdk/getting-started.md) for deployment and troubleshooting.
 
+### Custom Animated Backgrounds
+
+Drop `.mp4` videos into `/data/wh-backgrounds/` on the console to add them to the Welcome Hub's native **Change Background → From PlayStation** picker:
+
+```text
+/data/wh-backgrounds/
+  my-loop.mp4                 # required — H.264/MP4 video
+  my-loop.jpg                 # optional — thumbnail & placeholder (.jpg/.png; or -thumbnail.jpg / -placeholder.jpg)
+  my-loop.audio               # optional — empty file to unmute the video's audio (muted by default)
+```
+
+Custom backgrounds appear at the start of the **From PlayStation** list and are served over loopback by the resident payload. Selecting one persists through the console's own background settings.
+
 ## Testing And Current Status
 
 The payload and loader have been run on-console: the hook installs into SceShellUI, both sample widgets render inside the native hub frame, settings persist, and a widget source change is rebuilt and swapped in place without restarting the shell.

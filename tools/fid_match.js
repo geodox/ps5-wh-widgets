@@ -315,6 +315,10 @@ const MODULES = [
   // reads `.jsx` from it at call time. The loader wraps it to correct the Edit Widgets
   // rows' `enabled` flag (the "keep 3 widgets" rule) when the list shows one part.
   { name: 'jsxRuntime', id_1320: 3, need: ['DkKR87qr'] },
+  // PlayStation backgrounds catalog ("From PlayStation" tab in Change Background):
+  // `default()` returns a Promise of background items ({id, image, thumbnail, video}).
+  // The loader wraps it to prepend custom .mp4 backgrounds from /data/wh-backgrounds/.
+  { name: 'psBackgrounds', id_1320: 298, need: ['NUMBER_OF_ANIMATED_BACKGROUNDS', 'NUMBER_OF_STATIC_BACKGROUNDS', 'ps-animated-'] },
 ];
 
 // Every string operand in fid and the closures it creates.

@@ -252,6 +252,15 @@
       "fid": 17,
       "confidence": 0.99,
       "evidence": "unique normalized match (9 insns); all numbers identical; anchors DkKR87qr"
+    },
+    {
+      "name": "psBackgrounds",
+      "id_1320": 298,
+      "fid_1320": 2952,
+      "id": 298,
+      "fid": 2952,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (32 insns); all numbers identical; anchors NUMBER_OF_ANIMATED_BACKGROUNDS, NUMBER_OF_STATIC_BACKGROUNDS, ps-animated-"
     }
   ]
 }

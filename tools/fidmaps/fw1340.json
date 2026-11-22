@@ -252,6 +252,15 @@
       "fid": 17,
       "confidence": 0.99,
       "evidence": "unique normalized match (9 insns); numbers moved: LoadConstUInt8@5 arg1 82->88; anchors DkKR87qr"
+    },
+    {
+      "name": "psBackgrounds",
+      "id_1320": 298,
+      "fid_1320": 2952,
+      "id": 338,
+      "fid": 4845,
+      "confidence": 0.969,
+      "evidence": "aligned match sim=0.969 (runner-up F4874 0.543); +1/-1 insns [+ CreateClosure r0 r4 F:5f55a387bdd20bdf | - CreateClosure r0 r4 F:1cbb57e864c2bb6c]; anchors NUMBER_OF_ANIMATED_BACKGROUNDS, NUMBER_OF_STATIC_BACKGROUNDS, ps-animated-"
     }
   ]
 }

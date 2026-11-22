@@ -13,6 +13,7 @@
  * app launch (/__launch), widget notifications (/__notify), console stats (/__stats) and keeps the hook alive: if ShellUI respawns,
  * it reinstalls before the next focus, it rebuilds the prelude when the widget
  * sources change, and it retires when a newer install bumps the generation file. */
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -51,6 +52,8 @@ int sceKernelIccIsThermalAlert(int*);
 
 #define WH_ASSET_PORT 8098
 #define WH_ASSET_MAX  (1024*1024)
+#define WH_BG_DIR     "/data/wh-backgrounds"
+#define WH_BG_IMG_MAX (4*1024*1024)
 #define WH_GEN_FILE   WH_WIDGETS_DIR "/.wh_gen"
 #define WH_SAMPLE_MS  1000u        /* widget fingerprint sampling period */
 #define WH_STABLE_MS  5000u        /* how long a change must hold before rebuilding */
@@ -353,17 +356,129 @@ static void wh_settings_set(int c, char* q){
   }
   wh_reply(c, "204 No Content");
 }
+/* GET /__backgrounds -> JSON array of custom animated (.mp4) backgrounds in WH_BG_DIR. */
+static void wh_bg_img_pick(const char* stem, const char* suffix, char* out, size_t cap){
+  static const char* const exts[] = { ".jpg", ".jpeg", ".png" };
+  char fp[256]; struct stat st;
+  for (size_t i = 0; i < sizeof exts / sizeof exts[0]; i++) {
+    snprintf(fp, sizeof fp, "%s/%s%s%s", WH_BG_DIR, stem, suffix, exts[i]);
+    if (!lstat(fp, &st) && S_ISREG(st.st_mode) && st.st_size > 0 && st.st_size <= WH_BG_IMG_MAX) {
+      snprintf(out, cap, "http://127.0.0.1:%d/__bg/%s%s%s", WH_ASSET_PORT, stem, suffix, exts[i]);
+      return;
+    }
+  }
+  out[0] = 0;
+}
+static void wh_backgrounds_list(int c){
+  char body[8192]; size_t blen = 0;
+  body[blen++] = '[';
+  DIR* d = opendir(WH_BG_DIR);
+  if (d) {
+    struct dirent* e; int count = 0;
+    while ((e = readdir(d)) != 0 && count < 32) {
+      const char* n = e->d_name;
+      size_t nl = strlen(n);
+      if (nl < 5 || nl > 64 || strcasecmp(n + nl - 4, ".mp4")) continue;
+      if (!wh_name_ok(n, nl)) continue;
+      char fp[256]; struct stat st;
+      snprintf(fp, sizeof fp, "%s/%s", WH_BG_DIR, n);
+      if (lstat(fp, &st) || !S_ISREG(st.st_mode) || st.st_size <= 0) continue;
+      char stem[68]; size_t sl = nl - 4;
+      memcpy(stem, n, sl); stem[sl] = 0;
+      char thumb[192], ph[192];
+      wh_bg_img_pick(stem, "-thumbnail", thumb, sizeof thumb);
+      if (!thumb[0]) wh_bg_img_pick(stem, "", thumb, sizeof thumb);
+      wh_bg_img_pick(stem, "-placeholder", ph, sizeof ph);
+      if (!ph[0]) snprintf(ph, sizeof ph, "%s", thumb);
+      snprintf(fp, sizeof fp, "%s/%s.audio", WH_BG_DIR, stem);
+      int audio = (!lstat(fp, &st) && S_ISREG(st.st_mode));
+      char row[640];
+      int rl = snprintf(row, sizeof row,
+        "%s{\"id\":\"%s\",\"video\":\"http://127.0.0.1:%d/__bg/%s\",\"thumb\":\"%s\",\"placeholder\":\"%s\",\"audio\":%s}",
+        count ? "," : "", stem, WH_ASSET_PORT, n, thumb, ph, audio ? "true" : "false");
+      if (rl <= 0 || blen + (size_t)rl + 2 >= sizeof body) break;
+      memcpy(body + blen, row, (size_t)rl); blen += (size_t)rl; count++;
+    }
+    closedir(d);
+  }
+  body[blen++] = ']'; body[blen] = 0;
+  char h[200]; int hn = snprintf(h, sizeof h,
+    "HTTP/1.0 200 OK\r\nContent-Type: application/json\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n", blen);
+  wh_send_all(c, h, (size_t)hn); wh_send_all(c, body, blen);
+}
+/* GET /__bg/<file> -> serve custom background image or .mp4 (with HTTP Range) from WH_BG_DIR. */
+static void wh_bg_asset(int c, char* name, const char* range_hdr){
+  char* q = strchr(name, '?'); if (q) *q = 0;
+  size_t fl = strlen(name);
+  if (!wh_name_ok(name, fl) || strchr(name, '/')) { wh_reply(c, "404 Not Found"); return; }
+  int is_mp4 = (fl >= 5 && !strcasecmp(name + fl - 4, ".mp4"));
+  const char* type = is_mp4 ? "video/mp4" : wh_img_type(name);
+  if (!type) { wh_reply(c, "404 Not Found"); return; }
+  char fp[256]; snprintf(fp, sizeof fp, "%s/%s", WH_BG_DIR, name);
+  int fd = open(fp, O_RDONLY | O_NOFOLLOW);
+  if (fd < 0) { wh_flog("assets", "bg 404 %s", name); wh_reply(c, "404 Not Found"); return; }
+  struct stat st;
+  if (fstat(fd, &st) || !S_ISREG(st.st_mode) || st.st_size <= 0 || (!is_mp4 && st.st_size > WH_BG_IMG_MAX)) {
+    close(fd); wh_reply(c, "404 Not Found"); return;
+  }
+  long total = (long)st.st_size, start = 0, end = total - 1;
+  int partial = 0;
+  if (range_hdr && !strncmp(range_hdr, "bytes=", 6)) {
+    const char* r = range_hdr + 6;
+    char* dash = strchr(r, '-');
+    if (dash) {
+      start = strtol(r, 0, 10);
+      if (dash[1] >= '0' && dash[1] <= '9') end = strtol(dash + 1, 0, 10);
+      if (start < 0) start = 0;
+      if (end >= total) end = total - 1;
+      if (start <= end) partial = 1;
+    }
+  }
+  long clen = end - start + 1;
+  char h[256]; int hn;
+  if (partial) {
+    hn = snprintf(h, sizeof h,
+      "HTTP/1.1 206 Partial Content\r\nContent-Type: %s\r\nAccept-Ranges: bytes\r\nContent-Range: bytes %ld-%ld/%ld\r\nContent-Length: %ld\r\nConnection: close\r\n\r\n",
+      type, start, end, total, clen);
+    lseek(fd, start, SEEK_SET);
+  } else {
+    hn = snprintf(h, sizeof h,
+      "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nAccept-Ranges: bytes\r\nContent-Length: %ld\r\nCache-Control: max-age=60\r\nConnection: close\r\n\r\n",
+      type, total);
+  }
+  if (is_mp4) wh_flog("assets", "bg %s %s %ld-%ld/%ld", partial ? "206" : "200", name, start, end, total);
+  wh_send_all(c, h, (size_t)hn);
+  char buf[16384]; long rem = clen;
+  while (rem > 0) {
+    ssize_t r = read(fd, buf, rem > (long)sizeof buf ? sizeof buf : (size_t)rem);
+    if (r <= 0) break;
+    wh_send_all(c, buf, (size_t)r);
+    rem -= (long)r;
+  }
+  close(fd);
+}
 static void wh_asset_conn(int c){
-  char req[1024]; size_t got = 0;
+  char req[2048]; size_t got = 0;
   while (got < sizeof req - 1){
     ssize_t r = read(c, req + got, sizeof req - 1 - got);
     if (r <= 0) break;
     got += (size_t)r; req[got] = 0;
-    if (strstr(req, "\r\n")) break;          /* only the request line matters */
+    if (strstr(req, "\r\n\r\n")) break;
   }
   req[got] = 0;
   char* eol = strstr(req, "\r\n");
   if (!eol) { wh_reply(c, "400 Bad Request"); return; }
+  char range[64] = "";
+  for (char* p = eol + 2; p && *p; ) {
+    char* nl = strstr(p, "\r\n");
+    if (!nl || nl == p) break;
+    if (!strncasecmp(p, "Range:", 6)) {
+      char* v = p + 6; while (v < nl && (*v == ' ' || *v == '\t')) v++;
+      size_t rl = (size_t)(nl - v); if (rl >= sizeof range) rl = sizeof range - 1;
+      memcpy(range, v, rl); range[rl] = 0;
+    }
+    p = nl + 2;
+  }
   *eol = 0;
   if (strncmp(req, "GET /", 5)) { wh_reply(c, "405 Method Not Allowed"); return; }
   char* path = req + 5;                      /* after "GET /" */
@@ -374,6 +489,8 @@ static void wh_asset_conn(int c){
   if (!strncmp(path, "__launch?", 9)) { wh_launch_action(c, path + 9); return; }
   if (!strncmp(path, "__notify?", 9)) { wh_notify_action(c, path + 9); return; }
   if (!strcmp(path, "__stats") || !strncmp(path, "__stats?", 8)) { wh_stats_action(c); return; }
+  if (!strcmp(path, "__backgrounds") || !strncmp(path, "__backgrounds?", 14)) { wh_backgrounds_list(c); return; }
+  if (!strncmp(path, "__bg/", 5)) { wh_bg_asset(c, path + 5, range[0] ? range : 0); return; }
   char shown[100]; snprintf(shown, sizeof shown, "%s", path);   /* for refused-request log lines */
   char* q = strchr(path, '?');  if (q) *q = 0;
   char* sl = strchr(path, '/');

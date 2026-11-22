@@ -3279,6 +3279,59 @@
       }
     }
   };
+  // Custom animated (.mp4) backgrounds from /data/wh-backgrounds/ in the stock
+  // Change Background -> From PlayStation picker.
+  wh.__customBackgrounds = function () {
+    var hubRequire = root.__whRequire,
+      mods = root.__wh_hubmods || {};
+    if (typeof hubRequire !== 'function' || !mods.psBackgrounds) return;
+    try {
+      var bgMod = hubRequire(mods.psBackgrounds);
+      if (!bgMod || typeof bgMod['default'] !== 'function' || bgMod['default'].__wh) return;
+      var orig = bgMod['default'];
+      var wrapped = function () {
+        var stockP = root.Promise.resolve(orig.apply(this, arguments));
+        var customP =
+          typeof root.fetch === 'function'
+            ? root
+                .fetch('http://127.0.0.1:8098/__backgrounds')
+                .then(function (r) {
+                  return r && r.ok ? r.json() : [];
+                })
+                .catch(function () {
+                  return [];
+                })
+            : root.Promise.resolve([]);
+        return root.Promise.all([customP, stockP]).then(function (pair) {
+          var custom = root.Array.isArray(pair[0]) ? pair[0] : [];
+          var stock = root.Array.isArray(pair[1]) ? pair[1] : [];
+          if (!custom.length) return stock;
+          var defThumb = '/system/vsh_asset/welcome-hub-animated-background-0-thumbnail.jpg';
+          var defPh = '/system/vsh_asset/welcome-hub-animated-background-0-placeholder.jpg';
+          var out = [];
+          for (var i = 0; i < custom.length; i++) {
+            var b = custom[i];
+            if (!b || !b.id || !b.video) continue;
+            out.push({
+              id: 'wh-bg-' + b.id,
+              image: { uri: b.placeholder || defPh },
+              thumbnail: { uri: b.thumb || defThumb },
+              video: { src: b.video, basemat: 'linear', muted: !b.audio },
+              date: '2026-01-01T00:00:00.000Z',
+              seen: true,
+            });
+          }
+          if (out.length) logLine('backgrounds: added ' + out.length + ' custom animated background(s)');
+          return out.concat(stock);
+        });
+      };
+      wrapped.__wh = 1;
+      bgMod['default'] = wrapped;
+      logLine('custom animated backgrounds hook on (/data/wh-backgrounds)');
+    } catch (e) {
+      logLine('custom animated backgrounds hook failed: ' + errorText(e), 0, 1);
+    }
+  };
   // Turn the bridge's hand-off global into an accessor. A value assigned before the
   // loader ran is re-assigned through the new setter.
   wh.__install = function () {
@@ -3326,6 +3379,7 @@
             root.setTimeout(function () {
               wh.__hubSettingsRows();
               wh.__editLists();
+              wh.__customBackgrounds();
             }, 0);
           }
         },

@@ -112,7 +112,9 @@ A module the matcher could not resolve is left out:
 - without the telemetry module, ids are not filtered (`wh.log` says so);
 - without `editMenu`, Edit Widgets shows one list with the custom widgets last;
   without `jsxRuntime`, each of the two lists counts only its own widgets toward
-  the hub's minimum (`wh.log` says so).
+  the hub's minimum (`wh.log` says so);
+- without `psBackgrounds`, custom animated backgrounds in `/data/wh-backgrounds/`
+  are not added to Change Background.
 
 **Stock frame.** Each tile renders inside the hub's own widget frame, with the
 loader's tile as the frame's `Template`. The frame always draws the stock mat
@@ -275,6 +277,11 @@ validated once and passed on `props.settings`.
 
 * `GET /` and `GET /<widget>/<file>` - widget images, `.png`/`.jpg`, max 1 MB,
   names validated by `wh_name_ok`.
+* `GET /__backgrounds` and `GET /__bg/<file>` - custom animated backgrounds from
+  `/data/wh-backgrounds/`: lists `.mp4` files (with optional `.jpg`/`.png`
+  thumbnail/placeholder and optional `<name>.audio` marker to unmute) and serves
+  images (max 4 MB) and `.mp4` videos (with HTTP `Range` / `206 Partial Content`)
+  to Home UI's native `BackgroundVideo` player.
 * settings get/set endpoints used by the prelude, persisted under
   `/data/wh-widgets/<id>/.settings.json`; `w=.hub` is the loader's own
   (Welcome Hub Settings rows), `/data/wh-widgets/.hub.json`.
