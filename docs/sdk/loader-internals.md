@@ -310,7 +310,10 @@ need a payload reinstall, which also reloads the Welcome Hub automatically.
   `cpuTemp` and `socTemp` in °C (`sceKernelGetCpuTemperature`,
   `sceKernelGetSocSensorTemperature(0)`), `fan` in percent
   (`sceKernelGetCurrentFanDuty(u16 *duty, u64 *chassis)`, duty out of 1024),
-  `thermalAlert` 0 / 1 (`sceKernelIccIsThermalAlert`), `uptime` in seconds, and
+  `thermalAlert` 0 / 1 (`sceKernelIccIsThermalAlert`), SoC power in milliwatts
+  (`gfxPowerMw`, `cpuPowerMw`, `socPowerMw` via `sceKernelGetSocPowerConsumption`
+  on `/dev/mp1`), clocks in MHz (`gfxClockMhz` via `sceKernelGetSocClock`,
+  `cpuClockMhz` via `sceKernelGetCpuFrequency`), `uptime` in seconds, and
   `storage`: one `{name, total, free}` (bytes) per mounted drive (`internal` =
   `/user`, `m2`, `extended`, `usb0`..`usb3`). A reading the console refuses is
   `null`. Memory is not reported: the FreeBSD memory sysctls do not exist for the

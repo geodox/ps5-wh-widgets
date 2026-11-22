@@ -50,6 +50,9 @@ int sceKernelGetCpuTemperature(int*);
 int sceKernelGetSocSensorTemperature(int, int*);
 int sceKernelGetCurrentFanDuty(uint16_t*, uint64_t*);
 int sceKernelIccIsThermalAlert(int*);
+int sceKernelGetSocPowerConsumption(void*);
+int sceKernelGetSocClock(void*);
+uint64_t sceKernelGetCpuFrequency(void);
 
 #define WH_ASSET_PORT 8098
 #define WH_ASSET_MAX  (1024*1024)
@@ -275,7 +278,7 @@ static void wh_json_int(char* b, size_t cap, size_t* o, const char* key, int ok,
 }
 static void wh_stats_action(int c){
   static int logged = 0;
-  char b[1024]; size_t o = 0;
+  char b[1536]; size_t o = 0;
   int t[16];                                   /* oversized: one int is expected */
   b[o++] = '{';
   memset(t, 0, sizeof t); int ok = sceKernelGetCpuTemperature(t) == 0;
@@ -288,6 +291,19 @@ static void wh_stats_action(int c){
   int alert = 0;
   ok = sceKernelIccIsThermalAlert(&alert) == 0;
   wh_json_int(b, sizeof b, &o, "thermalAlert", ok, alert ? 1 : 0);
+  uint32_t sp[28];                             /* 112B SocPower: +0x00 gfx_mW, +0x0c cpu_mW */
+  memset(sp, 0, sizeof sp);
+  ok = sceKernelGetSocPowerConsumption(sp) == 0;
+  wh_json_int(b, sizeof b, &o, "gfxPowerMw", ok, sp[0]);
+  wh_json_int(b, sizeof b, &o, "cpuPowerMw", ok, sp[3]);
+  wh_json_int(b, sizeof b, &o, "socPowerMw", ok, (long long)sp[0] + (long long)sp[3]);
+  uint32_t clk[26];                            /* 0x68B SocClock: +0x50 (clk[20]) GFX MHz */
+  memset(clk, 0, sizeof clk);
+  ok = sceKernelGetSocClock(clk) == 0 && clk[20] > 0;
+  wh_json_int(b, sizeof b, &o, "gfxClockMhz", ok, clk[20]);
+  uint64_t cpuHz = sceKernelGetCpuFrequency();
+  ok = cpuHz > 0;
+  wh_json_int(b, sizeof b, &o, "cpuClockMhz", ok, ok ? (long long)(cpuHz / 1000000ULL) : 0);
   struct timespec up;
   ok = clock_gettime(CLOCK_UPTIME, &up) == 0;
   wh_json_int(b, sizeof b, &o, "uptime", ok, ok ? (long long)up.tv_sec : 0);
