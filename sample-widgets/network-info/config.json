@@ -1,0 +1,31 @@
+{
+  "id": "network-info",
+  "title": "Network Info",
+  "description": "Local IP, Wi-Fi signal, band, channel and link status — completely offline.",
+  "iconId": "wifi",
+  "size": 1,
+  "settings": [
+    {
+      "id": "refresh",
+      "title": "Refresh every",
+      "type": "choice",
+      "options": [
+        { "value": "2", "label": "2 seconds" },
+        { "value": "5", "label": "5 seconds" },
+        { "value": "10", "label": "10 seconds" },
+        { "value": "30", "label": "30 seconds" }
+      ],
+      "default": "5"
+    },
+    {
+      "id": "showSsid",
+      "title": "Wi-Fi network name (SSID)",
+      "type": "choice",
+      "options": [
+        { "value": "on", "label": "Show" },
+        { "value": "off", "label": "Hide" }
+      ],
+      "default": "on"
+    }
+  ]
+}
