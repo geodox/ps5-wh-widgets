@@ -390,6 +390,7 @@ static void wh_backgrounds_list(int c){
       if (!thumb[0]) wh_bg_img_pick(stem, "", thumb, sizeof thumb);
       wh_bg_img_pick(stem, "-placeholder", ph, sizeof ph);
       if (!ph[0]) snprintf(ph, sizeof ph, "%s", thumb);
+      if (!thumb[0]) snprintf(thumb, sizeof thumb, "%s", ph);
       snprintf(fp, sizeof fp, "%s/%s.audio", WH_BG_DIR, stem);
       int audio = (!lstat(fp, &st) && S_ISREG(st.st_mode));
       char row[640];

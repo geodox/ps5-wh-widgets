@@ -3279,57 +3279,178 @@
       }
     }
   };
+  // Persist custom animated backgrounds in AsyncStorage ('wh:customBg') so they
+  // survive sign-out/sign-in and preserve their .audio (muted: false) flag.
+  var WH_BG_KEY = 'wh:customBg';
+  wh.__bgPersist = function () {
+    var hubRequire = root.__whRequire,
+      mods = root.__wh_hubmods || {},
+      storage = vendor && vendor.AsyncStorage;
+    if (typeof hubRequire !== 'function' || !mods.bgStore || !storage) return;
+    try {
+      var st = hubRequire(mods.bgStore);
+      if (!st || typeof st.fetch !== 'function' || st.fetch.__wh) return;
+      var origFetch = st.fetch,
+        origSave = st.save,
+        origClear = st.clear;
+      var isOurs = function (u) {
+        return typeof u === 'string' && u.indexOf('http://127.0.0.1:8098/__bg/') === 0;
+      };
+      var wrappedFetch = function () {
+        var self = this,
+          args = arguments;
+        return root.Promise.resolve(storage.getItem(WH_BG_KEY))
+          .then(function (raw) {
+            if (raw) {
+              try {
+                var d = root.JSON.parse(raw);
+                if (d && d.videoUri && isOurs(d.videoUri)) {
+                  var res = {
+                    image: { uri: d.uri || '/system/vsh_asset/welcome-hub-animated-background-0-placeholder.jpg', basemat: d.basemat || 'EllipseNarrow' },
+                    video: { src: d.videoUri, basemat: d.videoBaseMat || 'linear' },
+                  };
+                  if (d.muted === false) res.video.muted = false;
+                  logLine('backgrounds: restored saved custom background ' + d.videoUri);
+                  return res;
+                }
+              } catch (e) {}
+            }
+            return origFetch.apply(self, args);
+          })
+          .catch(function () {
+            return origFetch.apply(self, args);
+          });
+      };
+      wrappedFetch.__wh = 1;
+      st.fetch = wrappedFetch;
+      if (st['default'] === origFetch) st['default'] = wrappedFetch;
+      if (typeof origSave === 'function') {
+        st.save = function (uri, bg) {
+          var vsrc = bg && bg.video && bg.video.src;
+          try {
+            if (isOurs(vsrc) || isOurs(uri)) {
+              var rec = {
+                uri: uri || (bg && bg.image && bg.image.uri) || '',
+                basemat: (bg && bg.image && bg.image.basemat) || 'EllipseNarrow',
+                videoUri: vsrc || '',
+                videoBaseMat: (bg && bg.video && bg.video.basemat) || 'linear',
+                muted: bg && bg.video && bg.video.muted === false ? false : true,
+              };
+              root.Promise.resolve(storage.setItem(WH_BG_KEY, root.JSON.stringify(rec))).catch(function () {});
+              logLine('backgrounds: saved custom background ' + (vsrc || uri));
+              return;
+            }
+            root.Promise.resolve(storage.removeItem(WH_BG_KEY)).catch(function () {});
+          } catch (e) {}
+          return origSave.apply(this, arguments);
+        };
+      }
+      if (typeof origClear === 'function') {
+        st.clear = function () {
+          try {
+            root.Promise.resolve(storage.removeItem(WH_BG_KEY)).catch(function () {});
+          } catch (e) {}
+          return origClear.apply(this, arguments);
+        };
+      }
+      logLine('custom background persistence on');
+    } catch (e) {
+      logLine('custom background persistence failed: ' + errorText(e), 0, 1);
+    }
+  };
   // Custom animated (.mp4) backgrounds from /data/wh-backgrounds/ in the stock
-  // Change Background -> From PlayStation picker.
+  // Change Background -> From PlayStation picker, and filtering out unreachable
+  // remote Sony CDN backgrounds (welcome-hub-assets.dl.playstation.net) from both
+  // From PlayStation and From Games on offline consoles.
+  wh.__isRemoteBg = function (item) {
+    if (!item || typeof item !== 'object') return false;
+    var u =
+      (item.video && item.video.src) ||
+      (item.thumbnail && item.thumbnail.uri) ||
+      (item.image && item.image.uri) ||
+      '';
+    return typeof u === 'string' && u.indexOf('https://') === 0;
+  };
+  wh.__filterLocalBgs = function (list, label) {
+    if (!root.Array.isArray(list)) return [];
+    var kept = [],
+      dropped = 0;
+    for (var i = 0; i < list.length; i++) {
+      if (wh.__isRemoteBg(list[i])) dropped++;
+      else kept.push(list[i]);
+    }
+    if (dropped) logLine('backgrounds: hid ' + dropped + ' unreachable remote ' + label + ' background(s)');
+    return kept;
+  };
   wh.__customBackgrounds = function () {
     var hubRequire = root.__whRequire,
       mods = root.__wh_hubmods || {};
-    if (typeof hubRequire !== 'function' || !mods.psBackgrounds) return;
-    try {
-      var bgMod = hubRequire(mods.psBackgrounds);
-      if (!bgMod || typeof bgMod['default'] !== 'function' || bgMod['default'].__wh) return;
-      var orig = bgMod['default'];
-      var wrapped = function () {
-        var stockP = root.Promise.resolve(orig.apply(this, arguments));
-        var customP =
-          typeof root.fetch === 'function'
-            ? root
-                .fetch('http://127.0.0.1:8098/__backgrounds')
-                .then(function (r) {
-                  return r && r.ok ? r.json() : [];
-                })
-                .catch(function () {
-                  return [];
-                })
-            : root.Promise.resolve([]);
-        return root.Promise.all([customP, stockP]).then(function (pair) {
-          var custom = root.Array.isArray(pair[0]) ? pair[0] : [];
-          var stock = root.Array.isArray(pair[1]) ? pair[1] : [];
-          if (!custom.length) return stock;
-          var defThumb = '/system/vsh_asset/welcome-hub-animated-background-0-thumbnail.jpg';
-          var defPh = '/system/vsh_asset/welcome-hub-animated-background-0-placeholder.jpg';
-          var out = [];
-          for (var i = 0; i < custom.length; i++) {
-            var b = custom[i];
-            if (!b || !b.id || !b.video) continue;
-            out.push({
-              id: 'wh-bg-' + b.id,
-              image: { uri: b.placeholder || defPh },
-              thumbnail: { uri: b.thumb || defThumb },
-              video: { src: b.video, basemat: 'linear', muted: !b.audio },
-              date: '2026-01-01T00:00:00.000Z',
-              seen: true,
+    if (typeof hubRequire !== 'function') return;
+    if (mods.psBackgrounds) {
+      try {
+        var bgMod = hubRequire(mods.psBackgrounds);
+        if (bgMod && typeof bgMod['default'] === 'function' && !bgMod['default'].__wh) {
+          var orig = bgMod['default'];
+          var wrapped = function () {
+            var stockP = root.Promise.resolve(orig.apply(this, arguments));
+            var customP =
+              typeof root.fetch === 'function'
+                ? root
+                    .fetch('http://127.0.0.1:8098/__backgrounds')
+                    .then(function (r) {
+                      return r && r.ok ? r.json() : [];
+                    })
+                    .catch(function () {
+                      return [];
+                    })
+                : root.Promise.resolve([]);
+            return root.Promise.all([customP, stockP]).then(function (pair) {
+              var custom = root.Array.isArray(pair[0]) ? pair[0] : [];
+              var stock = wh.__filterLocalBgs(pair[1], 'PlayStation');
+              if (!custom.length) return stock;
+              var defThumb = '/system/vsh_asset/welcome-hub-animated-background-0-thumbnail.jpg';
+              var defPh = '/system/vsh_asset/welcome-hub-animated-background-0-placeholder.jpg';
+              var out = [];
+              for (var i = 0; i < custom.length; i++) {
+                var b = custom[i];
+                if (!b || !b.id || !b.video) continue;
+                out.push({
+                  id: 'wh-bg-' + b.id,
+                  image: { uri: b.placeholder || defPh },
+                  thumbnail: { uri: b.thumb || defThumb },
+                  video: { src: b.video, basemat: 'linear', muted: !b.audio },
+                  date: '2026-01-01T00:00:00.000Z',
+                  seen: true,
+                });
+              }
+              if (out.length) logLine('backgrounds: added ' + out.length + ' custom animated background(s)');
+              return out.concat(stock);
             });
-          }
-          if (out.length) logLine('backgrounds: added ' + out.length + ' custom animated background(s)');
-          return out.concat(stock);
-        });
-      };
-      wrapped.__wh = 1;
-      bgMod['default'] = wrapped;
-      logLine('custom animated backgrounds hook on (/data/wh-backgrounds)');
-    } catch (e) {
-      logLine('custom animated backgrounds hook failed: ' + errorText(e), 0, 1);
+          };
+          wrapped.__wh = 1;
+          bgMod['default'] = wrapped;
+          logLine('custom animated backgrounds hook on (/data/wh-backgrounds)');
+        }
+      } catch (e) {
+        logLine('custom animated backgrounds hook failed: ' + errorText(e), 0, 1);
+      }
+    }
+    if (mods.gamesBackgrounds) {
+      try {
+        var gMod = hubRequire(mods.gamesBackgrounds);
+        if (gMod && typeof gMod['default'] === 'function' && !gMod['default'].__wh) {
+          var gOrig = gMod['default'];
+          var gWrapped = function () {
+            return root.Promise.resolve(gOrig.apply(this, arguments)).then(function (list) {
+              return wh.__filterLocalBgs(list, 'Games');
+            });
+          };
+          gWrapped.__wh = 1;
+          gMod['default'] = gWrapped;
+        }
+      } catch (e) {
+        logLine('games backgrounds filter failed: ' + errorText(e), 0, 1);
+      }
     }
   };
   // Turn the bridge's hand-off global into an accessor. A value assigned before the
@@ -3371,6 +3492,7 @@
           }
           wh.__registerEditList();
           wh.__layoutBackup();
+          wh.__bgPersist();
           wh.__registerMini();
           wh.__hideTelemetry();
           if (!wh.__hsr) {

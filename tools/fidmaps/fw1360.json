@@ -261,6 +261,24 @@
       "fid": 4845,
       "confidence": 0.969,
       "evidence": "aligned match sim=0.969 (runner-up F4874 0.543); +1/-1 insns [+ CreateClosure r0 r4 F:5f55a387bdd20bdf | - CreateClosure r0 r4 F:1cbb57e864c2bb6c]; anchors NUMBER_OF_ANIMATED_BACKGROUNDS, NUMBER_OF_STATIC_BACKGROUNDS, ps-animated-"
+    },
+    {
+      "name": "gamesBackgrounds",
+      "id_1320": 301,
+      "fid_1320": 2986,
+      "id": 340,
+      "fid": 4874,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (38 insns); numbers moved: LoadConstInt@102 arg1 299->339, LoadConstInt@117 arg1 1045->1199; anchors games-, gamesBackgroundPath"
+    },
+    {
+      "name": "bgStore",
+      "id_1320": 208,
+      "fid_1320": 2144,
+      "id": 235,
+      "fid": 2367,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (42 insns); all numbers identical; anchors home:backgroundImagePath:update, home:backgroundImagePath:clear, videoUri"
     }
   ]
 }

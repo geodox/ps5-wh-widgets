@@ -317,8 +317,16 @@ const MODULES = [
   { name: 'jsxRuntime', id_1320: 3, need: ['DkKR87qr'] },
   // PlayStation backgrounds catalog ("From PlayStation" tab in Change Background):
   // `default()` returns a Promise of background items ({id, image, thumbnail, video}).
-  // The loader wraps it to prepend custom .mp4 backgrounds from /data/wh-backgrounds/.
+  // The loader wraps it to prepend custom .mp4 backgrounds from /data/wh-backgrounds/
+  // and filter unreachable remote Sony CDN entries.
   { name: 'psBackgrounds', id_1320: 298, need: ['NUMBER_OF_ANIMATED_BACKGROUNDS', 'NUMBER_OF_STATIC_BACKGROUNDS', 'ps-animated-'] },
+  // Games backgrounds catalog ("From Games" tab in Change Background):
+  // wrapped to filter unreachable remote Sony CDN entries on offline consoles.
+  // Optional: older hub builds without a separate Games tab leave it null.
+  { name: 'gamesBackgrounds', id_1320: 301, need: ['games-', 'gamesBackgroundPath'], optional: true },
+  // Background persistence store (save/fetch/clear via BGS). Wrapped so custom
+  // loopback animated backgrounds persist in AsyncStorage across sign-out/in.
+  { name: 'bgStore', id_1320: 208, need: ['home:backgroundImagePath:update', 'home:backgroundImagePath:clear', 'videoUri'] },
 ];
 
 // Every string operand in fid and the closures it creates.
@@ -408,7 +416,7 @@ function main() {
         r.evidence += `; resolved by the only module with anchors ${md.need.join(', ')}`;
       } else r.evidence += `; anchor fallback: ${hits.length} modules have every anchor`;
     }
-    if (id === null) ok = false;
+    if (id === null && !md.optional) ok = false;
     const e = { name: md.name, id_1320: md.id_1320, fid_1320: rfid, id, fid: r.fid, confidence: id === null ? Math.min(r.confidence, 0.5) : r.confidence, evidence: r.evidence };
     console.log(`${('module ' + md.name).padEnd(18)} ${md.id_1320} (F${rfid}) -> ${id} (F${r.fid})  conf=${e.confidence}`);
     return e;

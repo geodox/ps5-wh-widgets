@@ -261,6 +261,24 @@
       "fid": 9236,
       "confidence": 0.969,
       "evidence": "aligned match sim=0.969 (runner-up F6192 0.543); +1/-1 insns [+ CreateClosure r0 r4 F:e2c9315329ccbf80 | - CreateClosure r0 r4 F:1cbb57e864c2bb6c]; anchors NUMBER_OF_ANIMATED_BACKGROUNDS, NUMBER_OF_STATIC_BACKGROUNDS, ps-animated-"
+    },
+    {
+      "name": "gamesBackgrounds",
+      "id_1320": 301,
+      "fid_1320": 2986,
+      "id": 434,
+      "fid": 6192,
+      "confidence": 0.97,
+      "evidence": "aligned match sim=0.974 (runner-up F7652 0.493); +1/-1 insns [+ CreateClosure r0 r4 F:bbb6587c47298f28 | - CreateClosure r0 r4 F:332839cf228e6d5b]; anchors games-, gamesBackgroundPath"
+    },
+    {
+      "name": "bgStore",
+      "id_1320": 208,
+      "fid_1320": 2144,
+      "id": 968,
+      "fid": 11912,
+      "confidence": 0.9,
+      "evidence": "aligned match sim=0.480 (runner-up F18953 0.429); +15/-24 insns [+ CreateClosure r0 r4 F:3be6ebab2681ef57 | + CreateClosure r0 r4 F:d7cbdaa3c5ead377 | + LoadConstZero r3 | + Call2 r5 r6 r0 r3 | + GetGlobalObject r3 | + TryGetById r9 r3 _ \"Object\" | + GetById r8 r9 _ \"defineProperty\" | + NewObject r7 | + LoadConstTrue r3 | + PutNewOwnById r7 r3 \"value\" | + LoadConstString r3 \"__esModule\" | + Call4 r3 r8 r9 r2 r3 r7 | + PutById r2 r0 _ \"RECENTLY_PLAYED_DEFAULT_LIMIT\" | + PutById r2 r1 _ \"fetchRecentlyPlayed\" | + PutById r2 r3 _ \"RECENTLY_PLAYED_DEFAULT_LIMIT\" | - CreateClosure r3 r4 F:f13e1e0eee43298e | - StoreToEnvironment r4 # r3 | - CreateClosure r0 r4 F:e753070d4e94a87a | - CreateClosure r0 r4 F:5a358b6bc2410f23 | - LoadConstZero r5 | - Call2 r5 r6 r0 r5 | - GetGlobalObject r7 | - TryGetById r10 r7 _ \"Object\" | - GetById r9 r10 _ \"defineProperty\" | - NewObject r8 | - LoadConstTrue r7 | - PutNewOwnById r8 r7 \"value\" | - LoadConstString r7 \"__esModule\" | - Call4 r7 r9 r10 r2 r7 r8 | - PutById r2 r0 _ \"DEFAULT_BASEMAT\" | - CreateClosure r7 r4 F:5c0d32ad57b271a0 | - PutById r2 r7 _ \"clear\" | - PutById r2 r1 _ \"fetch\" | - PutById r2 r3 _ \"save\" | - Call2 r3 r6 r0 r3 | - Call2 r3 r5 r0 r3 | - StoreToEnvironment r4 # r3 | - LoadConstString r3 \"EllipseNarrow\" | - PutById r2 r3 _ \"DEFAULT_BASEMAT\"]; REJECTED: sim < 0.9; resolved by the only module with anchors home:backgroundImagePath:update, home:backgroundImagePath:clear, videoUri"
     }
   ]
 }

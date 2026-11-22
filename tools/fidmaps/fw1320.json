@@ -261,6 +261,24 @@
       "fid": 2952,
       "confidence": 0.99,
       "evidence": "unique normalized match (32 insns); all numbers identical; anchors NUMBER_OF_ANIMATED_BACKGROUNDS, NUMBER_OF_STATIC_BACKGROUNDS, ps-animated-"
+    },
+    {
+      "name": "gamesBackgrounds",
+      "id_1320": 301,
+      "fid_1320": 2986,
+      "id": 301,
+      "fid": 2986,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (38 insns); all numbers identical; anchors games-, gamesBackgroundPath"
+    },
+    {
+      "name": "bgStore",
+      "id_1320": 208,
+      "fid_1320": 2144,
+      "id": 208,
+      "fid": 2144,
+      "confidence": 0.99,
+      "evidence": "unique normalized match (42 insns); all numbers identical; anchors home:backgroundImagePath:update, home:backgroundImagePath:clear, videoUri"
     }
   ]
 }
