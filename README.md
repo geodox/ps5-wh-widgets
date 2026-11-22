@@ -137,7 +137,7 @@ These widgets ship with the project, ready to use and as starting points for you
 | Widget | What it does |
 | :--- | :--- |
 | **Payload Monitor** | Lists the homebrew payloads running on the console with their PID and memory use, updating live. A long list turns pages by itself; L1 / R1 page it while the tile is focused. |
-| **Console Stats** | CPU and SoC temperature, fan speed, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
+| **Console Stats** | CPU and SoC temperature, fan speed, optional SoC power & CPU/GFX clocks, free space and a usage bar per drive (console storage, M.2, USB), and uptime. Pauses while the tiles are covered. |
 | **Network Info** | Local IP address, Wi-Fi signal strength (percentage, dBm, bar), SSID, band/channel, NAT type, and connection uptime — read directly from ShellUI's native network modules, completely offline. |
 | **Home Assistant** | Shows and controls your Home Assistant entities, as cards: lights, switches, sensors, climate, covers, locks, media players and more. X toggles or runs one; the full-screen page adds brightness, volume and position sliders, target temperature and mode, and the entity chooser. Unlocking and opening a garage door ask first. Needs a token in its `config.json`: see its [README](sample-widgets/home-assistant/README.md). |
 | **Weather** | Current weather and forecast for your saved places, anywhere in the world: search by city or postal code, switch places with L1 / R1. Background photos for the current weather, a 5-day forecast and hourly details at the larger sizes, units from the console's region or your choice. Based on VintendoPower's Weather widget; see its [README](sample-widgets/weather/README.md). |

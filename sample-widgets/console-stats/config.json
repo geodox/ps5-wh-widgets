@@ -1,13 +1,16 @@
 {
   "id": "console-stats",
   "title": "Console Stats",
-  "description": "Temperatures, fan speed, storage and uptime of your console.",
+  "description": "Temperatures, fan speed, optional SoC power & clocks, storage and uptime of your console.",
   "iconId": "ps5",
   "size": 1,
   "settings": [
     { "id": "unit", "title": "Temperature", "type": "choice",
       "options": [ { "value": "c", "label": "Celsius" }, { "value": "f", "label": "Fahrenheit" } ],
       "default": "c" },
+    { "id": "showPower", "title": "SoC power & clocks", "type": "choice",
+      "options": [ { "value": "off", "label": "Off" }, { "value": "on", "label": "On" } ],
+      "default": "off" },
     { "id": "refresh", "title": "Refresh every", "type": "choice",
       "options": [ { "value": "2", "label": "2 seconds" }, { "value": "5", "label": "5 seconds" }, { "value": "10", "label": "10 seconds" } ],
       "default": "5" }

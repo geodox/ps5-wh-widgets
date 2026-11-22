@@ -49,6 +49,14 @@
   function tempStyle(c) {
     return c == null ? null : c >= HOT_C ? styles.hot : c >= WARM_C ? styles.warm : null;
   }
+  function watts(mw) {
+    if (mw == null) return '-';
+    return (mw / 1000).toFixed(1) + 'W';
+  }
+  function mhz(v) {
+    if (v == null) return '-';
+    return v >= 1000 ? (v / 1000).toFixed(2) + ' GHz' : v + ' MHz';
+  }
   function uptime(s) {
     var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
     return (d ? d + 'd ' : '') + (d || h ? h + 'h ' : '') + m + 'm';
@@ -75,6 +83,7 @@
   function ConsoleStats(props) {
     var settings = props.settings || {};
     var unit = settings.unit === 'f' ? 'f' : 'c';
+    var showPower = settings.showPower === 'on';
     var refreshMs = (parseInt(settings.refresh, 10) || 5) * 1000;
     var st = React.useState(null), stats = st[0], setStats = st[1];
     var er = React.useState(null), err = er[0], setErr = er[1];
@@ -101,27 +110,43 @@
     var drives = s.storage || [];
     var internal = drives.filter(function (d) { return d.name === 'internal'; })[0];
 
+    var headlineCells = [
+      ce(Cell, { key: 'cpu', value: temp(s.cpuTemp, unit), caption: 'CPU', style: tempStyle(s.cpuTemp) }),
+      ce(Cell, { key: 'soc', value: temp(s.socTemp, unit), caption: 'SoC', style: tempStyle(s.socTemp) }),
+      ce(Cell, { key: 'fan', value: s.fan == null ? '-' : s.fan + '%', caption: 'Fan' }),
+      ce(Cell, { key: 'free', value: internal ? gb(internal.free) : '-', caption: 'Free' })
+    ];
+    if (showPower && H <= 200) {
+      headlineCells.push(ce(Cell, { key: 'pwr', value: watts(s.socPowerMw), caption: 'Power' }));
+    }
+
     var body = [
       // The console's own thermal alert outranks the uptime badge.
       ce(wh.Title, { key: 't', iconId: cfg.iconId || 'ps5',
         badge: s.thermalAlert ? 'Thermal alert' : s.uptime != null ? 'Up ' + uptime(s.uptime) : null },
         cfg.title || 'Console Stats'),
-      ce(View, { key: 'c', style: styles.cells },
-        ce(Cell, { value: temp(s.cpuTemp, unit), caption: 'CPU', style: tempStyle(s.cpuTemp) }),
-        ce(Cell, { value: temp(s.socTemp, unit), caption: 'SoC', style: tempStyle(s.socTemp) }),
-        ce(Cell, { value: s.fan == null ? '-' : s.fan + '%', caption: 'Fan' }),
-        ce(Cell, { value: internal ? gb(internal.free) : '-', caption: 'Free' }))
+      ce(View, { key: 'c', style: styles.cells }, headlineCells)
     ];
     if (!stats && err) body.push(ce(Label, { key: 'e', style: styles.error }, 'Stats unavailable: ' + err));
 
     if (stats && H > 200) {
+      var extraH = 0;
+      if (showPower) {
+        extraH = 72;
+        body.push(
+          ce(View, { key: 'p', style: [styles.cells, styles.section] },
+            ce(Cell, { key: 'tot', value: watts(s.socPowerMw), caption: 'SoC Power' }),
+            ce(Cell, { key: 'gfx', value: watts(s.gfxPowerMw), caption: 'GFX ' + mhz(s.gfxClockMhz) }),
+            ce(Cell, { key: 'cpup', value: watts(s.cpuPowerMw), caption: 'CPU ' + mhz(s.cpuClockMhz) }))
+        );
+      }
       var bars = [];
       drives.forEach(function (d) {
         bars.push(ce(Bar, { key: d.name, label: driveName(d.name), total: d.total, free: d.free, width: inner }));
       });
       // As many bars as fit above the frame's bottom key guide (about 48 px while
       // the tile is focused): padding, title row, number row, section gap.
-      var room = Math.max(1, Math.floor((H - 32 - 40 - 64 - 16 - 48) / 42));
+      var room = Math.max(1, Math.floor((H - 32 - 40 - 64 - 16 - extraH - 48) / 42));
       body.push(ce(View, { key: 'b', style: styles.section }, bars.slice(0, room)));
     }
 
