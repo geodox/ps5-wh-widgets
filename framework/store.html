@@ -297,7 +297,7 @@
       await uploadFile(w.id, '.meta.json', new TextEncoder().encode(meta));
       await loadState();
       render();
-      notify('Installed ' + w.name + '. Welcome Hub will reload automatically in ~5 seconds.', 'ok');
+      notify('Installed ' + w.name + '. Click "Reload Welcome Hub" when you are done.', 'ok');
     } catch (e) {
       notify('Install failed for ' + w.name + ': ' + (e.message || e), 'err');
     }
@@ -311,7 +311,7 @@
       if (!r.ok) throw new Error('HTTP ' + r.status);
       await loadState();
       render();
-      notify('Uninstalled ' + name + '. Welcome Hub will reload automatically in ~5 seconds.', 'ok');
+      notify('Uninstalled ' + name + '. Click "Reload Welcome Hub" when you are done.', 'ok');
     } catch (e) {
       notify('Uninstall failed: ' + (e.message || e), 'err');
     }

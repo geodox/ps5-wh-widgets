@@ -52,7 +52,7 @@ Send `wh_bridge.elf` from the [releases](https://github.com/geodox/ps5-wh-widget
 
 ### Adding Widgets
 
-Open **Welcome Hub Settings → Widget Store** (or visit `http://127.0.0.1:8098/__store` in the console browser or BrowserPS5) to browse, install, update, and remove widgets from the official [`widgets.json`](widgets.json) catalog or your own custom `widgets.json` sources — no PC or FTP needed.
+Open **Welcome Hub Settings → Widget Store** on the console, or visit `http://<ps5-ip>:8098/` (or `http://127.0.0.1:8098/__store` in the console browser / BrowserPS5) from any phone, tablet, or PC on your network to browse, install, update, and remove widgets from the official [`widgets.json`](widgets.json) catalog or your own custom `widgets.json` sources — no FTP needed. See [Publishing a Widget Repository](docs/sdk/widget-repos.md) to host your own widget catalog.
 
 You can also install widgets manually by placing each unpacked widget in its own folder on the console:
 

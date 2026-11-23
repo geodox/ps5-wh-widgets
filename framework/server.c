@@ -198,7 +198,9 @@ static void wh_launch_action(int c, char* q){
  * embedded hub (re-triggering our evaluateJavaScript hook). Runs on a detached
  * thread so the asset server keeps serving 127.0.0.1:8098 during the reload. */
 static volatile int g_reloading = 0;
+static volatile int g_manual_reload = 0;
 static time_t g_reload_last = 0;
+static time_t g_store_active = 0;
 static void* wh_reload_thread(void* arg){
   const char* why = (const char*)arg;
   int r1 = wh_native_launch("pshomeui:navigateToHome?spaceId=media");
@@ -229,9 +231,12 @@ static int wh_reload_hub_async(const char* why){
   return 0;
 }
 static void wh_reload_action(int c){
-  int rc = wh_reload_hub_async("manual");
-  if (rc == -1) { wh_reply_json(c, 429, "{\"ok\":false,\"error\":\"rate-limited\"}"); return; }
-  if (rc < 0) { wh_reply_json(c, 502, "{\"ok\":false,\"error\":\"reload failed\"}"); return; }
+  time_t now = time(0);
+  if (g_reloading || (now - g_reload_last) < 4) {
+    wh_reply_json(c, 429, "{\"ok\":false,\"error\":\"rate-limited\"}"); return;
+  }
+  g_store_active = 0;
+  g_manual_reload = 1;
   wh_reply_json(c, 200, "{\"ok\":true}");
 }
 /* GET /__notify?text=<url-encoded UTF-8> -> a system notification. Control characters
@@ -542,9 +547,10 @@ static void wh_bg_asset(int c, char* name, const char* range_hdr){
   }
   close(fd);
 }
-/* ---- Built-in Widget Store (/__store, loopback only) --------------------- */
+/* ---- Built-in Widget Store (/__store, LAN + loopback) -------------------- */
 #define WH_STORE_SOURCES WH_WIDGETS_DIR "/.store.json"
 #define WH_STORE_SRC_MAX 4096
+#define WH_STORE_QUIET_S 120   /* suppress auto-reload while user is in the Store */
 static int wh_store_ext_ok(const char* f){
   const char* d = strrchr(f, '.');
   if (!d) return 0;
@@ -696,7 +702,7 @@ static void wh_store_sources(int c, const char* body, size_t blen){
   wh_flog("assets", "store: saved sources (%zuB)", blen);
   wh_reply_json(c, 200, "{\"ok\":true}");
 }
-static void wh_asset_conn(int c){
+static void wh_asset_conn(int c, int is_local){
   char req[2048]; size_t got = 0; char* hdr_end = 0;
   while (got < sizeof req - 1){
     ssize_t r = read(c, req + got, sizeof req - 1 - got);
@@ -724,6 +730,7 @@ static void wh_asset_conn(int c){
   }
   *eol = 0;
   if (!strncmp(req, "POST /__store/", 14)) {
+    g_store_active = time(0);
     if (clen_hdr < 0 || clen_hdr > WH_ASSET_MAX) { wh_reply(c, "413 Payload Too Large"); return; }
     char* path = req + 6;                    /* after "POST /" */
     char* sp = strchr(path, ' '); if (sp) *sp = 0;
@@ -751,13 +758,14 @@ static void wh_asset_conn(int c){
   if (strncmp(req, "GET /", 5)) { wh_reply(c, "405 Method Not Allowed"); return; }
   char* path = req + 5;                      /* after "GET /" */
   char* sp = strchr(path, ' '); if (sp) *sp = 0;
-  if (!strcmp(path, "__store") || !strcmp(path, "__store/")) { wh_store_page(c); return; }
-  if (!strcmp(path, "__store/state") || !strncmp(path, "__store/state?", 14)) { wh_store_state(c); return; }
+  if (!path[0] || !strcmp(path, "__store") || !strcmp(path, "__store/")) { g_store_active = time(0); wh_store_page(c); return; }
+  if (!strcmp(path, "__store/state") || !strncmp(path, "__store/state?", 14)) { g_store_active = time(0); wh_store_state(c); return; }
+  if (!strcmp(path, "__reload") || !strncmp(path, "__reload?", 9)) { wh_reload_action(c); return; }
+  if (!is_local) { wh_reply(c, "403 Forbidden"); return; }
   if (!strncmp(path, "__log?", 6)) { wh_log_endpoint(c, path + 6); return; }
   if (!strncmp(path, "__wget?", 7)) { wh_settings_get(c, path + 7); return; }
   if (!strncmp(path, "__wset?", 7)) { wh_settings_set(c, path + 7); return; }
   if (!strncmp(path, "__launch?", 9)) { wh_launch_action(c, path + 9); return; }
-  if (!strcmp(path, "__reload") || !strncmp(path, "__reload?", 9)) { wh_reload_action(c); return; }
   if (!strncmp(path, "__notify?", 9)) { wh_notify_action(c, path + 9); return; }
   if (!strcmp(path, "__stats") || !strncmp(path, "__stats?", 8)) { wh_stats_action(c); return; }
   if (!strcmp(path, "__backgrounds") || !strncmp(path, "__backgrounds?", 14)) { wh_backgrounds_list(c); return; }
@@ -807,7 +815,7 @@ int wh_asset_open(unsigned* gen, const char** why){
   if (s < 0) { klog_printf("[wc] assets: socket failed\n"); return -1; }
   int one = 1; setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof one);
   struct sockaddr_in a; memset(&a, 0, sizeof a);
-  a.sin_family = AF_INET; a.sin_port = htons(WH_ASSET_PORT); a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  a.sin_family = AF_INET; a.sin_port = htons(WH_ASSET_PORT); a.sin_addr.s_addr = htonl(INADDR_ANY);
   unsigned my = wh_gen_bump();               /* tells an older server to retire */
   *gen = my;
   int bound = 0;
@@ -816,10 +824,10 @@ int wh_asset_open(unsigned* gen, const char** why){
     else usleep(200000);
   }
   if (!bound) {
-    LOG("assets: 127.0.0.1:%d still busy, not serving\n", WH_ASSET_PORT);
+    LOG("assets: 0.0.0.0:%d still busy, not serving\n", WH_ASSET_PORT);
     close(s); *why = "port busy"; return -1;
   }
-  LOG("assets: serving %s on 127.0.0.1:%d (gen %u)\n", WH_WIDGETS_DIR, WH_ASSET_PORT, my);
+  LOG("assets: serving %s on 0.0.0.0:%d (gen %u)\n", WH_WIDGETS_DIR, WH_ASSET_PORT, my);
   return s;
 }
 void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, int auto_reload){
@@ -828,7 +836,7 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
   int dn = open("/dev/null", O_RDWR);        /* detach stdio so the loader connection ends */
   if (dn >= 0) { dup2(dn, 0); dup2(dn, 1); dup2(dn, 2); if (dn > 2) close(dn); }
   if (auto_reload) wh_reload_hub_async("install");
-  struct timeval tv = { 2, 0 };
+  struct timeval tv = { 5, 0 };
   /* In-place widget refresh: sample the source fingerprint at ~1 Hz and rebuild
    * the prelude once a change has been identical for WH_STABLE_MS. Sampling is
    * clock-driven, so a served request or the rebuild itself cannot stretch the
@@ -844,6 +852,15 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
       klog_printf("[wc] assets: gen %u superseded, retiring\n", my);
       wh_flog("assets", "server gen %u handed over to a newer install, exiting", my);
       close(s); _exit(0);
+    }
+    if (g_manual_reload) {
+      g_manual_reload = 0;
+      uint64_t sig = wh_widget_fingerprint();
+      if (sig && sig != applied) {
+        wh_flog("assets", "manual reload: refreshing pending widget changes first");
+        if (wh_refresh_in_place(shell, br) == 0) { applied = candidate = wh_prelude_sig; candidate_since = 0; attempts = 0; }
+      }
+      wh_reload_hub_async("manual");
     }
     if (pending_reload) {
       int rrc = wh_reload_hub_async("widget-refresh");
@@ -862,7 +879,11 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
           int rr = wh_refresh_in_place(shell, br);
           if (rr == 0) {
             applied = candidate = wh_prelude_sig; attempts = 0;
-            if (wh_reload_hub_async("widget-refresh") == -1) pending_reload = 1;
+            if (g_store_active && (time(0) - g_store_active) < WH_STORE_QUIET_S) {
+              wh_flog("assets", "in-place refresh ready (auto-reload paused while Widget Store is active)");
+            } else if (wh_reload_hub_async("widget-refresh") == -1) {
+              pending_reload = 1;
+            }
           }
           else if (++attempts >= 3) {
             wh_flog("assets", "in-place refresh failed 3x (rc=%d); waiting for the next change", rr);
@@ -883,11 +904,14 @@ void wh_asset_loop(int s, unsigned my, pid_t shell, const struct wh_bridge* br, 
       continue;
     }
     if (pr <= 0) continue;
-    int c = accept(s, 0, 0);
+    struct sockaddr_in peer; socklen_t plen = sizeof peer;
+    memset(&peer, 0, sizeof peer);
+    int c = accept(s, (struct sockaddr*)&peer, &plen);
     if (c < 0) { if (errno == EINTR) continue; usleep(100000); continue; }
+    int is_local = (peer.sin_addr.s_addr == htonl(INADDR_LOOPBACK));
     setsockopt(c, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv);
     setsockopt(c, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv);
-    wh_asset_conn(c);
+    wh_asset_conn(c, is_local);
     close(c);
   }
 }

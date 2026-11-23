@@ -23,6 +23,7 @@ The hub is **React Native, not the web**. There is no DOM, no `div`, no CSS, no
 | [Style guide](style-guide.md) | stock look, type, spacing, colours |
 | [Glyphs and images](glyphs.md) | stock icons, image glyphs, asset URLs |
 | [Stock icon ids](icons.md) | every stock `iconId` |
+| [Widget repositories](widget-repos.md) | publishing a `widgets.json` catalog for the built-in Widget Store |
 | [Troubleshooting](troubleshooting.md) | `wh.log`, common errors, reloading |
 | [Loader internals](loader-internals.md) | how the framework hooks the hub |
 
