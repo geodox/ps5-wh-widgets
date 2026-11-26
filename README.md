@@ -207,6 +207,7 @@ Thanks to everyone who provided stock hub dumps and on-console testing:
 
 - **[@pm5krj](https://github.com/pm5krj)**
 - **[@TRIPSLORD](https://github.com/TRIPSLORD)**
+- **[@StefanF1047](https://github.com/StefanF1047)**
 
 This is an independent, unofficial community homebrew project. It is not affiliated with or endorsed by Sony Interactive Entertainment or PlayStation.
 
