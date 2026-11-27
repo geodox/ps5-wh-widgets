@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include <ps5/kernel.h>
 #include "bridge.h"
 #include "cave.h"
@@ -31,6 +32,10 @@
 
 int main(void){
   uint32_t fw = kernel_get_fw_version();
+  /* The widgets folder holds the log, the Widget Store's installs and the hub
+   * settings. A console set up only through the Widget Store has never had it
+   * created over FTP, and every write into it would fail. */
+  mkdir(WH_WIDGETS_DIR, 0755);
   wh_flog("installer", "---- WHBridge %s start ----", WH_VERSION);
   const struct wh_bridge* br = wh_bridge_for_fw(fw);
   if (!br) {
